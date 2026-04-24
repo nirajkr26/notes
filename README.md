@@ -10,6 +10,10 @@ A collection of concise, interview-ready technical notes for computer science fu
 | [operating-system.md](operating-system.md) | Processes, Threads, CPU Scheduling, Synchronization, Deadlocks, Memory Management, File Systems |
 | [computer-network.md](computer-network.md) | OSI Model, TCP/IP, TCP vs UDP, DNS, HTTP/HTTPS, Routing, Switching, Network Security |
 | [dbms.md](dbms.md) | SQL, Normalization, ACID, Transactions, Indexing, Joins, NoSQL, CAP Theorem |
+| [cpp.md](cpp.md) | Pointers, References, Memory Management, Smart Pointers, OOP, Templates, STL, Move Semantics, Multithreading |
+| [java.md](java.md) | JVM/JDK/JRE, OOP, Collections, Generics, Exception Handling, Java 8 Features, Streams, Multithreading, GC |
+| [javascript.md](javascript.md) | Variables, Closures, Hoisting, Prototypes, Async/Await, Event Loop, ES6+ Features, DOM, Promises |
+| [hr.md](hr.md) | HR Round Q&A, STAR Method, Behavioral Questions, Salary Negotiation, Company Research, Questions to Ask |
 
 ## 🎯 Purpose
 
