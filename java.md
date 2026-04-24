@@ -1,5 +1,7 @@
 # Java — Super Detailed Interview & Exam Notes
 
+> 📌 **GitHub:** [nirajkr26](https://github.com/nirajkr26) &nbsp;|&nbsp; **LinkedIn:** [nirajkr26](https://www.linkedin.com/in/nirajkr26)
+
 ---
 
 ## 1. Introduction to Java
