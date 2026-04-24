@@ -1,5 +1,7 @@
 # core-notes
 
+> 📌 **GitHub:** [nirajkr26](https://github.com/nirajkr26) &nbsp;|&nbsp; **LinkedIn:** [nirajkr26](https://www.linkedin.com/in/nirajkr26)
+
 A collection of concise, interview-ready technical notes for computer science fundamentals.
 
 ## 📚 Notes

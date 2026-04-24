@@ -1,5 +1,7 @@
 # HR Round Questions & Answers — Interview Preparation Guide
 
+> 📌 **GitHub:** [nirajkr26](https://github.com/nirajkr26) &nbsp;|&nbsp; **LinkedIn:** [nirajkr26](https://www.linkedin.com/in/nirajkr26)
+
 ---
 
 ## Introduction
