@@ -16,6 +16,8 @@ A collection of concise, interview-ready technical notes for computer science fu
 | [java.md](java.md) | JVM/JDK/JRE, OOP, Collections, Generics, Exception Handling, Java 8 Features, Streams, Multithreading, GC |
 | [javascript.md](javascript.md) | Variables, Closures, Hoisting, Prototypes, Async/Await, Event Loop, ES6+ Features, DOM, Promises |
 | [hr.md](hr.md) | HR Round Q&A, STAR Method, Behavioral Questions, Salary Negotiation, Company Research, Questions to Ask |
+| [docker.md](docker.md) | Images, Containers, Dockerfile, Networking, Volumes, Compose, Swarm, Security, Registry |
+| [cloudcomputing.md](cloudcomputing.md) | IaaS/PaaS/SaaS, Deployment Models, AWS/Azure/GCP, VPC, IAM, Storage, Serverless, IaC, Security, Cost Optimization |
 
 ## 🎯 Purpose
 
