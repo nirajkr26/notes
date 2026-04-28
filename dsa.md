@@ -289,43 +289,198 @@ Supports push/pop at both ends in O(1). Used for:
 
 ---
 
-## 7. Hash Maps & Hash Sets
+## 7. Hashing
 
-### 7.1 Properties
+### 7.1 Hash Function
 
-- Average O(1) for get, put, delete
-- Worst case O(n) with many collisions (rare with good hash function)
-- Unordered (use `TreeMap` for sorted order, O(log n))
+A **hash function** maps a key to a bucket index: `h(key) → [0, capacity)`.
 
-### 7.2 Collision Resolution
+**Properties of a good hash function:**
+- **Deterministic** — same key always produces the same hash
+- **Uniform distribution** — spreads keys evenly across buckets (minimizes collisions)
+- **Fast to compute** — ideally O(1)
+- **Avalanche effect** — small change in key → large change in hash
 
-| Method             | Description                                          |
-|--------------------|------------------------------------------------------|
-| Chaining           | Each bucket is a linked list; append on collision    |
-| Open Addressing    | Find next empty slot (linear/quadratic/double hash)  |
-| Robin Hood Hashing | Displace "rich" entries to reduce variance           |
+**Common approaches:**
+| Key type   | Technique                                      |
+|------------|------------------------------------------------|
+| Integer    | `key % capacity` (use prime capacity)          |
+| String     | Polynomial rolling hash: `Σ c[i] * p^i mod M` |
+| Object     | Combine field hashes with XOR / multiply-shift |
 
-### 7.3 Common Patterns
+### 7.2 Load Factor & Rehashing
 
 ```
-// Frequency count
-freq = {}
-for char in s:
-    freq[char] = freq.get(char, 0) + 1
-
-// Group by key (anagram grouping)
-groups = defaultdict(list)
-for word in words:
-    groups[tuple(sorted(word))].append(word)
-
-// Two Sum pattern
-seen = {}
-for i, num in enumerate(nums):
-    complement = target - num
-    if complement in seen:
-        return [seen[complement], i]
-    seen[num] = i
+load_factor = number_of_elements / number_of_buckets
 ```
+
+- **Target load factor:** typically 0.75 (C++ `unordered_map` default is 1.0)
+- When `load_factor > threshold`, **rehash**: allocate a new (usually 2×) table and reinsert all elements — amortized O(1) per insert
+- Too low → wasted memory; too high → degraded O(n) performance from long chains
+
+### 7.3 Collision Resolution
+
+| Method              | Description                                           | Pros / Cons                                  |
+|---------------------|-------------------------------------------------------|----------------------------------------------|
+| **Separate Chaining** | Each bucket holds a linked list (or small vector)   | Simple; handles high load; extra pointer overhead |
+| **Linear Probing**  | On collision, scan `+1, +2, …` until empty slot      | Cache-friendly; suffers from primary clustering |
+| **Quadratic Probing** | Probe at `+1², +2², +3², …`                        | Reduces primary clustering; may not cover all slots |
+| **Double Hashing**  | Second hash `h2(key)` determines probe step           | Minimizes clustering; requires careful `h2` design |
+| **Robin Hood Hashing** | Displace entries with shorter probe distance       | Low variance probe length; used in fast open-address tables |
+
+### 7.4 C++ Hash Map & Hash Set API
+
+```cpp
+#include <unordered_map>
+#include <unordered_set>
+
+// --- unordered_map<K, V> ---
+unordered_map<string, int> freq;
+freq["apple"]++;                     // insert or increment
+freq.count("apple");                 // 1 if present, 0 otherwise
+freq.find("apple") != freq.end();    // safe lookup
+freq.erase("apple");                 // remove key
+freq.size();                         // number of entries
+for (auto& [key, val] : freq) { }   // range-for (C++17 structured binding)
+
+// Default value on missing key (inserts 0)
+freq["missing"];  // creates entry with value 0
+
+// --- unordered_set<K> ---
+unordered_set<int> seen;
+seen.insert(42);
+seen.count(42);                      // 1 if present
+seen.erase(42);
+
+// --- Performance hints ---
+freq.reserve(1 << 16);               // pre-allocate buckets to avoid rehashes
+freq.max_load_factor(0.25);          // lower → fewer collisions, more memory
+```
+
+### 7.5 Custom Hash Functions
+
+The default `std::hash` covers built-in types. For custom types or better performance, supply your own:
+
+```cpp
+// Option 1: inject into std namespace (for pair<int,int>)
+struct PairHash {
+    size_t operator()(const pair<int,int>& p) const {
+        size_t h1 = hash<int>{}(p.first);
+        size_t h2 = hash<int>{}(p.second);
+        return h1 ^ (h2 * 2654435761ULL);   // Knuth multiplicative hash
+    }
+};
+unordered_map<pair<int,int>, int, PairHash> dp;
+
+// Option 2: combine hashes with boost-style seed mixing
+size_t hashCombine(size_t seed, size_t val) {
+    return seed ^ (val + 0x9e3779b9 + (seed << 6) + (seed >> 2));
+}
+
+// Option 3: anti-hack hash (randomize to defeat adversarial inputs)
+struct SafeHash {
+    static uint64_t splitmix64(uint64_t x) {
+        x += 0x9e3779b97f4a7c15;
+        x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9;
+        x = (x ^ (x >> 27)) * 0x94d049bb133111eb;
+        return x ^ (x >> 31);
+    }
+    size_t operator()(uint64_t x) const {
+        static const uint64_t FIXED_RANDOM =
+            chrono::steady_clock::now().time_since_epoch().count();
+        return splitmix64(x + FIXED_RANDOM);
+    }
+};
+unordered_map<int, int, SafeHash> safe_map;
+```
+
+### 7.6 Polynomial Rolling Hash (String Hashing)
+
+Used for **O(1) substring comparison** and duplicate detection.
+
+```cpp
+// Precompute prefix hashes for string s
+// hash(s[l..r]) = (H[r+1] - H[l] * P[r-l+1]) % MOD
+const long long MOD = 1e9 + 7, BASE = 31;
+
+string s = "...";
+int n = s.size();
+vector<long long> H(n + 1, 0), P(n + 1, 1);
+
+for (int i = 0; i < n; i++) {
+    H[i+1] = (H[i] * BASE + (s[i] - 'a' + 1)) % MOD;
+    P[i+1] = P[i] * BASE % MOD;
+}
+
+// Hash of substring s[l..r] (0-indexed, inclusive)
+auto getHash = [&](int l, int r) -> long long {
+    return (H[r+1] - H[l] * P[r-l+1] % MOD + MOD * 2) % MOD;
+};
+
+// Use two different (BASE, MOD) pairs to reduce collision probability
+```
+
+**Applications:** Longest duplicate substring (binary search + rolling hash), Rabin-Karp pattern matching.
+
+### 7.7 Common Hashing Patterns (C++)
+
+```cpp
+// --- Frequency count ---
+unordered_map<char, int> freq;
+for (char c : s) freq[c]++;
+
+// --- Two Sum ---
+unordered_map<int, int> seen;  // value → index
+for (int i = 0; i < (int)nums.size(); i++) {
+    int complement = target - nums[i];
+    if (seen.count(complement))
+        return {seen[complement], i};
+    seen[nums[i]] = i;
+}
+
+// --- Anagram grouping ---
+unordered_map<string, vector<string>> groups;
+for (auto& word : words) {
+    string key = word;
+    sort(key.begin(), key.end());
+    groups[key].push_back(word);
+}
+
+// --- Subarray sum equals k (prefix sum + hash map) ---
+unordered_map<int, int> prefixCount{{0, 1}};
+int sum = 0, count = 0;
+for (int num : nums) {
+    sum += num;
+    count += prefixCount[sum - k];
+    prefixCount[sum]++;
+}
+
+// --- Longest consecutive sequence ---
+unordered_set<int> numSet(nums.begin(), nums.end());
+int longest = 0;
+for (int n : numSet) {
+    if (!numSet.count(n - 1)) {       // start of a sequence
+        int len = 1;
+        while (numSet.count(n + len)) len++;
+        longest = max(longest, len);
+    }
+}
+```
+
+### 7.8 Classic Hashing Problems
+
+| Problem                          | Key Idea                                              | Complexity   |
+|----------------------------------|-------------------------------------------------------|--------------|
+| Two Sum                          | Store `value → index`; look up complement             | O(n)         |
+| Group Anagrams                   | Sorted string (or char freq array) as key             | O(n·k log k) |
+| Subarray Sum Equals K            | Prefix sums + frequency map                           | O(n)         |
+| Longest Consecutive Sequence     | Set lookup for sequence start                         | O(n)         |
+| First Non-Repeating Character    | Ordered map / two-pass frequency count                | O(n)         |
+| 4-Sum Count (4 arrays)           | Split into two pairs; store pair-sum counts           | O(n²)        |
+| Rabin-Karp String Match          | Rolling hash for O(n+m) average pattern search        | O(n+m)       |
+| Longest Duplicate Substring      | Binary search length + rolling hash                   | O(n log n)   |
+| Minimum Window Substring         | Sliding window + character frequency maps             | O(n)         |
+| LRU Cache                        | `unordered_map` + doubly-linked list                  | O(1)         |
 
 ---
 
