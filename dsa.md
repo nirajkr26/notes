@@ -289,43 +289,198 @@ Supports push/pop at both ends in O(1). Used for:
 
 ---
 
-## 7. Hash Maps & Hash Sets
+## 7. Hashing
 
-### 7.1 Properties
+### 7.1 Hash Function
 
-- Average O(1) for get, put, delete
-- Worst case O(n) with many collisions (rare with good hash function)
-- Unordered (use `TreeMap` for sorted order, O(log n))
+A **hash function** maps a key to a bucket index: `h(key) → [0, capacity)`.
 
-### 7.2 Collision Resolution
+**Properties of a good hash function:**
+- **Deterministic** — same key always produces the same hash
+- **Uniform distribution** — spreads keys evenly across buckets (minimizes collisions)
+- **Fast to compute** — ideally O(1)
+- **Avalanche effect** — small change in key → large change in hash
 
-| Method             | Description                                          |
-|--------------------|------------------------------------------------------|
-| Chaining           | Each bucket is a linked list; append on collision    |
-| Open Addressing    | Find next empty slot (linear/quadratic/double hash)  |
-| Robin Hood Hashing | Displace "rich" entries to reduce variance           |
+**Common approaches:**
+| Key type   | Technique                                      |
+|------------|------------------------------------------------|
+| Integer    | `key % capacity` (use prime capacity)          |
+| String     | Polynomial rolling hash: `Σ c[i] * p^i mod M` |
+| Object     | Combine field hashes with XOR / multiply-shift |
 
-### 7.3 Common Patterns
+### 7.2 Load Factor & Rehashing
 
 ```
-// Frequency count
-freq = {}
-for char in s:
-    freq[char] = freq.get(char, 0) + 1
-
-// Group by key (anagram grouping)
-groups = defaultdict(list)
-for word in words:
-    groups[tuple(sorted(word))].append(word)
-
-// Two Sum pattern
-seen = {}
-for i, num in enumerate(nums):
-    complement = target - num
-    if complement in seen:
-        return [seen[complement], i]
-    seen[num] = i
+load_factor = number_of_elements / number_of_buckets
 ```
+
+- **Target load factor:** typically 0.75 (C++ `unordered_map` default is 1.0)
+- When `load_factor > threshold`, **rehash**: allocate a new (usually 2×) table and reinsert all elements — amortized O(1) per insert
+- Too low → wasted memory; too high → degraded O(n) performance from long chains
+
+### 7.3 Collision Resolution
+
+| Method              | Description                                           | Pros / Cons                                  |
+|---------------------|-------------------------------------------------------|----------------------------------------------|
+| **Separate Chaining** | Each bucket holds a linked list (or small vector)   | Simple; handles high load; extra pointer overhead |
+| **Linear Probing**  | On collision, scan `+1, +2, …` until empty slot      | Cache-friendly; suffers from primary clustering |
+| **Quadratic Probing** | Probe at `+1², +2², +3², …`                        | Reduces primary clustering; may not cover all slots |
+| **Double Hashing**  | Second hash `h2(key)` determines probe step           | Minimizes clustering; requires careful `h2` design |
+| **Robin Hood Hashing** | Displace entries with shorter probe distance       | Low variance probe length; used in fast open-address tables |
+
+### 7.4 C++ Hash Map & Hash Set API
+
+```cpp
+#include <unordered_map>
+#include <unordered_set>
+
+// --- unordered_map<K, V> ---
+unordered_map<string, int> freq;
+freq["apple"]++;                     // insert or increment
+freq.count("apple");                 // 1 if present, 0 otherwise
+freq.find("apple") != freq.end();    // safe lookup
+freq.erase("apple");                 // remove key
+freq.size();                         // number of entries
+for (auto& [key, val] : freq) { }   // range-for (C++17 structured binding)
+
+// Default value on missing key (inserts 0)
+freq["missing"];  // creates entry with value 0
+
+// --- unordered_set<K> ---
+unordered_set<int> seen;
+seen.insert(42);
+seen.count(42);                      // 1 if present
+seen.erase(42);
+
+// --- Performance hints ---
+freq.reserve(1 << 16);               // pre-allocate buckets to avoid rehashes
+freq.max_load_factor(0.25);          // lower → fewer collisions, more memory
+```
+
+### 7.5 Custom Hash Functions
+
+The default `std::hash` covers built-in types. For custom types or better performance, supply your own:
+
+```cpp
+// Option 1: inject into std namespace (for pair<int,int>)
+struct PairHash {
+    size_t operator()(const pair<int,int>& p) const {
+        size_t h1 = hash<int>{}(p.first);
+        size_t h2 = hash<int>{}(p.second);
+        return h1 ^ (h2 * 2654435761ULL);   // Knuth multiplicative hash
+    }
+};
+unordered_map<pair<int,int>, int, PairHash> dp;
+
+// Option 2: combine hashes with boost-style seed mixing
+size_t hashCombine(size_t seed, size_t val) {
+    return seed ^ (val + 0x9e3779b9 + (seed << 6) + (seed >> 2));
+}
+
+// Option 3: anti-hack hash (randomize to defeat adversarial inputs)
+struct SafeHash {
+    static uint64_t splitmix64(uint64_t x) {
+        x += 0x9e3779b97f4a7c15;
+        x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9;
+        x = (x ^ (x >> 27)) * 0x94d049bb133111eb;
+        return x ^ (x >> 31);
+    }
+    size_t operator()(uint64_t x) const {
+        static const uint64_t FIXED_RANDOM =
+            chrono::steady_clock::now().time_since_epoch().count();
+        return splitmix64(x + FIXED_RANDOM);
+    }
+};
+unordered_map<int, int, SafeHash> safe_map;
+```
+
+### 7.6 Polynomial Rolling Hash (String Hashing)
+
+Used for **O(1) substring comparison** and duplicate detection.
+
+```cpp
+// Precompute prefix hashes for string s
+// hash(s[l..r]) = (H[r+1] - H[l] * P[r-l+1]) % MOD
+const long long MOD = 1e9 + 7, BASE = 31;
+
+string s = "...";
+int n = s.size();
+vector<long long> H(n + 1, 0), P(n + 1, 1);
+
+for (int i = 0; i < n; i++) {
+    H[i+1] = (H[i] * BASE + (s[i] - 'a' + 1)) % MOD;
+    P[i+1] = P[i] * BASE % MOD;
+}
+
+// Hash of substring s[l..r] (0-indexed, inclusive)
+auto getHash = [&](int l, int r) -> long long {
+    return (H[r+1] - H[l] * P[r-l+1] % MOD + MOD * 2) % MOD;
+};
+
+// Use two different (BASE, MOD) pairs to reduce collision probability
+```
+
+**Applications:** Longest duplicate substring (binary search + rolling hash), Rabin-Karp pattern matching.
+
+### 7.7 Common Hashing Patterns (C++)
+
+```cpp
+// --- Frequency count ---
+unordered_map<char, int> freq;
+for (char c : s) freq[c]++;
+
+// --- Two Sum ---
+unordered_map<int, int> seen;  // value → index
+for (int i = 0; i < (int)nums.size(); i++) {
+    int complement = target - nums[i];
+    if (seen.count(complement))
+        return {seen[complement], i};
+    seen[nums[i]] = i;
+}
+
+// --- Anagram grouping ---
+unordered_map<string, vector<string>> groups;
+for (auto& word : words) {
+    string key = word;
+    sort(key.begin(), key.end());
+    groups[key].push_back(word);
+}
+
+// --- Subarray sum equals k (prefix sum + hash map) ---
+unordered_map<int, int> prefixCount{{0, 1}};
+int sum = 0, count = 0;
+for (int num : nums) {
+    sum += num;
+    count += prefixCount[sum - k];
+    prefixCount[sum]++;
+}
+
+// --- Longest consecutive sequence ---
+unordered_set<int> numSet(nums.begin(), nums.end());
+int longest = 0;
+for (int n : numSet) {
+    if (!numSet.count(n - 1)) {       // start of a sequence
+        int len = 1;
+        while (numSet.count(n + len)) len++;
+        longest = max(longest, len);
+    }
+}
+```
+
+### 7.8 Classic Hashing Problems
+
+| Problem                          | Key Idea                                              | Complexity   |
+|----------------------------------|-------------------------------------------------------|--------------|
+| Two Sum                          | Store `value → index`; look up complement             | O(n)         |
+| Group Anagrams                   | Sorted string (or char freq array) as key             | O(n·k log k) |
+| Subarray Sum Equals K            | Prefix sums + frequency map                           | O(n)         |
+| Longest Consecutive Sequence     | Set lookup for sequence start                         | O(n)         |
+| First Non-Repeating Character    | Ordered map / two-pass frequency count                | O(n)         |
+| 4-Sum Count (4 arrays)           | Split into two pairs; store pair-sum counts           | O(n²)        |
+| Rabin-Karp String Match          | Rolling hash for O(n+m) average pattern search        | O(n+m)       |
+| Longest Duplicate Substring      | Binary search length + rolling hash                   | O(n log n)   |
+| Minimum Window Substring         | Sliding window + character frequency maps             | O(n)         |
+| LRU Cache                        | `unordered_map` + doubly-linked list                  | O(1)         |
 
 ---
 
@@ -450,25 +605,27 @@ def lca(root, p, q):
 
 ### 9.2 Common Patterns
 
-```python
-import heapq
+```cpp
+#include <queue>
+#include <vector>
 
-# Min-heap (Python default)
-heap = []
-heapq.heappush(heap, 3)
-heapq.heappush(heap, 1)
-heapq.heappush(heap, 2)
-heapq.heappop(heap)  # returns 1
+// Min-heap
+priority_queue<int, vector<int>, greater<int>> minHeap;
+minHeap.push(3);
+minHeap.push(1);
+minHeap.push(2);
+minHeap.top();   // returns 1
+minHeap.pop();
 
-# Max-heap: negate values
-heapq.heappush(heap, -val)
--heapq.heappop(heap)
+// Max-heap (default)
+priority_queue<int> maxHeap;
+maxHeap.push(val);
+maxHeap.top();
 
-# K largest elements
-heapq.nlargest(k, nums)         # O(n log k)
+// K largest elements: use min-heap of size k — O(n log k)
 
-# Heap from list
-heapq.heapify(nums)             # O(n)
+// Heap from vector (make_heap)
+make_heap(nums.begin(), nums.end());  // O(n), max-heap
 ```
 
 ### 9.3 Top-K Problems
@@ -517,18 +674,18 @@ def findMedian():
 
 ### 10.1 Representations
 
-```python
-# Adjacency List (space-efficient for sparse graphs)
-graph = defaultdict(list)
-graph[0].append((1, weight))
-graph[1].append((0, weight))
+```cpp
+// Adjacency List (space-efficient for sparse graphs)
+vector<vector<pair<int,int>>> graph(n);
+graph[0].push_back({1, weight});
+graph[1].push_back({0, weight});
 
-# Adjacency Matrix (fast edge lookup for dense graphs)
-matrix = [[0] * n for _ in range(n)]
-matrix[0][1] = weight
+// Adjacency Matrix (fast edge lookup for dense graphs)
+vector<vector<int>> matrix(n, vector<int>(n, 0));
+matrix[0][1] = weight;
 
-# Edge List
-edges = [(0, 1, weight), (1, 2, weight)]
+// Edge List
+vector<tuple<int,int,int>> edges = {{0, 1, weight}, {1, 2, weight}};
 ```
 
 ### 10.2 Graph Traversals
@@ -658,26 +815,28 @@ if len(order) != n: "Cycle detected"
 
 ### 10.6 Union-Find (Disjoint Set Union)
 
-```python
-class UnionFind:
-    def __init__(self, n):
-        self.parent = list(range(n))
-        self.rank = [0] * n
-
-    def find(self, x):
-        if self.parent[x] != x:
-            self.parent[x] = self.find(self.parent[x])  # path compression
-        return self.parent[x]
-
-    def union(self, x, y):
-        px, py = self.find(x), self.find(y)
-        if px == py: return False
-        if self.rank[px] < self.rank[py]: px, py = py, px
-        self.parent[py] = px
-        if self.rank[px] == self.rank[py]: self.rank[px] += 1
-        return True
-
-# Operations: near O(1) amortized with path compression + union by rank
+```cpp
+class UnionFind {
+    vector<int> parent, rank;
+public:
+    UnionFind(int n) : parent(n), rank(n, 0) {
+        iota(parent.begin(), parent.end(), 0);
+    }
+    int find(int x) {
+        if (parent[x] != x)
+            parent[x] = find(parent[x]);  // path compression
+        return parent[x];
+    }
+    bool unite(int x, int y) {
+        int px = find(x), py = find(y);
+        if (px == py) return false;
+        if (rank[px] < rank[py]) swap(px, py);
+        parent[py] = px;
+        if (rank[px] == rank[py]) rank[px]++;
+        return true;
+    }
+};
+// Operations: near O(1) amortized with path compression + union by rank
 ```
 
 **Applications:** Connected components, cycle detection, Kruskal's MST.
@@ -751,47 +910,55 @@ def partition(arr, low, high):
 
 ### 12.1 Binary Search
 
-```python
-def binarySearch(arr, target):
-    left, right = 0, len(arr) - 1
-    while left <= right:
-        mid = left + (right - left) // 2  # avoid overflow
-        if arr[mid] == target: return mid
-        elif arr[mid] < target: left = mid + 1
-        else: right = mid - 1
-    return -1
+```cpp
+int binarySearch(vector<int>& arr, int target) {
+    int left = 0, right = arr.size() - 1;
+    while (left <= right) {
+        int mid = left + (right - left) / 2;  // avoid overflow
+        if (arr[mid] == target) return mid;
+        else if (arr[mid] < target) left = mid + 1;
+        else right = mid - 1;
+    }
+    return -1;
+}
 ```
 
 ### 12.2 Binary Search Variants
 
-```python
-# Find leftmost position where condition is true (lower bound)
-def lowerBound(arr, target):
-    left, right = 0, len(arr)
-    while left < right:
-        mid = (left + right) // 2
-        if arr[mid] < target: left = mid + 1
-        else: right = mid
-    return left
+```cpp
+// Find leftmost position where condition is true (lower bound)
+int lowerBound(vector<int>& arr, int target) {
+    int left = 0, right = arr.size();
+    while (left < right) {
+        int mid = (left + right) / 2;
+        if (arr[mid] < target) left = mid + 1;
+        else right = mid;
+    }
+    return left;
+}
 
-# Find rightmost position where arr[mid] <= target (upper bound)
-def upperBound(arr, target):
-    left, right = 0, len(arr)
-    while left < right:
-        mid = (left + right) // 2
-        if arr[mid] <= target: left = mid + 1
-        else: right = mid
-    return left
+// Find rightmost position where arr[mid] <= target (upper bound)
+int upperBound(vector<int>& arr, int target) {
+    int left = 0, right = arr.size();
+    while (left < right) {
+        int mid = (left + right) / 2;
+        if (arr[mid] <= target) left = mid + 1;
+        else right = mid;
+    }
+    return left;
+}
 
-# Binary search on answer space
-# "Find minimum X such that condition(X) is true"
-def minValue():
-    left, right = MIN_POSSIBLE, MAX_POSSIBLE
-    while left < right:
-        mid = (left + right) // 2
-        if condition(mid): right = mid
-        else: left = mid + 1
-    return left
+// Binary search on answer space
+// "Find minimum X such that condition(X) is true"
+int minValue(int MIN_POSSIBLE, int MAX_POSSIBLE) {
+    int left = MIN_POSSIBLE, right = MAX_POSSIBLE;
+    while (left < right) {
+        int mid = (left + right) / 2;
+        if (condition(mid)) right = mid;
+        else left = mid + 1;
+    }
+    return left;
+}
 ```
 
 ---
@@ -812,74 +979,92 @@ def solve(params):
 
 ### 13.2 Backtracking Template
 
-```python
-def backtrack(state, choices):
-    if is_solution(state):
-        record(state)
-        return
-
-    for choice in choices:
-        if is_valid(choice, state):
-            make_choice(state, choice)
-            backtrack(state, remaining_choices)
-            undo_choice(state, choice)          # backtrack!
+```cpp
+void backtrack(State& state, vector<Choice>& choices) {
+    if (isSolution(state)) {
+        record(state);
+        return;
+    }
+    for (auto& choice : choices) {
+        if (isValid(choice, state)) {
+            makeChoice(state, choice);
+            backtrack(state, remainingChoices);
+            undoChoice(state, choice);          // backtrack!
+        }
+    }
+}
 ```
 
 ### 13.3 Classic Backtracking Problems
 
 #### Permutations
-```python
-def permute(nums):
-    result = []
-    def backtrack(path, used):
-        if len(path) == len(nums):
-            result.append(path[:])
-            return
-        for i, num in enumerate(nums):
-            if not used[i]:
-                used[i] = True
-                path.append(num)
-                backtrack(path, used)
-                path.pop()
-                used[i] = False
-    backtrack([], [False]*len(nums))
-    return result
+```cpp
+vector<vector<int>> permute(vector<int>& nums) {
+    vector<vector<int>> result;
+    vector<int> path;
+    vector<bool> used(nums.size(), false);
+    function<void()> backtrack = [&]() {
+        if (path.size() == nums.size()) {
+            result.push_back(path);
+            return;
+        }
+        for (int i = 0; i < (int)nums.size(); i++) {
+            if (!used[i]) {
+                used[i] = true;
+                path.push_back(nums[i]);
+                backtrack();
+                path.pop_back();
+                used[i] = false;
+            }
+        }
+    };
+    backtrack();
+    return result;
+}
 ```
 
 #### Subsets
-```python
-def subsets(nums):
-    result = []
-    def backtrack(start, path):
-        result.append(path[:])
-        for i in range(start, len(nums)):
-            path.append(nums[i])
-            backtrack(i+1, path)
-            path.pop()
-    backtrack(0, [])
-    return result
+```cpp
+vector<vector<int>> subsets(vector<int>& nums) {
+    vector<vector<int>> result;
+    vector<int> path;
+    function<void(int)> backtrack = [&](int start) {
+        result.push_back(path);
+        for (int i = start; i < (int)nums.size(); i++) {
+            path.push_back(nums[i]);
+            backtrack(i + 1);
+            path.pop_back();
+        }
+    };
+    backtrack(0);
+    return result;
+}
 ```
 
 #### N-Queens
-```python
-def solveNQueens(n):
-    result, cols, diag1, diag2 = [], set(), set(), set()
-    board = [['.']*n for _ in range(n)]
-
-    def backtrack(row):
-        if row == n:
-            result.append([''.join(r) for r in board])
-            return
-        for col in range(n):
-            if col in cols or (row-col) in diag1 or (row+col) in diag2:
-                continue
-            cols.add(col); diag1.add(row-col); diag2.add(row+col)
-            board[row][col] = 'Q'
-            backtrack(row+1)
+```cpp
+vector<vector<string>> solveNQueens(int n) {
+    vector<vector<string>> result;
+    vector<string> board(n, string(n, '.'));
+    unordered_set<int> cols, diag1, diag2;
+    function<void(int)> backtrack = [&](int row) {
+        if (row == n) {
+            result.push_back(board);
+            return;
+        }
+        for (int col = 0; col < n; col++) {
+            if (cols.count(col) || diag1.count(row-col) || diag2.count(row+col))
+                continue;
+            cols.insert(col); diag1.insert(row-col); diag2.insert(row+col);
+            board[row][col] = 'Q';
+            backtrack(row + 1);
             board[row][col] = '.';
-            cols.remove(col); diag1.remove(row-col); diag2.remove(row+col)
-    backtrack(0)
-    return result
+            cols.erase(col); diag1.erase(row-col); diag2.erase(row+col);
+        }
+    };
+    backtrack(0);
+    return result;
+}
 ```
 
 ---
@@ -1003,34 +1188,42 @@ return jumps
 
 ## 16. Trie (Prefix Tree)
 
-```python
-class TrieNode:
-    def __init__(self):
-        self.children = {}
-        self.is_end = False
+```cpp
+struct TrieNode {
+    unordered_map<char, TrieNode*> children;
+    bool is_end = false;
+};
 
-class Trie:
-    def __init__(self): self.root = TrieNode()
+class Trie {
+    TrieNode* root;
+public:
+    Trie() : root(new TrieNode()) {}
 
-    def insert(self, word):
-        node = self.root
-        for char in word:
-            node = node.children.setdefault(char, TrieNode())
-        node.is_end = True
+    void insert(const string& word) {
+        TrieNode* node = root;
+        for (char c : word)
+            node = node->children.emplace(c, new TrieNode()).first->second;
+        node->is_end = true;
+    }
 
-    def search(self, word):
-        node = self.root
-        for char in word:
-            if char not in node.children: return False
-            node = node.children[char]
-        return node.is_end
+    bool search(const string& word) {
+        TrieNode* node = root;
+        for (char c : word) {
+            if (!node->children.count(c)) return false;
+            node = node->children[c];
+        }
+        return node->is_end;
+    }
 
-    def startsWith(self, prefix):
-        node = self.root
-        for char in prefix:
-            if char not in node.children: return False
-            node = node.children[char]
-        return True
+    bool startsWith(const string& prefix) {
+        TrieNode* node = root;
+        for (char c : prefix) {
+            if (!node->children.count(c)) return false;
+            node = node->children[c];
+        }
+        return true;
+    }
+};
 ```
 
 **Applications:** Autocomplete, spell check, IP routing, word search in grid, longest prefix matching.
@@ -1044,53 +1237,59 @@ class Trie:
 - Supports **range queries** and **point updates** in O(log n)
 - Build: O(n); each node stores aggregate for a range
 
-```python
-class SegmentTree:
-    def __init__(self, arr):
-        n = len(arr)
-        self.tree = [0] * (4 * n)
-        self.build(arr, 1, 0, n-1)
-
-    def build(self, arr, node, start, end):
-        if start == end:
-            self.tree[node] = arr[start]
-        else:
-            mid = (start + end) // 2
-            self.build(arr, 2*node, start, mid)
-            self.build(arr, 2*node+1, mid+1, end)
-            self.tree[node] = self.tree[2*node] + self.tree[2*node+1]
-
-    def query(self, node, start, end, l, r):
-        if r < start or end < l: return 0
-        if l <= start and end <= r: return self.tree[node]
-        mid = (start + end) // 2
-        return self.query(2*node, start, mid, l, r) + \
-               self.query(2*node+1, mid+1, end, l, r)
+```cpp
+class SegmentTree {
+    vector<int> tree;
+    void build(vector<int>& arr, int node, int start, int end) {
+        if (start == end) {
+            tree[node] = arr[start];
+        } else {
+            int mid = (start + end) / 2;
+            build(arr, 2*node, start, mid);
+            build(arr, 2*node+1, mid+1, end);
+            tree[node] = tree[2*node] + tree[2*node+1];
+        }
+    }
+public:
+    SegmentTree(vector<int>& arr) : tree(4 * arr.size(), 0) {
+        build(arr, 1, 0, arr.size() - 1);
+    }
+    int query(int node, int start, int end, int l, int r) {
+        if (r < start || end < l) return 0;
+        if (l <= start && end <= r) return tree[node];
+        int mid = (start + end) / 2;
+        return query(2*node, start, mid, l, r) +
+               query(2*node+1, mid+1, end, l, r);
+    }
+};
 ```
 
 ### 17.2 Binary Indexed Tree (Fenwick Tree)
 
 Simpler implementation; supports **prefix sum queries** and **point updates** in O(log n).
 
-```python
-class BIT:
-    def __init__(self, n):
-        self.tree = [0] * (n + 1)
+```cpp
+class BIT {
+    vector<int> tree;
+public:
+    BIT(int n) : tree(n + 1, 0) {}
 
-    def update(self, i, delta):
-        while i < len(self.tree):
-            self.tree[i] += delta
-            i += i & (-i)  # add lowest set bit
+    void update(int i, int delta) {
+        for (; i < (int)tree.size(); i += i & (-i))  // add lowest set bit
+            tree[i] += delta;
+    }
 
-    def query(self, i):  # prefix sum [1..i]
-        total = 0
-        while i > 0:
-            total += self.tree[i]
-            i -= i & (-i)  # remove lowest set bit
-        return total
+    int query(int i) {  // prefix sum [1..i]
+        int total = 0;
+        for (; i > 0; i -= i & (-i))  // remove lowest set bit
+            total += tree[i];
+        return total;
+    }
 
-    def rangeQuery(self, l, r):
-        return self.query(r) - self.query(l-1)
+    int rangeQuery(int l, int r) {
+        return query(r) - query(l - 1);
+    }
+};
 ```
 
 ---
@@ -1110,17 +1309,17 @@ class BIT:
 
 ### 18.2 Common Tricks
 
-```python
-n & (n-1)          # Clear lowest set bit; n==0 if n is power of 2
-n & (-n)           # Isolate lowest set bit
-n ^ n == 0         # XOR with itself = 0
-n ^ 0 == n         # XOR with 0 = n
-a ^ b ^ a == b     # XOR cancels duplicates (find single number)
-(n >> i) & 1       # Check if i-th bit is set
-n | (1 << i)       # Set i-th bit
-n & ~(1 << i)      # Clear i-th bit
-n ^ (1 << i)       # Toggle i-th bit
-bin(n).count('1')  # Count set bits (Hamming weight)
+```cpp
+n & (n-1)              // Clear lowest set bit; n==0 if n is power of 2
+n & (-n)               // Isolate lowest set bit
+n ^ n == 0             // XOR with itself = 0
+n ^ 0 == n             // XOR with 0 = n
+a ^ b ^ a == b         // XOR cancels duplicates (find single number)
+(n >> i) & 1           // Check if i-th bit is set
+n | (1 << i)           // Set i-th bit
+n & ~(1 << i)          // Clear i-th bit
+n ^ (1 << i)           // Toggle i-th bit
+__builtin_popcount(n)  // Count set bits (Hamming weight)
 ```
 
 ### 18.3 Classic Bit Problems
@@ -1140,46 +1339,53 @@ bin(n).count('1')  # Count set bits (Hamming weight)
 
 ### 19.1 Essential Math for DSA
 
-```python
-# GCD (Euclidean algorithm) — O(log min(a,b))
-def gcd(a, b):
-    while b: a, b = b, a % b
-    return a
+```cpp
+// GCD (Euclidean algorithm) — O(log min(a,b))
+int gcd(int a, int b) {
+    while (b) { int t = b; b = a % b; a = t; }
+    return a;
+}
 
-# LCM
-def lcm(a, b): return a * b // gcd(a, b)
+// LCM
+int lcm(int a, int b) { return a / gcd(a, b) * b; }
 
-# Power with modular exponentiation — O(log exp)
-def power(base, exp, mod):
-    result = 1
-    base %= mod
-    while exp > 0:
-        if exp % 2 == 1: result = result * base % mod
-        base = base * base % mod
-        exp //= 2
-    return result
+// Power with modular exponentiation — O(log exp)
+long long power(long long base, long long exp, long long mod) {
+    long long result = 1;
+    base %= mod;
+    while (exp > 0) {
+        if (exp % 2 == 1) result = result * base % mod;
+        base = base * base % mod;
+        exp /= 2;
+    }
+    return result;
+}
 
-# Sieve of Eratosthenes — all primes up to n in O(n log log n)
-def sieve(n):
-    is_prime = [True] * (n+1)
-    is_prime[0] = is_prime[1] = False
-    for i in range(2, int(n**0.5)+1):
-        if is_prime[i]:
-            for j in range(i*i, n+1, i):
-                is_prime[j] = False
-    return [i for i in range(2, n+1) if is_prime[i]]
+// Sieve of Eratosthenes — all primes up to n in O(n log log n)
+vector<int> sieve(int n) {
+    vector<bool> is_prime(n + 1, true);
+    is_prime[0] = is_prime[1] = false;
+    for (int i = 2; (long long)i * i <= n; i++)
+        if (is_prime[i])
+            for (int j = i * i; j <= n; j += i)
+                is_prime[j] = false;
+    vector<int> primes;
+    for (int i = 2; i <= n; i++)
+        if (is_prime[i]) primes.push_back(i);
+    return primes;
+}
 ```
 
 ### 19.2 Combinatorics
 
-```python
-# Combinations C(n, k) with Pascal's Triangle / DP
-C[0][0] = 1
-C[n][k] = C[n-1][k-1] + C[n-1][k]
+```cpp
+// Combinations C(n, k) with Pascal's Triangle / DP
+C[0][0] = 1;
+C[n][k] = C[n-1][k-1] + C[n-1][k];
 
-# nCr with modular inverse (when mod is prime)
-# C(n, r) = n! / (r! * (n-r)!) mod p
-# Use Fermat's little theorem: a^(-1) ≡ a^(p-2) mod p
+// nCr with modular inverse (when mod is prime)
+// C(n, r) = n! / (r! * (n-r)!) mod p
+// Use Fermat's little theorem: a^(-1) ≡ a^(p-2) mod p
 ```
 
 ---
