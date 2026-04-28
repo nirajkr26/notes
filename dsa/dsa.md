@@ -1,4 +1,4 @@
-# Data Structures & Algorithms (DSA) — Super Detailed Interview & Exam Notes
+# Data Structures & Algorithms (DSA) — Super Detailed Interview & Exam Notes (C++)
 
 > 📌 **GitHub:** [nirajkr26](https://github.com/nirajkr26) &nbsp;|&nbsp; **LinkedIn:** [nirajkr26](https://www.linkedin.com/in/nirajkr26)
 
@@ -60,51 +60,125 @@ Average cost per operation over a sequence. Example: Dynamic array doubling — 
 ### 3.1 Properties
 
 - Contiguous memory; O(1) access by index
-- Fixed size (static) or dynamic (ArrayList/vector doubles capacity)
+- Fixed size (static) or dynamic (`std::vector` doubles capacity)
 - Insert/delete at middle: O(n) due to shifting
 
 ### 3.2 Key Techniques
 
 #### Two Pointers
-```
-Use two pointers moving inward/outward to avoid nested loops.
+Find pair summing to target in sorted array — avoids nested loops.
 
-// Find pair summing to target in sorted array
-left = 0, right = n-1
-while left < right:
-    sum = arr[left] + arr[right]
-    if sum == target: return [left, right]
-    if sum < target:  left++
-    else:             right--
+```cpp
+// Returns {i, j} such that arr[i] + arr[j] == target, or {-1,-1}
+pair<int,int> twoSum(vector<int>& arr, int target) {
+    int left = 0, right = (int)arr.size() - 1;
+    while (left < right) {
+        int sum = arr[left] + arr[right];
+        if (sum == target) return {left, right};
+        else if (sum < target) left++;
+        else right--;
+    }
+    return {-1, -1};
+}
 ```
 
 #### Sliding Window
-```
-Maintain a window [left, right] and expand/shrink as needed.
+Maintain a window `[left, right]` and expand/shrink as needed.
 
-// Longest subarray with sum ≤ k
-left = 0, sum = 0, maxLen = 0
-for right in 0..n-1:
-    sum += arr[right]
-    while sum > k: sum -= arr[left++]
-    maxLen = max(maxLen, right - left + 1)
+```cpp
+// Longest subarray with sum <= k
+int longestSubarrayWithSumAtMostK(vector<int>& arr, int k) {
+    int left = 0, sum = 0, maxLen = 0;
+    for (int right = 0; right < (int)arr.size(); right++) {
+        sum += arr[right];
+        while (sum > k) sum -= arr[left++];
+        maxLen = max(maxLen, right - left + 1);
+    }
+    return maxLen;
+}
 ```
 
 #### Prefix Sum
-```
 Precompute cumulative sums for O(1) range sum queries.
 
-prefix[0] = 0
-prefix[i] = prefix[i-1] + arr[i-1]
-rangeSum(l, r) = prefix[r+1] - prefix[l]  // O(1)
+```cpp
+// Build prefix array (1-indexed)
+vector<int> buildPrefix(vector<int>& arr) {
+    int n = arr.size();
+    vector<int> prefix(n + 1, 0);
+    for (int i = 0; i < n; i++)
+        prefix[i + 1] = prefix[i] + arr[i];
+    return prefix;
+}
+// rangeSum(l, r) = prefix[r+1] - prefix[l]  (0-indexed, inclusive)
+int rangeSum(vector<int>& prefix, int l, int r) {
+    return prefix[r + 1] - prefix[l];
+}
 ```
 
 #### Kadane's Algorithm (Max Subarray Sum)
+
+```cpp
+int maxSubarraySum(vector<int>& arr) {
+    int maxSum = arr[0], currentSum = arr[0];
+    for (int i = 1; i < (int)arr.size(); i++) {
+        currentSum = max(arr[i], currentSum + arr[i]);
+        maxSum = max(maxSum, currentSum);
+    }
+    return maxSum;
+}
 ```
-maxSum = arr[0], currentSum = arr[0]
-for i in 1..n-1:
-    currentSum = max(arr[i], currentSum + arr[i])
-    maxSum = max(maxSum, currentSum)
+
+#### Trapping Rain Water (Two Pointers)
+
+```cpp
+int trap(vector<int>& height) {
+    int left = 0, right = (int)height.size() - 1;
+    int leftMax = 0, rightMax = 0, water = 0;
+    while (left < right) {
+        if (height[left] < height[right]) {
+            leftMax = max(leftMax, height[left]);
+            water += leftMax - height[left];
+            left++;
+        } else {
+            rightMax = max(rightMax, height[right]);
+            water += rightMax - height[right];
+            right--;
+        }
+    }
+    return water;
+}
+```
+
+#### Merge Intervals
+
+```cpp
+vector<vector<int>> merge(vector<vector<int>>& intervals) {
+    sort(intervals.begin(), intervals.end());
+    vector<vector<int>> result;
+    for (auto& interval : intervals) {
+        if (result.empty() || result.back()[1] < interval[0])
+            result.push_back(interval);
+        else
+            result.back()[1] = max(result.back()[1], interval[1]);
+    }
+    return result;
+}
+```
+
+#### Rotate Array (3 Reverses)
+
+```cpp
+void reverse(vector<int>& arr, int l, int r) {
+    while (l < r) swap(arr[l++], arr[r--]);
+}
+void rotate(vector<int>& arr, int k) {
+    int n = arr.size();
+    k %= n;
+    reverse(arr, 0, n - 1);
+    reverse(arr, 0, k - 1);
+    reverse(arr, k, n - 1);
+}
 ```
 
 ### 3.3 Common Array Problems
@@ -136,38 +210,123 @@ for i in 1..n-1:
 
 ### 4.2 Sliding Window on Strings
 
-```
+```cpp
 // Longest substring without repeating characters
-seen = {}
-left = 0, maxLen = 0
-for right in 0..n-1:
-    if s[right] in seen and seen[s[right]] >= left:
-        left = seen[s[right]] + 1
-    seen[s[right]] = right
-    maxLen = max(maxLen, right - left + 1)
+int lengthOfLongestSubstring(string s) {
+    unordered_map<char, int> seen;  // char -> last seen index
+    int left = 0, maxLen = 0;
+    for (int right = 0; right < (int)s.size(); right++) {
+        auto it = seen.find(s[right]);
+        if (it != seen.end() && it->second >= left)
+            left = it->second + 1;
+        seen[s[right]] = right;
+        maxLen = max(maxLen, right - left + 1);
+    }
+    return maxLen;
+}
+
+// Minimum window substring (contains all chars of t)
+string minWindow(string s, string t) {
+    unordered_map<char, int> need, window;
+    for (char c : t) need[c]++;
+    int left = 0, matched = 0, minLen = INT_MAX, start = 0;
+    for (int right = 0; right < (int)s.size(); right++) {
+        char c = s[right];
+        if (need.count(c) && ++window[c] == need[c]) matched++;
+        while (matched == (int)need.size()) {
+            if (right - left + 1 < minLen) {
+                minLen = right - left + 1;
+                start = left;
+            }
+            char l = s[left++];
+            if (need.count(l) && window[l]-- == need[l]) matched--;
+        }
+    }
+    return minLen == INT_MAX ? "" : s.substr(start, minLen);
+}
 ```
 
 ### 4.3 KMP (Knuth-Morris-Pratt)
 
+Build failure function (lps[]) — longest proper prefix that is also suffix. Avoids redundant comparisons.
+
+```cpp
+// Build LPS (longest proper prefix-suffix) array — O(m)
+vector<int> buildLPS(const string& pattern) {
+    int m = pattern.size();
+    vector<int> lps(m, 0);
+    int len = 0, i = 1;
+    while (i < m) {
+        if (pattern[i] == pattern[len]) {
+            lps[i++] = ++len;
+        } else if (len != 0) {
+            len = lps[len - 1];
+        } else {
+            lps[i++] = 0;
+        }
+    }
+    return lps;
+}
+
+// KMP search — returns all starting indices of pattern in text — O(n+m)
+vector<int> kmpSearch(const string& text, const string& pattern) {
+    int n = text.size(), m = pattern.size();
+    vector<int> lps = buildLPS(pattern);
+    vector<int> matches;
+    int i = 0, j = 0;  // i = text index, j = pattern index
+    while (i < n) {
+        if (text[i] == pattern[j]) { i++; j++; }
+        if (j == m) {
+            matches.push_back(i - j);
+            j = lps[j - 1];
+        } else if (i < n && text[i] != pattern[j]) {
+            if (j != 0) j = lps[j - 1];
+            else i++;
+        }
+    }
+    return matches;
+}
 ```
-Build failure function (lps[]) — longest proper prefix that is also suffix.
-Use lps[] to skip redundant comparisons.
 
-lps[0] = 0
-i = 1, len = 0
-while i < m:
-    if pattern[i] == pattern[len]: lps[i++] = ++len
-    elif len != 0: len = lps[len-1]
-    else: lps[i++] = 0
+### 4.4 Palindrome — Expand Around Center
 
-// Search: O(n+m) vs naive O(nm)
+```cpp
+// Returns length of longest palindrome centered at (l, r)
+int expand(const string& s, int l, int r) {
+    while (l >= 0 && r < (int)s.size() && s[l] == s[r]) { l--; r++; }
+    return r - l - 1;  // length of palindrome
+}
+
+string longestPalindrome(string s) {
+    int start = 0, maxLen = 1;
+    for (int i = 0; i < (int)s.size(); i++) {
+        int odd  = expand(s, i, i);       // odd-length
+        int even = expand(s, i, i + 1);   // even-length
+        int best = max(odd, even);
+        if (best > maxLen) {
+            maxLen = best;
+            start = i - (best - 1) / 2;
+        }
+    }
+    return s.substr(start, maxLen);
+}
 ```
 
 ---
 
 ## 5. Linked Lists
 
-### 5.1 Types
+### 5.1 Node Definition
+
+```cpp
+struct ListNode {
+    int val;
+    ListNode* next;
+    ListNode(int x) : val(x), next(nullptr) {}
+};
+```
+
+### 5.2 Types
 
 | Type              | Description                                    | Space |
 |-------------------|------------------------------------------------|-------|
@@ -175,7 +334,7 @@ while i < m:
 | Doubly Linked     | Each node has `prev` and `next`                | O(n)  |
 | Circular Singly   | Last node's `next` points to head              | O(n)  |
 
-### 5.2 Operations Complexity
+### 5.3 Operations Complexity
 
 | Operation       | Singly LL | With Tail Pointer |
 |-----------------|-----------|-------------------|
@@ -186,45 +345,106 @@ while i < m:
 | Delete by value | O(n)      | O(n)              |
 | Search          | O(n)      | O(n)              |
 
-### 5.3 Classic Techniques
-
-#### Floyd's Cycle Detection (Fast/Slow Pointers)
-```
-slow = head, fast = head
-while fast and fast.next:
-    slow = slow.next
-    fast = fast.next.next
-    if slow == fast: CYCLE DETECTED
-
-// Find cycle start:
-slow = head
-while slow != fast:
-    slow = slow.next
-    fast = fast.next
-// slow == fast == cycle start
-```
+### 5.4 Classic Techniques
 
 #### Reverse a Linked List
+
+```cpp
+ListNode* reverseList(ListNode* head) {
+    ListNode* prev = nullptr;
+    ListNode* curr = head;
+    while (curr) {
+        ListNode* next = curr->next;
+        curr->next = prev;
+        prev = curr;
+        curr = next;
+    }
+    return prev;  // new head
+}
 ```
-prev = null, curr = head
-while curr:
-    next = curr.next
-    curr.next = prev
-    prev = curr
-    curr = next
-return prev  // new head
+
+#### Floyd's Cycle Detection (Fast/Slow Pointers)
+
+```cpp
+bool hasCycle(ListNode* head) {
+    ListNode* slow = head;
+    ListNode* fast = head;
+    while (fast && fast->next) {
+        slow = slow->next;
+        fast = fast->next->next;
+        if (slow == fast) return true;
+    }
+    return false;
+}
+
+// Find cycle start — after meeting point, reset one pointer to head
+ListNode* detectCycleStart(ListNode* head) {
+    ListNode* slow = head, *fast = head;
+    while (fast && fast->next) {
+        slow = slow->next;
+        fast = fast->next->next;
+        if (slow == fast) {
+            slow = head;
+            while (slow != fast) { slow = slow->next; fast = fast->next; }
+            return slow;  // cycle start
+        }
+    }
+    return nullptr;
+}
 ```
 
 #### Find Middle Node
-```
-slow = fast = head
-while fast and fast.next:
-    slow = slow.next
-    fast = fast.next.next
-return slow  // middle node
+
+```cpp
+ListNode* findMiddle(ListNode* head) {
+    ListNode* slow = head, *fast = head;
+    while (fast && fast->next) {
+        slow = slow->next;
+        fast = fast->next->next;
+    }
+    return slow;  // middle node (second middle for even length)
+}
 ```
 
-### 5.4 Common Problems
+#### Merge Two Sorted Lists
+
+```cpp
+ListNode* mergeTwoLists(ListNode* l1, ListNode* l2) {
+    ListNode dummy(0);
+    ListNode* curr = &dummy;
+    while (l1 && l2) {
+        if (l1->val <= l2->val) { curr->next = l1; l1 = l1->next; }
+        else                    { curr->next = l2; l2 = l2->next; }
+        curr = curr->next;
+    }
+    curr->next = l1 ? l1 : l2;
+    return dummy.next;
+}
+```
+
+#### Reverse Nodes in k-Group
+
+```cpp
+ListNode* reverseKGroup(ListNode* head, int k) {
+    ListNode* check = head;
+    for (int i = 0; i < k; i++) {
+        if (!check) return head;  // fewer than k nodes left
+        check = check->next;
+    }
+    // Reverse k nodes
+    ListNode* prev = nullptr, *curr = head;
+    for (int i = 0; i < k; i++) {
+        ListNode* next = curr->next;
+        curr->next = prev;
+        prev = curr;
+        curr = next;
+    }
+    head->next = reverseKGroup(curr, k);  // head is now tail of reversed group
+    return prev;  // new head
+}
+```
+
+### 5.5 Common Problems
 
 | Problem                        | Approach                        |
 |--------------------------------|---------------------------------|
@@ -242,11 +462,15 @@ return slow  // middle node
 
 ### 6.1 Stack — LIFO
 
-```
-push(x)    → add to top   O(1)
-pop()      → remove top   O(1)
-peek/top() → view top     O(1)
-isEmpty()  → check empty  O(1)
+```cpp
+#include <stack>
+
+stack<int> st;
+st.push(x);       // add to top   O(1)
+st.pop();         // remove top   O(1)
+st.top();         // view top     O(1)
+st.empty();       // check empty  O(1)
+st.size();        // number of elements
 ```
 
 **Applications:**
@@ -256,22 +480,75 @@ isEmpty()  → check empty  O(1)
 - Monotonic stack problems (next greater element)
 - Postfix expression evaluation
 
-#### Monotonic Stack (Next Greater Element)
+#### Balanced Parentheses
+
+```cpp
+bool isValid(string s) {
+    stack<char> st;
+    for (char c : s) {
+        if (c == '(' || c == '[' || c == '{') {
+            st.push(c);
+        } else {
+            if (st.empty()) return false;
+            char top = st.top(); st.pop();
+            if ((c == ')' && top != '(') ||
+                (c == ']' && top != '[') ||
+                (c == '}' && top != '{')) return false;
+        }
+    }
+    return st.empty();
+}
 ```
-result = [-1] * n
-stack = []  // indices
-for i in 0..n-1:
-    while stack and arr[stack[-1]] < arr[i]:
-        result[stack.pop()] = arr[i]
-    stack.append(i)
+
+#### Monotonic Stack (Next Greater Element)
+
+```cpp
+// For each element, find the next element strictly greater than it
+vector<int> nextGreaterElement(vector<int>& arr) {
+    int n = arr.size();
+    vector<int> result(n, -1);
+    stack<int> stk;  // stack of indices
+    for (int i = 0; i < n; i++) {
+        while (!stk.empty() && arr[stk.top()] < arr[i]) {
+            result[stk.top()] = arr[i];
+            stk.pop();
+        }
+        stk.push(i);
+    }
+    return result;
+}
+```
+
+#### Largest Rectangle in Histogram
+
+```cpp
+int largestRectangleArea(vector<int>& heights) {
+    stack<int> stk;
+    int maxArea = 0;
+    heights.push_back(0);  // sentinel
+    for (int i = 0; i < (int)heights.size(); i++) {
+        while (!stk.empty() && heights[stk.top()] > heights[i]) {
+            int h = heights[stk.top()]; stk.pop();
+            int w = stk.empty() ? i : i - stk.top() - 1;
+            maxArea = max(maxArea, h * w);
+        }
+        stk.push(i);
+    }
+    return maxArea;
+}
 ```
 
 ### 6.2 Queue — FIFO
 
-```
-enqueue(x) → add to back  O(1)
-dequeue()  → remove front O(1)
-peek()     → view front   O(1)
+```cpp
+#include <queue>
+
+queue<int> q;
+q.push(x);        // add to back  O(1)
+q.pop();          // remove front O(1)
+q.front();        // view front   O(1)
+q.back();         // view back    O(1)
+q.empty();        // check empty  O(1)
 ```
 
 **Applications:**
@@ -282,10 +559,53 @@ peek()     → view front   O(1)
 
 ### 6.3 Deque (Double-Ended Queue)
 
-Supports push/pop at both ends in O(1). Used for:
-- Sliding window maximum (`collections.deque` in Python)
-- Palindrome checking
-- BFS + DFS combined
+Supports push/pop at both ends in O(1).
+
+```cpp
+#include <deque>
+
+deque<int> dq;
+dq.push_front(x);  dq.push_back(x);
+dq.pop_front();    dq.pop_back();
+dq.front();        dq.back();
+```
+
+#### Sliding Window Maximum (Monotonic Deque)
+
+```cpp
+// Maximum value in every window of size k — O(n)
+vector<int> maxSlidingWindow(vector<int>& nums, int k) {
+    deque<int> dq;  // stores indices; front = max
+    vector<int> result;
+    for (int i = 0; i < (int)nums.size(); i++) {
+        // Remove indices out of window
+        while (!dq.empty() && dq.front() < i - k + 1) dq.pop_front();
+        // Remove indices with smaller values (they can never be max)
+        while (!dq.empty() && nums[dq.back()] < nums[i]) dq.pop_back();
+        dq.push_back(i);
+        if (i >= k - 1) result.push_back(nums[dq.front()]);
+    }
+    return result;
+}
+```
+
+### 6.4 Stack-Based Queue (Two-Stack Queue)
+
+```cpp
+// Amortized O(1) per operation
+class MyQueue {
+    stack<int> inbox, outbox;
+    void transfer() {
+        if (outbox.empty())
+            while (!inbox.empty()) { outbox.push(inbox.top()); inbox.pop(); }
+    }
+public:
+    void push(int x) { inbox.push(x); }
+    int pop()  { transfer(); int v = outbox.top(); outbox.pop(); return v; }
+    int peek() { transfer(); return outbox.top(); }
+    bool empty() { return inbox.empty() && outbox.empty(); }
+};
+```
 
 ---
 
@@ -354,7 +674,7 @@ seen.erase(42);
 
 // --- Performance hints ---
 freq.reserve(1 << 16);               // pre-allocate buckets to avoid rehashes
-freq.max_load_factor(0.25);          // lower → fewer collisions, more memory
+freq.max_load_factor(0.25);          // lower -> fewer collisions, more memory
 ```
 
 ### 7.5 Custom Hash Functions
@@ -430,7 +750,7 @@ unordered_map<char, int> freq;
 for (char c : s) freq[c]++;
 
 // --- Two Sum ---
-unordered_map<int, int> seen;  // value → index
+unordered_map<int, int> seen;  // value -> index
 for (int i = 0; i < (int)nums.size(); i++) {
     int complement = target - nums[i];
     if (seen.count(complement))
@@ -471,7 +791,7 @@ for (int n : numSet) {
 
 | Problem                          | Key Idea                                              | Complexity   |
 |----------------------------------|-------------------------------------------------------|--------------|
-| Two Sum                          | Store `value → index`; look up complement             | O(n)         |
+| Two Sum                          | Store `value -> index`; look up complement            | O(n)         |
 | Group Anagrams                   | Sorted string (or char freq array) as key             | O(n·k log k) |
 | Subarray Sum Equals K            | Prefix sums + frequency map                           | O(n)         |
 | Longest Consecutive Sequence     | Set lookup for sequence start                         | O(n)         |
@@ -486,52 +806,104 @@ for (int n : numSet) {
 
 ## 8. Trees
 
-### 8.1 Binary Tree
+### 8.1 TreeNode Definition
+
+```cpp
+struct TreeNode {
+    int val;
+    TreeNode* left;
+    TreeNode* right;
+    TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+};
+```
+
+### 8.2 Binary Tree Properties
 
 ```
-Node { value, left, right }
-
 Height: max edges from root to leaf
 Depth:  edges from root to node
 Full:   every node has 0 or 2 children
 Complete: all levels filled except last (filled left to right)
 Perfect: all internal nodes have 2 children; all leaves at same level
-Balanced: |height(left) - height(right)| ≤ 1 for all nodes
+Balanced: |height(left) - height(right)| <= 1 for all nodes
 ```
 
-### 8.2 Tree Traversals
+### 8.3 Tree Traversals
 
+```cpp
+// --- Recursive traversals ---
+void inorder(TreeNode* node, vector<int>& result) {
+    if (!node) return;
+    inorder(node->left, result);   // Left -> Root -> Right (gives sorted order for BST)
+    result.push_back(node->val);
+    inorder(node->right, result);
+}
+
+void preorder(TreeNode* node, vector<int>& result) {
+    if (!node) return;
+    result.push_back(node->val);   // Root -> Left -> Right (used for copy/serialize)
+    preorder(node->left, result);
+    preorder(node->right, result);
+}
+
+void postorder(TreeNode* node, vector<int>& result) {
+    if (!node) return;
+    postorder(node->left, result);
+    postorder(node->right, result);
+    result.push_back(node->val);   // Left -> Right -> Root (used for delete/evaluate)
+}
+
+// --- Level-order (BFS) ---
+vector<vector<int>> levelOrder(TreeNode* root) {
+    if (!root) return {};
+    vector<vector<int>> result;
+    queue<TreeNode*> q;
+    q.push(root);
+    while (!q.empty()) {
+        int size = q.size();
+        vector<int> level;
+        for (int i = 0; i < size; i++) {
+            TreeNode* node = q.front(); q.pop();
+            level.push_back(node->val);
+            if (node->left)  q.push(node->left);
+            if (node->right) q.push(node->right);
+        }
+        result.push_back(level);
+    }
+    return result;
+}
+
+// --- Iterative Inorder (using stack) ---
+vector<int> inorderIterative(TreeNode* root) {
+    vector<int> result;
+    stack<TreeNode*> stk;
+    TreeNode* curr = root;
+    while (curr || !stk.empty()) {
+        while (curr) { stk.push(curr); curr = curr->left; }
+        curr = stk.top(); stk.pop();
+        result.push_back(curr->val);
+        curr = curr->right;
+    }
+    return result;
+}
+
+// --- Iterative Preorder (using stack) ---
+vector<int> preorderIterative(TreeNode* root) {
+    if (!root) return {};
+    vector<int> result;
+    stack<TreeNode*> stk;
+    stk.push(root);
+    while (!stk.empty()) {
+        TreeNode* node = stk.top(); stk.pop();
+        result.push_back(node->val);
+        if (node->right) stk.push(node->right);  // push right first
+        if (node->left)  stk.push(node->left);
+    }
+    return result;
+}
 ```
-// Inorder: Left → Root → Right (BST gives sorted order)
-def inorder(node):
-    if not node: return
-    inorder(node.left)
-    visit(node)
-    inorder(node.right)
 
-// Preorder: Root → Left → Right (copy tree, serialize)
-// Postorder: Left → Right → Root (delete tree, evaluate expression)
-
-// Level-order (BFS)
-queue = deque([root])
-while queue:
-    node = queue.popleft()
-    visit(node)
-    if node.left:  queue.append(node.left)
-    if node.right: queue.append(node.right)
-
-// Iterative Inorder (using stack)
-stack, curr = [], root
-while curr or stack:
-    while curr:
-        stack.append(curr)
-        curr = curr.left
-    curr = stack.pop()
-    visit(curr)
-    curr = curr.right
-```
-
-### 8.3 Binary Search Tree (BST)
+### 8.4 Binary Search Tree (BST)
 
 **BST Property:** left subtree < node < right subtree
 
@@ -541,12 +913,47 @@ while curr or stack:
 | Insert    | O(log n)| O(n)           |
 | Delete    | O(log n)| O(n)           |
 
-**BST Delete:**
-- Node has no children → simply remove
-- Node has one child → replace with child
-- Node has two children → replace with **inorder successor** (smallest in right subtree)
+```cpp
+// BST Insert
+TreeNode* insert(TreeNode* root, int val) {
+    if (!root) return new TreeNode(val);
+    if (val < root->val) root->left  = insert(root->left,  val);
+    else if (val > root->val) root->right = insert(root->right, val);
+    return root;
+}
 
-### 8.4 AVL Tree
+// BST Delete
+TreeNode* deleteNode(TreeNode* root, int key) {
+    if (!root) return nullptr;
+    if (key < root->val) {
+        root->left = deleteNode(root->left, key);
+    } else if (key > root->val) {
+        root->right = deleteNode(root->right, key);
+    } else {
+        if (!root->left)  return root->right;
+        if (!root->right) return root->left;
+        // Two children: replace with inorder successor (min of right subtree)
+        TreeNode* minNode = root->right;
+        while (minNode->left) minNode = minNode->left;
+        root->val = minNode->val;
+        root->right = deleteNode(root->right, minNode->val);
+    }
+    return root;
+}
+
+// Validate BST (pass min/max bounds)
+bool isValidBST(TreeNode* node, long long minVal, long long maxVal) {
+    if (!node) return true;
+    if (node->val <= minVal || node->val >= maxVal) return false;
+    return isValidBST(node->left,  minVal, node->val) &&
+           isValidBST(node->right, node->val, maxVal);
+}
+bool isValidBST(TreeNode* root) {
+    return isValidBST(root, LLONG_MIN, LLONG_MAX);
+}
+```
+
+### 8.5 AVL Tree
 
 Self-balancing BST. After insert/delete, **rotations** restore balance factor.
 
@@ -555,24 +962,85 @@ Balance Factor = height(left) - height(right)
 Valid range: {-1, 0, 1}
 
 Rotations:
-- Left Rotation:  right-heavy → rotate left
-- Right Rotation: left-heavy  → rotate right
-- Left-Right:     left child is right-heavy → left rotate child, then right rotate
-- Right-Left:     right child is left-heavy → right rotate child, then left rotate
+- Left Rotation:  right-heavy -> rotate left
+- Right Rotation: left-heavy  -> rotate right
+- Left-Right:     left child is right-heavy -> left rotate child, then right rotate
+- Right-Left:     right child is left-heavy -> right rotate child, then left rotate
 ```
 
-### 8.5 Lowest Common Ancestor (LCA)
+### 8.6 Lowest Common Ancestor (LCA)
 
-```
-def lca(root, p, q):
-    if not root or root == p or root == q: return root
-    left  = lca(root.left,  p, q)
-    right = lca(root.right, p, q)
-    if left and right: return root  // p in one subtree, q in other
-    return left or right
+```cpp
+TreeNode* lca(TreeNode* root, TreeNode* p, TreeNode* q) {
+    if (!root || root == p || root == q) return root;
+    TreeNode* left  = lca(root->left,  p, q);
+    TreeNode* right = lca(root->right, p, q);
+    if (left && right) return root;   // p in one subtree, q in other
+    return left ? left : right;
+}
 ```
 
-### 8.6 Common Tree Problems
+### 8.7 Tree Height & Diameter
+
+```cpp
+// Max depth (height) of tree
+int maxDepth(TreeNode* root) {
+    if (!root) return 0;
+    return 1 + max(maxDepth(root->left), maxDepth(root->right));
+}
+
+// Diameter — longest path between any two nodes
+int diameterOfBinaryTree(TreeNode* root) {
+    int diameter = 0;
+    function<int(TreeNode*)> dfs = [&](TreeNode* node) -> int {
+        if (!node) return 0;
+        int left  = dfs(node->left);
+        int right = dfs(node->right);
+        diameter = max(diameter, left + right);
+        return 1 + max(left, right);
+    };
+    dfs(root);
+    return diameter;
+}
+
+// Check if tree is balanced (|height difference| <= 1 at every node)
+int checkBalanced(TreeNode* node) {
+    if (!node) return 0;
+    int left  = checkBalanced(node->left);
+    if (left == -1) return -1;
+    int right = checkBalanced(node->right);
+    if (right == -1) return -1;
+    if (abs(left - right) > 1) return -1;
+    return 1 + max(left, right);
+}
+bool isBalanced(TreeNode* root) { return checkBalanced(root) != -1; }
+```
+
+### 8.8 Serialize / Deserialize Binary Tree
+
+```cpp
+// Preorder serialization with null markers
+string serialize(TreeNode* root) {
+    if (!root) return "#,";
+    return to_string(root->val) + "," + serialize(root->left) + serialize(root->right);
+}
+
+TreeNode* deserialize(istringstream& ss) {
+    string token;
+    getline(ss, token, ',');
+    if (token == "#") return nullptr;
+    TreeNode* node = new TreeNode(stoi(token));
+    node->left  = deserialize(ss);
+    node->right = deserialize(ss);
+    return node;
+}
+TreeNode* deserialize(string data) {
+    istringstream ss(data);
+    return deserialize(ss);
+}
+```
+
+### 8.9 Common Tree Problems
 
 | Problem                         | Key Idea                           |
 |---------------------------------|------------------------------------|
@@ -603,7 +1071,7 @@ def lca(root, p, q):
 | build heap   | O(n)    |
 | heapify      | O(log n)|
 
-### 9.2 Common Patterns
+### 9.2 C++ Priority Queue API
 
 ```cpp
 #include <queue>
@@ -622,50 +1090,76 @@ priority_queue<int> maxHeap;
 maxHeap.push(val);
 maxHeap.top();
 
-// K largest elements: use min-heap of size k — O(n log k)
+// Custom comparator (min-heap by first element of pair)
+using P = pair<int,int>;
+priority_queue<P, vector<P>, greater<P>> pq;
 
-// Heap from vector (make_heap)
-make_heap(nums.begin(), nums.end());  // O(n), max-heap
+// K largest elements: maintain min-heap of size k
+priority_queue<int, vector<int>, greater<int>> kLargest;
+for (int x : nums) {
+    kLargest.push(x);
+    if ((int)kLargest.size() > k) kLargest.pop();
+}
+// kLargest.top() = k-th largest
 ```
 
 ### 9.3 Top-K Problems
 
-```
-// K most frequent elements
-freq = Counter(nums)
-return heapq.nlargest(k, freq.keys(), key=freq.get)
+```cpp
+// K most frequent elements — O(n log k)
+vector<int> topKFrequent(vector<int>& nums, int k) {
+    unordered_map<int, int> freq;
+    for (int n : nums) freq[n]++;
+    // min-heap: {count, value}
+    priority_queue<pair<int,int>, vector<pair<int,int>>, greater<>> pq;
+    for (auto& [val, cnt] : freq) {
+        pq.push({cnt, val});
+        if ((int)pq.size() > k) pq.pop();
+    }
+    vector<int> result;
+    while (!pq.empty()) { result.push_back(pq.top().second); pq.pop(); }
+    return result;
+}
 
-// K closest points to origin
-// Sort by distance² to avoid sqrt
-return heapq.nsmallest(k, points, key=lambda p: p[0]**2 + p[1]**2)
+// K closest points to origin — O(n log k)
+vector<vector<int>> kClosest(vector<vector<int>>& points, int k) {
+    // max-heap of size k (distance, index)
+    using T = pair<int,int>;
+    priority_queue<T> pq;
+    for (int i = 0; i < (int)points.size(); i++) {
+        int d = points[i][0]*points[i][0] + points[i][1]*points[i][1];
+        pq.push({d, i});
+        if ((int)pq.size() > k) pq.pop();
+    }
+    vector<vector<int>> result;
+    while (!pq.empty()) { result.push_back(points[pq.top().second]); pq.pop(); }
+    return result;
+}
 
-// Merge K sorted lists (using heap)
-heap = [(lists[i][0], i, 0) for i in range(len(lists)) if lists[i]]
-heapq.heapify(heap)
-result = []
-while heap:
-    val, i, j = heapq.heappop(heap)
-    result.append(val)
-    if j+1 < len(lists[i]):
-        heapq.heappush(heap, (lists[i][j+1], i, j+1))
+// Merge K sorted lists — O(N log K) where N = total nodes
+// Uses min-heap of (value, list_index, element_index)
 ```
 
 ### 9.4 Median from Data Stream
 
-```
+```cpp
 // Two heaps: max-heap for lower half, min-heap for upper half
-lower = []  // max-heap (negate values)
-upper = []  // min-heap
-
-def addNum(num):
-    heappush(lower, -num)
-    heappush(upper, -heappop(lower))
-    if len(lower) < len(upper):
-        heappush(lower, -heappop(upper))
-
-def findMedian():
-    if len(lower) > len(upper): return -lower[0]
-    return (-lower[0] + upper[0]) / 2
+class MedianFinder {
+    priority_queue<int> lower;                            // max-heap
+    priority_queue<int, vector<int>, greater<int>> upper; // min-heap
+public:
+    void addNum(int num) {
+        lower.push(num);
+        upper.push(lower.top()); lower.pop();
+        if (lower.size() < upper.size()) {
+            lower.push(upper.top()); upper.pop();
+        }
+    }
+    double findMedian() {
+        if (lower.size() > upper.size()) return lower.top();
+        return (lower.top() + upper.top()) / 2.0;
+    }
+};
 ```
 
 ---
@@ -676,7 +1170,8 @@ def findMedian():
 
 ```cpp
 // Adjacency List (space-efficient for sparse graphs)
-vector<vector<pair<int,int>>> graph(n);
+int n;  // number of vertices
+vector<vector<pair<int,int>>> graph(n);    // graph[u] = {(v, weight), ...}
 graph[0].push_back({1, weight});
 graph[1].push_back({0, weight});
 
@@ -691,135 +1186,226 @@ vector<tuple<int,int,int>> edges = {{0, 1, weight}, {1, 2, weight}};
 ### 10.2 Graph Traversals
 
 #### BFS (Breadth-First Search)
-```
-// Shortest path (unweighted), level-order traversal
-visited = set([start])
-queue = deque([start])
-while queue:
-    node = queue.popleft()
-    for neighbor in graph[node]:
-        if neighbor not in visited:
-            visited.add(neighbor)
-            queue.append(neighbor)
+
+```cpp
+// Shortest path (unweighted), level-order traversal — O(V+E)
+vector<int> bfs(int start, vector<vector<int>>& graph) {
+    int n = graph.size();
+    vector<int> dist(n, -1);
+    queue<int> q;
+    dist[start] = 0;
+    q.push(start);
+    while (!q.empty()) {
+        int node = q.front(); q.pop();
+        for (int neighbor : graph[node]) {
+            if (dist[neighbor] == -1) {
+                dist[neighbor] = dist[node] + 1;
+                q.push(neighbor);
+            }
+        }
+    }
+    return dist;
+}
 ```
 
 #### DFS (Depth-First Search)
-```
-// Connectivity, cycle detection, topological sort
-visited = set()
-def dfs(node):
-    visited.add(node)
-    for neighbor in graph[node]:
-        if neighbor not in visited:
-            dfs(neighbor)
+
+```cpp
+// Recursive DFS — O(V+E)
+void dfs(int node, vector<vector<int>>& graph, vector<bool>& visited) {
+    visited[node] = true;
+    for (int neighbor : graph[node])
+        if (!visited[neighbor])
+            dfs(neighbor, graph, visited);
+}
 
 // Iterative DFS
-stack = [start]
-visited = set([start])
-while stack:
-    node = stack.pop()
-    for neighbor in graph[node]:
-        if neighbor not in visited:
-            visited.add(neighbor)
-            stack.append(neighbor)
+void dfsIterative(int start, vector<vector<int>>& graph) {
+    int n = graph.size();
+    vector<bool> visited(n, false);
+    stack<int> stk;
+    stk.push(start);
+    visited[start] = true;
+    while (!stk.empty()) {
+        int node = stk.top(); stk.pop();
+        for (int neighbor : graph[node]) {
+            if (!visited[neighbor]) {
+                visited[neighbor] = true;
+                stk.push(neighbor);
+            }
+        }
+    }
+}
 ```
 
 ### 10.3 Shortest Path Algorithms
 
 #### Dijkstra's Algorithm (non-negative weights)
-```
+
+```cpp
 // O((V + E) log V) with min-heap
-dist = {v: inf for v in graph}; dist[src] = 0
-heap = [(0, src)]
-while heap:
-    d, u = heappop(heap)
-    if d > dist[u]: continue
-    for v, w in graph[u]:
-        if dist[u] + w < dist[v]:
-            dist[v] = dist[u] + w
-            heappush(heap, (dist[v], v))
+vector<int> dijkstra(int src, vector<vector<pair<int,int>>>& graph) {
+    int n = graph.size();
+    vector<int> dist(n, INT_MAX);
+    priority_queue<pair<int,int>, vector<pair<int,int>>, greater<>> pq;
+    dist[src] = 0;
+    pq.push({0, src});
+    while (!pq.empty()) {
+        auto [d, u] = pq.top(); pq.pop();
+        if (d > dist[u]) continue;  // stale entry
+        for (auto [v, w] : graph[u]) {
+            if (dist[u] + w < dist[v]) {
+                dist[v] = dist[u] + w;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+    return dist;
+}
 ```
 
 #### Bellman-Ford (handles negative weights)
-```
+
+```cpp
 // O(VE); detects negative cycles
-dist = [inf] * n; dist[src] = 0
-for _ in range(n-1):
-    for u, v, w in edges:
-        if dist[u] + w < dist[v]:
-            dist[v] = dist[u] + w
-// Check negative cycle: one more relaxation changes a distance
+vector<int> bellmanFord(int src, int n, vector<tuple<int,int,int>>& edges) {
+    vector<int> dist(n, INT_MAX);
+    dist[src] = 0;
+    for (int i = 0; i < n - 1; i++) {         // relax V-1 times
+        for (auto [u, v, w] : edges) {
+            if (dist[u] != INT_MAX && dist[u] + w < dist[v])
+                dist[v] = dist[u] + w;
+        }
+    }
+    // Check for negative cycle
+    for (auto [u, v, w] : edges)
+        if (dist[u] != INT_MAX && dist[u] + w < dist[v])
+            return {};  // negative cycle detected
+    return dist;
+}
 ```
 
 #### Floyd-Warshall (all-pairs shortest path)
-```
+
+```cpp
 // O(V³)
-dist[i][j] = weight of direct edge (or inf)
-for k in range(n):
-    for i in range(n):
-        for j in range(n):
-            dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j])
+void floydWarshall(vector<vector<int>>& dist) {
+    int n = dist.size();
+    for (int k = 0; k < n; k++)
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+                if (dist[i][k] != INT_MAX && dist[k][j] != INT_MAX)
+                    dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j]);
+}
 ```
 
 ### 10.4 Minimum Spanning Tree
 
 #### Kruskal's Algorithm
-```
+
+```cpp
 // O(E log E) — sort edges; use Union-Find to avoid cycles
-Sort edges by weight
-For each edge (u, v, w) in sorted order:
-    if find(u) != find(v):
-        union(u, v)
-        MST.add(edge)
+struct Edge { int u, v, w; };
+
+int find(vector<int>& parent, int x) {
+    if (parent[x] != x) parent[x] = find(parent, parent[x]);
+    return parent[x];
+}
+bool unite(vector<int>& parent, vector<int>& rank, int x, int y) {
+    int px = find(parent, x), py = find(parent, y);
+    if (px == py) return false;
+    if (rank[px] < rank[py]) swap(px, py);
+    parent[py] = px;
+    if (rank[px] == rank[py]) rank[px]++;
+    return true;
+}
+
+int kruskal(int n, vector<Edge>& edges) {
+    sort(edges.begin(), edges.end(), [](const Edge& a, const Edge& b){ return a.w < b.w; });
+    vector<int> parent(n), rank(n, 0);
+    iota(parent.begin(), parent.end(), 0);
+    int mstWeight = 0, edgesUsed = 0;
+    for (auto& e : edges) {
+        if (unite(parent, rank, e.u, e.v)) {
+            mstWeight += e.w;
+            if (++edgesUsed == n - 1) break;
+        }
+    }
+    return mstWeight;
+}
 ```
 
 #### Prim's Algorithm
-```
+
+```cpp
 // O((V + E) log V) — grow MST from a seed vertex using min-heap
-heap = [(0, 0)]  // (weight, vertex)
-inMST = set()
-while heap:
-    w, u = heappop(heap)
-    if u in inMST: continue
-    inMST.add(u)
-    for v, weight in graph[u]:
-        if v not in inMST:
-            heappush(heap, (weight, v))
+int prim(int n, vector<vector<pair<int,int>>>& graph) {
+    vector<bool> inMST(n, false);
+    priority_queue<pair<int,int>, vector<pair<int,int>>, greater<>> pq;
+    pq.push({0, 0});  // (weight, vertex)
+    int total = 0;
+    while (!pq.empty()) {
+        auto [w, u] = pq.top(); pq.pop();
+        if (inMST[u]) continue;
+        inMST[u] = true;
+        total += w;
+        for (auto [v, weight] : graph[u])
+            if (!inMST[v]) pq.push({weight, v});
+    }
+    return total;
+}
 ```
 
 ### 10.5 Topological Sort
 
 For **Directed Acyclic Graphs (DAGs)** — linear ordering where all edges go forward.
 
-```
-// Kahn's Algorithm (BFS-based)
-in_degree = [0] * n
-for u in range(n):
-    for v in graph[u]:
-        in_degree[v] += 1
+```cpp
+// Kahn's Algorithm (BFS-based) — detects cycle if not all nodes processed
+vector<int> topoSort(int n, vector<vector<int>>& graph) {
+    vector<int> inDegree(n, 0);
+    for (int u = 0; u < n; u++)
+        for (int v : graph[u]) inDegree[v]++;
+    queue<int> q;
+    for (int v = 0; v < n; v++) if (inDegree[v] == 0) q.push(v);
+    vector<int> order;
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        order.push_back(u);
+        for (int v : graph[u])
+            if (--inDegree[v] == 0) q.push(v);
+    }
+    return (int)order.size() == n ? order : vector<int>{};  // empty = cycle
+}
 
-queue = deque([v for v in range(n) if in_degree[v] == 0])
-order = []
-while queue:
-    u = queue.popleft()
-    order.append(u)
-    for v in graph[u]:
-        in_degree[v] -= 1
-        if in_degree[v] == 0:
-            queue.append(v)
+// DFS-based topological sort
+void dfsTopoSort(int node, vector<vector<int>>& graph,
+                 vector<bool>& visited, stack<int>& stk) {
+    visited[node] = true;
+    for (int neighbor : graph[node])
+        if (!visited[neighbor])
+            dfsTopoSort(neighbor, graph, visited, stk);
+    stk.push(node);
+}
 
-if len(order) != n: "Cycle detected"
-
-// DFS-based: push to stack after visiting all descendants; reverse stack
+vector<int> topoSortDFS(int n, vector<vector<int>>& graph) {
+    vector<bool> visited(n, false);
+    stack<int> stk;
+    for (int i = 0; i < n; i++)
+        if (!visited[i]) dfsTopoSort(i, graph, visited, stk);
+    vector<int> order;
+    while (!stk.empty()) { order.push_back(stk.top()); stk.pop(); }
+    return order;
+}
 ```
 
 ### 10.6 Union-Find (Disjoint Set Union)
 
 ```cpp
 class UnionFind {
-    vector<int> parent, rank;
+    vector<int> parent, rank_;
 public:
-    UnionFind(int n) : parent(n), rank(n, 0) {
+    UnionFind(int n) : parent(n), rank_(n, 0) {
         iota(parent.begin(), parent.end(), 0);
     }
     int find(int x) {
@@ -830,16 +1416,46 @@ public:
     bool unite(int x, int y) {
         int px = find(x), py = find(y);
         if (px == py) return false;
-        if (rank[px] < rank[py]) swap(px, py);
+        if (rank_[px] < rank_[py]) swap(px, py);
         parent[py] = px;
-        if (rank[px] == rank[py]) rank[px]++;
+        if (rank_[px] == rank_[py]) rank_[px]++;
         return true;
     }
+    bool connected(int x, int y) { return find(x) == find(y); }
 };
 // Operations: near O(1) amortized with path compression + union by rank
 ```
 
 **Applications:** Connected components, cycle detection, Kruskal's MST.
+
+### 10.7 Cycle Detection
+
+```cpp
+// Undirected graph — Union-Find approach
+bool hasCycleUndirected(int n, vector<pair<int,int>>& edges) {
+    UnionFind uf(n);
+    for (auto [u, v] : edges)
+        if (!uf.unite(u, v)) return true;  // same component -> cycle
+    return false;
+}
+
+// Directed graph — DFS with 3-color (white=0, gray=1, black=2)
+bool dfsCycle(int node, vector<vector<int>>& graph, vector<int>& color) {
+    color[node] = 1;  // gray (in progress)
+    for (int neighbor : graph[node]) {
+        if (color[neighbor] == 1) return true;   // back edge -> cycle
+        if (color[neighbor] == 0 && dfsCycle(neighbor, graph, color)) return true;
+    }
+    color[node] = 2;  // black (done)
+    return false;
+}
+bool hasCycleDirected(int n, vector<vector<int>>& graph) {
+    vector<int> color(n, 0);
+    for (int i = 0; i < n; i++)
+        if (color[i] == 0 && dfsCycle(i, graph, color)) return true;
+    return false;
+}
+```
 
 ---
 
@@ -859,50 +1475,103 @@ public:
 
 ### 11.2 Merge Sort
 
-```
-def mergeSort(arr):
-    if len(arr) <= 1: return arr
-    mid = len(arr) // 2
-    left  = mergeSort(arr[:mid])
-    right = mergeSort(arr[mid:])
-    return merge(left, right)
+```cpp
+void merge(vector<int>& arr, int left, int mid, int right) {
+    vector<int> temp(right - left + 1);
+    int i = left, j = mid + 1, k = 0;
+    while (i <= mid && j <= right) {
+        if (arr[i] <= arr[j]) temp[k++] = arr[i++];
+        else                  temp[k++] = arr[j++];
+    }
+    while (i <= mid)   temp[k++] = arr[i++];
+    while (j <= right) temp[k++] = arr[j++];
+    for (int x = 0; x < k; x++) arr[left + x] = temp[x];
+}
 
-def merge(left, right):
-    result, i, j = [], 0, 0
-    while i < len(left) and j < len(right):
-        if left[i] <= right[j]: result.append(left[i]); i++
-        else:                   result.append(right[j]); j++
-    return result + left[i:] + right[j:]
+void mergeSort(vector<int>& arr, int left, int right) {
+    if (left >= right) return;
+    int mid = left + (right - left) / 2;
+    mergeSort(arr, left,    mid);
+    mergeSort(arr, mid + 1, right);
+    merge(arr, left, mid, right);
+}
 ```
 
 ### 11.3 Quick Sort
 
+```cpp
+int partition(vector<int>& arr, int low, int high) {
+    // Random pivot to avoid O(n²) worst case on sorted input
+    int randIdx = low + rand() % (high - low + 1);
+    swap(arr[randIdx], arr[high]);
+    int pivot = arr[high];
+    int i = low - 1;
+    for (int j = low; j < high; j++) {
+        if (arr[j] <= pivot) {
+            i++;
+            swap(arr[i], arr[j]);
+        }
+    }
+    swap(arr[i + 1], arr[high]);
+    return i + 1;
+}
+
+void quickSort(vector<int>& arr, int low, int high) {
+    if (low < high) {
+        int pi = partition(arr, low, high);
+        quickSort(arr, low,    pi - 1);
+        quickSort(arr, pi + 1, high);
+    }
+}
 ```
-def quickSort(arr, low, high):
-    if low < high:
-        pi = partition(arr, low, high)
-        quickSort(arr, low, pi-1)
-        quickSort(arr, pi+1, high)
 
-def partition(arr, low, high):
-    pivot = arr[high]  // Lomuto partition
-    i = low - 1
-    for j in range(low, high):
-        if arr[j] <= pivot:
-            i++; arr[i], arr[j] = arr[j], arr[i]
-    arr[i+1], arr[high] = arr[high], arr[i+1]
-    return i+1
+### 11.4 Heap Sort
+
+```cpp
+void heapify(vector<int>& arr, int n, int i) {
+    int largest = i, l = 2*i+1, r = 2*i+2;
+    if (l < n && arr[l] > arr[largest]) largest = l;
+    if (r < n && arr[r] > arr[largest]) largest = r;
+    if (largest != i) {
+        swap(arr[i], arr[largest]);
+        heapify(arr, n, largest);
+    }
+}
+
+void heapSort(vector<int>& arr) {
+    int n = arr.size();
+    for (int i = n/2 - 1; i >= 0; i--) heapify(arr, n, i);  // build max-heap O(n)
+    for (int i = n - 1; i > 0; i--) {
+        swap(arr[0], arr[i]);   // move max to end
+        heapify(arr, i, 0);     // restore heap on reduced array
+    }
+}
 ```
 
-**Optimization:** Random pivot selection to avoid O(n²) worst case.
-
-### 11.4 Non-Comparison Sorts
+### 11.5 Non-Comparison Sorts
 
 | Algorithm      | Time    | Space  | Constraint                      |
 |----------------|---------|--------|---------------------------------|
 | Counting Sort  | O(n+k)  | O(k)   | Integer keys in range [0, k]    |
 | Radix Sort     | O(nk)   | O(n+k) | Integer keys; k = max digits    |
 | Bucket Sort    | O(n+k)  | O(n)   | Uniformly distributed floats    |
+
+```cpp
+// Counting Sort
+void countingSort(vector<int>& arr, int maxVal) {
+    vector<int> count(maxVal + 1, 0);
+    for (int x : arr) count[x]++;
+    int idx = 0;
+    for (int v = 0; v <= maxVal; v++)
+        while (count[v]--) arr[idx++] = v;
+}
+
+// STL sort (introsort — O(n log n) worst case)
+sort(arr.begin(), arr.end());                                   // ascending
+sort(arr.begin(), arr.end(), greater<int>());                   // descending
+sort(arr.begin(), arr.end(), [](int a, int b){ return a > b; }); // custom
+stable_sort(arr.begin(), arr.end());                            // stable
+```
 
 ---
 
@@ -912,12 +1581,12 @@ def partition(arr, low, high):
 
 ```cpp
 int binarySearch(vector<int>& arr, int target) {
-    int left = 0, right = arr.size() - 1;
+    int left = 0, right = (int)arr.size() - 1;
     while (left <= right) {
         int mid = left + (right - left) / 2;  // avoid overflow
-        if (arr[mid] == target) return mid;
-        else if (arr[mid] < target) left = mid + 1;
-        else right = mid - 1;
+        if      (arr[mid] == target) return mid;
+        else if (arr[mid] <  target) left  = mid + 1;
+        else                         right = mid - 1;
     }
     return -1;
 }
@@ -926,9 +1595,10 @@ int binarySearch(vector<int>& arr, int target) {
 ### 12.2 Binary Search Variants
 
 ```cpp
-// Find leftmost position where condition is true (lower bound)
+// Find leftmost position where condition is true (lower_bound)
+// First index where arr[i] >= target
 int lowerBound(vector<int>& arr, int target) {
-    int left = 0, right = arr.size();
+    int left = 0, right = (int)arr.size();
     while (left < right) {
         int mid = (left + right) / 2;
         if (arr[mid] < target) left = mid + 1;
@@ -937,9 +1607,9 @@ int lowerBound(vector<int>& arr, int target) {
     return left;
 }
 
-// Find rightmost position where arr[mid] <= target (upper bound)
+// First index where arr[i] > target (upper_bound)
 int upperBound(vector<int>& arr, int target) {
-    int left = 0, right = arr.size();
+    int left = 0, right = (int)arr.size();
     while (left < right) {
         int mid = (left + right) / 2;
         if (arr[mid] <= target) left = mid + 1;
@@ -950,14 +1620,41 @@ int upperBound(vector<int>& arr, int target) {
 
 // Binary search on answer space
 // "Find minimum X such that condition(X) is true"
-int minValue(int MIN_POSSIBLE, int MAX_POSSIBLE) {
-    int left = MIN_POSSIBLE, right = MAX_POSSIBLE;
+// Requires: condition is monotone (false...false, true...true)
+int binarySearchOnAnswer(int minPossible, int maxPossible,
+                         function<bool(int)> condition) {
+    int left = minPossible, right = maxPossible;
     while (left < right) {
-        int mid = (left + right) / 2;
+        int mid = left + (right - left) / 2;
         if (condition(mid)) right = mid;
         else left = mid + 1;
     }
     return left;
+}
+
+// STL wrappers (require sorted container)
+auto it = lower_bound(arr.begin(), arr.end(), target);
+auto it2 = upper_bound(arr.begin(), arr.end(), target);
+bool found = binary_search(arr.begin(), arr.end(), target);
+```
+
+### 12.3 Search in Rotated Sorted Array
+
+```cpp
+int search(vector<int>& nums, int target) {
+    int left = 0, right = (int)nums.size() - 1;
+    while (left <= right) {
+        int mid = left + (right - left) / 2;
+        if (nums[mid] == target) return mid;
+        if (nums[left] <= nums[mid]) {  // left half is sorted
+            if (nums[left] <= target && target < nums[mid]) right = mid - 1;
+            else left = mid + 1;
+        } else {                        // right half is sorted
+            if (nums[mid] < target && target <= nums[right]) left = mid + 1;
+            else right = mid - 1;
+        }
+    }
+    return -1;
 }
 ```
 
@@ -967,30 +1664,31 @@ int minValue(int MIN_POSSIBLE, int MAX_POSSIBLE) {
 
 ### 13.1 Recursion Template
 
-```
-def solve(params):
-    # Base case
-    if base_condition: return base_result
+```cpp
+// Generic recursion pattern
+ReturnType solve(Parameters params) {
+    // 1. Base case
+    if (baseCondition(params)) return baseResult;
 
-    # Recursive case
-    result = combine(solve(smaller_params), ...)
-    return result
+    // 2. Recursive case — break into smaller subproblems
+    auto subResult = solve(smallerParams);
+    return combine(subResult, ...);
+}
 ```
 
 ### 13.2 Backtracking Template
 
 ```cpp
-void backtrack(State& state, vector<Choice>& choices) {
+void backtrack(State& state, int start, vector<Result>& results) {
     if (isSolution(state)) {
-        record(state);
+        results.push_back(state);
         return;
     }
-    for (auto& choice : choices) {
-        if (isValid(choice, state)) {
-            makeChoice(state, choice);
-            backtrack(state, remainingChoices);
-            undoChoice(state, choice);          // backtrack!
-        }
+    for (int i = start; i < choices.size(); i++) {
+        if (!isValid(choices[i], state)) continue;
+        makeChoice(state, choices[i]);          // choose
+        backtrack(state, i + 1, results);       // explore
+        undoChoice(state, choices[i]);          // unchoose (backtrack)
     }
 }
 ```
@@ -998,13 +1696,14 @@ void backtrack(State& state, vector<Choice>& choices) {
 ### 13.3 Classic Backtracking Problems
 
 #### Permutations
+
 ```cpp
 vector<vector<int>> permute(vector<int>& nums) {
     vector<vector<int>> result;
     vector<int> path;
     vector<bool> used(nums.size(), false);
     function<void()> backtrack = [&]() {
-        if (path.size() == nums.size()) {
+        if ((int)path.size() == (int)nums.size()) {
             result.push_back(path);
             return;
         }
@@ -1024,6 +1723,7 @@ vector<vector<int>> permute(vector<int>& nums) {
 ```
 
 #### Subsets
+
 ```cpp
 vector<vector<int>> subsets(vector<int>& nums) {
     vector<vector<int>> result;
@@ -1041,7 +1741,30 @@ vector<vector<int>> subsets(vector<int>& nums) {
 }
 ```
 
+#### Combination Sum
+
+```cpp
+// Find all combinations that sum to target (elements can be reused)
+vector<vector<int>> combinationSum(vector<int>& candidates, int target) {
+    vector<vector<int>> result;
+    vector<int> path;
+    function<void(int, int)> backtrack = [&](int start, int remaining) {
+        if (remaining == 0) { result.push_back(path); return; }
+        for (int i = start; i < (int)candidates.size(); i++) {
+            if (candidates[i] > remaining) break;  // prune if sorted
+            path.push_back(candidates[i]);
+            backtrack(i, remaining - candidates[i]);  // i not i+1 (can reuse)
+            path.pop_back();
+        }
+    };
+    sort(candidates.begin(), candidates.end());
+    backtrack(0, target);
+    return result;
+}
+```
+
 #### N-Queens
+
 ```cpp
 vector<vector<string>> solveNQueens(int n) {
     vector<vector<string>> result;
@@ -1067,6 +1790,36 @@ vector<vector<string>> solveNQueens(int n) {
 }
 ```
 
+#### Sudoku Solver
+
+```cpp
+bool isValidPlacement(vector<vector<char>>& board, int row, int col, char c) {
+    for (int i = 0; i < 9; i++) {
+        if (board[row][i] == c) return false;
+        if (board[i][col] == c) return false;
+        if (board[3*(row/3) + i/3][3*(col/3) + i%3] == c) return false;
+    }
+    return true;
+}
+
+bool solveSudoku(vector<vector<char>>& board) {
+    for (int r = 0; r < 9; r++) {
+        for (int c = 0; c < 9; c++) {
+            if (board[r][c] != '.') continue;
+            for (char ch = '1'; ch <= '9'; ch++) {
+                if (isValidPlacement(board, r, c, ch)) {
+                    board[r][c] = ch;
+                    if (solveSudoku(board)) return true;
+                    board[r][c] = '.';
+                }
+            }
+            return false;  // no valid placement
+        }
+    }
+    return true;  // board fully filled
+}
+```
+
 ---
 
 ## 14. Dynamic Programming
@@ -1085,61 +1838,168 @@ vector<vector<string>> solveNQueens(int n) {
 ### 14.2 1D DP Patterns
 
 #### Fibonacci / Climbing Stairs
-```
-dp[i] = dp[i-1] + dp[i-2]   // reach stair i from i-1 or i-2
+
+```cpp
+int climbStairs(int n) {
+    if (n <= 2) return n;
+    int a = 1, b = 2;
+    for (int i = 3; i <= n; i++) {
+        int c = a + b;
+        a = b; b = c;
+    }
+    return b;  // O(1) space
+}
 ```
 
 #### House Robber
-```
-dp[i] = max(dp[i-1], dp[i-2] + nums[i])
-// either skip house i, or rob it (can't rob i-1)
+
+```cpp
+int rob(vector<int>& nums) {
+    int prev2 = 0, prev1 = 0;
+    for (int num : nums) {
+        int curr = max(prev1, prev2 + num);
+        prev2 = prev1;
+        prev1 = curr;
+    }
+    return prev1;
+}
 ```
 
 #### Longest Increasing Subsequence (LIS)
-```
-// O(n²) DP
-dp[i] = max(dp[j]+1) for all j < i where nums[j] < nums[i]
 
-// O(n log n) with patience sorting (binary search)
-tails = []
-for num in nums:
-    pos = bisect_left(tails, num)
-    if pos == len(tails): tails.append(num)
-    else: tails[pos] = num
-return len(tails)
+```cpp
+// O(n²) DP
+int lisDP(vector<int>& nums) {
+    int n = nums.size();
+    vector<int> dp(n, 1);
+    int maxLen = 1;
+    for (int i = 1; i < n; i++)
+        for (int j = 0; j < i; j++)
+            if (nums[j] < nums[i]) {
+                dp[i] = max(dp[i], dp[j] + 1);
+                maxLen = max(maxLen, dp[i]);
+            }
+    return maxLen;
+}
+
+// O(n log n) — patience sorting with binary search
+int lisFast(vector<int>& nums) {
+    vector<int> tails;  // tails[i] = smallest tail of all IS of length i+1
+    for (int num : nums) {
+        auto it = lower_bound(tails.begin(), tails.end(), num);
+        if (it == tails.end()) tails.push_back(num);
+        else *it = num;
+    }
+    return (int)tails.size();
+}
 ```
 
 ### 14.3 2D DP Patterns
 
 #### Longest Common Subsequence (LCS)
-```
-dp[i][j] = length of LCS of s1[:i] and s2[:j]
 
-if s1[i-1] == s2[j-1]: dp[i][j] = dp[i-1][j-1] + 1
-else:                   dp[i][j] = max(dp[i-1][j], dp[i][j-1])
+```cpp
+int longestCommonSubsequence(string s1, string s2) {
+    int m = s1.size(), n = s2.size();
+    vector<vector<int>> dp(m + 1, vector<int>(n + 1, 0));
+    for (int i = 1; i <= m; i++)
+        for (int j = 1; j <= n; j++)
+            if (s1[i-1] == s2[j-1]) dp[i][j] = dp[i-1][j-1] + 1;
+            else                     dp[i][j] = max(dp[i-1][j], dp[i][j-1]);
+    return dp[m][n];
+}
 ```
 
 #### Edit Distance
-```
-dp[i][j] = min operations to convert s1[:i] to s2[:j]
 
-if s1[i-1] == s2[j-1]: dp[i][j] = dp[i-1][j-1]
-else: dp[i][j] = 1 + min(dp[i-1][j],    // delete from s1
-                         dp[i][j-1],    // insert into s1
-                         dp[i-1][j-1]) // replace
+```cpp
+int minDistance(string s1, string s2) {
+    int m = s1.size(), n = s2.size();
+    // dp[i][j] = min operations to convert s1[:i] to s2[:j]
+    vector<vector<int>> dp(m + 1, vector<int>(n + 1));
+    for (int i = 0; i <= m; i++) dp[i][0] = i;
+    for (int j = 0; j <= n; j++) dp[0][j] = j;
+    for (int i = 1; i <= m; i++)
+        for (int j = 1; j <= n; j++)
+            if (s1[i-1] == s2[j-1]) dp[i][j] = dp[i-1][j-1];
+            else dp[i][j] = 1 + min({dp[i-1][j],    // delete from s1
+                                     dp[i][j-1],    // insert into s1
+                                     dp[i-1][j-1]}); // replace
+    return dp[m][n];
+}
 ```
 
 #### 0/1 Knapsack
+
+```cpp
+int knapsack(int W, vector<int>& weight, vector<int>& value) {
+    int n = weight.size();
+    // Space-optimized: 1D dp, iterate weights in reverse
+    vector<int> dp(W + 1, 0);
+    for (int i = 0; i < n; i++)
+        for (int w = W; w >= weight[i]; w--)
+            dp[w] = max(dp[w], dp[w - weight[i]] + value[i]);
+    return dp[W];
+}
 ```
-dp[i][w] = max value using first i items with weight capacity w
 
-if weight[i] > w: dp[i][w] = dp[i-1][w]
-else: dp[i][w] = max(dp[i-1][w], dp[i-1][w-weight[i]] + value[i])
+#### Coin Change
 
-// Space optimized — iterate weights in reverse
-for i in range(n):
-    for w in range(W, weight[i]-1, -1):
-        dp[w] = max(dp[w], dp[w-weight[i]] + value[i])
+```cpp
+int coinChange(vector<int>& coins, int amount) {
+    vector<int> dp(amount + 1, INT_MAX);
+    dp[0] = 0;
+    for (int a = 1; a <= amount; a++)
+        for (int coin : coins)
+            if (coin <= a && dp[a - coin] != INT_MAX)
+                dp[a] = min(dp[a], dp[a - coin] + 1);
+    return dp[amount] == INT_MAX ? -1 : dp[amount];
+}
+```
+
+#### Unique Paths
+
+```cpp
+int uniquePaths(int m, int n) {
+    vector<int> dp(n, 1);  // base: one way to reach each cell in first row
+    for (int i = 1; i < m; i++)
+        for (int j = 1; j < n; j++)
+            dp[j] += dp[j - 1];
+    return dp[n - 1];
+}
+```
+
+#### Word Break
+
+```cpp
+bool wordBreak(string s, vector<string>& wordDict) {
+    unordered_set<string> dict(wordDict.begin(), wordDict.end());
+    int n = s.size();
+    vector<bool> dp(n + 1, false);
+    dp[0] = true;
+    for (int i = 1; i <= n; i++)
+        for (int j = 0; j < i; j++)
+            if (dp[j] && dict.count(s.substr(j, i - j))) { dp[i] = true; break; }
+    return dp[n];
+}
+```
+
+#### Longest Palindromic Substring (DP)
+
+```cpp
+string longestPalindromicSubstringDP(string s) {
+    int n = s.size(), start = 0, maxLen = 1;
+    vector<vector<bool>> dp(n, vector<bool>(n, false));
+    for (int i = 0; i < n; i++) dp[i][i] = true;
+    for (int len = 2; len <= n; len++) {
+        for (int i = 0; i <= n - len; i++) {
+            int j = i + len - 1;
+            dp[i][j] = (s[i] == s[j]) && (len == 2 || dp[i+1][j-1]);
+            if (dp[i][j] && len > maxLen) { maxLen = len; start = i; }
+        }
+    }
+    return s.substr(start, maxLen);
+}
 ```
 
 ### 14.4 Classic DP Problems
@@ -1173,15 +2033,64 @@ Greedy works when a **locally optimal choice** leads to a **globally optimal sol
 | Interval Scheduling        | Sort by end time; pick non-overlapping    |
 | Minimum Platforms          | Sort arrivals/departures; track count     |
 
-#### Jump Game II (Min Jumps)
+#### Jump Game (Can Reach End?)
+
+```cpp
+bool canJump(vector<int>& nums) {
+    int maxReach = 0;
+    for (int i = 0; i < (int)nums.size(); i++) {
+        if (i > maxReach) return false;
+        maxReach = max(maxReach, i + nums[i]);
+    }
+    return true;
+}
 ```
-jumps = 0, currentEnd = 0, farthest = 0
-for i in range(n-1):
-    farthest = max(farthest, i + nums[i])
-    if i == currentEnd:
-        jumps++
-        currentEnd = farthest
-return jumps
+
+#### Jump Game II (Min Jumps)
+
+```cpp
+int jump(vector<int>& nums) {
+    int jumps = 0, currentEnd = 0, farthest = 0;
+    for (int i = 0; i < (int)nums.size() - 1; i++) {
+        farthest = max(farthest, i + nums[i]);
+        if (i == currentEnd) {
+            jumps++;
+            currentEnd = farthest;
+        }
+    }
+    return jumps;
+}
+```
+
+#### Activity Selection / Interval Scheduling
+
+```cpp
+// Maximum number of non-overlapping intervals
+int eraseOverlapIntervals(vector<vector<int>>& intervals) {
+    sort(intervals.begin(), intervals.end(),
+         [](const vector<int>& a, const vector<int>& b){ return a[1] < b[1]; });
+    int count = 0, end = INT_MIN;
+    for (auto& iv : intervals) {
+        if (iv[0] >= end) end = iv[1];  // no overlap, take it
+        else count++;                    // overlap, remove it
+    }
+    return count;
+}
+```
+
+#### Gas Station
+
+```cpp
+int canCompleteCircuit(vector<int>& gas, vector<int>& cost) {
+    int total = 0, tank = 0, start = 0;
+    for (int i = 0; i < (int)gas.size(); i++) {
+        int diff = gas[i] - cost[i];
+        total += diff;
+        tank  += diff;
+        if (tank < 0) { start = i + 1; tank = 0; }  // can't start from here
+    }
+    return total >= 0 ? start : -1;
+}
 ```
 
 ---
@@ -1190,8 +2099,11 @@ return jumps
 
 ```cpp
 struct TrieNode {
-    unordered_map<char, TrieNode*> children;
-    bool is_end = false;
+    TrieNode* children[26];
+    bool isEnd;
+    TrieNode() : isEnd(false) {
+        fill(children, children + 26, nullptr);
+    }
 };
 
 class Trie {
@@ -1201,27 +2113,52 @@ public:
 
     void insert(const string& word) {
         TrieNode* node = root;
-        for (char c : word)
-            node = node->children.emplace(c, new TrieNode()).first->second;
-        node->is_end = true;
+        for (char c : word) {
+            int idx = c - 'a';
+            if (!node->children[idx])
+                node->children[idx] = new TrieNode();
+            node = node->children[idx];
+        }
+        node->isEnd = true;
     }
 
     bool search(const string& word) {
         TrieNode* node = root;
         for (char c : word) {
-            if (!node->children.count(c)) return false;
-            node = node->children[c];
+            int idx = c - 'a';
+            if (!node->children[idx]) return false;
+            node = node->children[idx];
         }
-        return node->is_end;
+        return node->isEnd;
     }
 
     bool startsWith(const string& prefix) {
         TrieNode* node = root;
         for (char c : prefix) {
-            if (!node->children.count(c)) return false;
-            node = node->children[c];
+            int idx = c - 'a';
+            if (!node->children[idx]) return false;
+            node = node->children[idx];
         }
         return true;
+    }
+
+    // Count words with given prefix
+    int countWordsWithPrefix(const string& prefix) {
+        TrieNode* node = root;
+        for (char c : prefix) {
+            int idx = c - 'a';
+            if (!node->children[idx]) return 0;
+            node = node->children[idx];
+        }
+        // DFS count from here
+        int count = 0;
+        function<void(TrieNode*)> dfs = [&](TrieNode* n) {
+            if (n->isEnd) count++;
+            for (int i = 0; i < 26; i++)
+                if (n->children[i]) dfs(n->children[i]);
+        };
+        dfs(node);
+        return count;
     }
 };
 ```
@@ -1236,10 +2173,13 @@ public:
 
 - Supports **range queries** and **point updates** in O(log n)
 - Build: O(n); each node stores aggregate for a range
+- Use 4*n size array to store the tree
 
 ```cpp
 class SegmentTree {
+    int n;
     vector<int> tree;
+
     void build(vector<int>& arr, int node, int start, int end) {
         if (start == end) {
             tree[node] = arr[start];
@@ -1247,20 +2187,35 @@ class SegmentTree {
             int mid = (start + end) / 2;
             build(arr, 2*node, start, mid);
             build(arr, 2*node+1, mid+1, end);
+            tree[node] = tree[2*node] + tree[2*node+1];  // sum; change for min/max
+        }
+    }
+
+    void update(int node, int start, int end, int idx, int val) {
+        if (start == end) {
+            tree[node] = val;
+        } else {
+            int mid = (start + end) / 2;
+            if (idx <= mid) update(2*node,   start, mid,   idx, val);
+            else            update(2*node+1, mid+1, end,   idx, val);
             tree[node] = tree[2*node] + tree[2*node+1];
         }
     }
-public:
-    SegmentTree(vector<int>& arr) : tree(4 * arr.size(), 0) {
-        build(arr, 1, 0, arr.size() - 1);
-    }
+
     int query(int node, int start, int end, int l, int r) {
-        if (r < start || end < l) return 0;
-        if (l <= start && end <= r) return tree[node];
+        if (r < start || end < l) return 0;      // out of range
+        if (l <= start && end <= r) return tree[node]; // fully in range
         int mid = (start + end) / 2;
         return query(2*node, start, mid, l, r) +
                query(2*node+1, mid+1, end, l, r);
     }
+
+public:
+    SegmentTree(vector<int>& arr) : n(arr.size()), tree(4 * arr.size(), 0) {
+        build(arr, 1, 0, n - 1);
+    }
+    void update(int idx, int val)     { update(1, 0, n-1, idx, val); }
+    int  query(int l, int r)          { return query(1, 0, n-1, l, r); }
 };
 ```
 
@@ -1270,23 +2225,24 @@ Simpler implementation; supports **prefix sum queries** and **point updates** in
 
 ```cpp
 class BIT {
+    int n;
     vector<int> tree;
 public:
-    BIT(int n) : tree(n + 1, 0) {}
+    BIT(int n) : n(n), tree(n + 1, 0) {}
 
-    void update(int i, int delta) {
-        for (; i < (int)tree.size(); i += i & (-i))  // add lowest set bit
+    void update(int i, int delta) {        // 1-indexed
+        for (; i <= n; i += i & (-i))      // add lowest set bit
             tree[i] += delta;
     }
 
-    int query(int i) {  // prefix sum [1..i]
+    int query(int i) {                     // prefix sum [1..i]
         int total = 0;
-        for (; i > 0; i -= i & (-i))  // remove lowest set bit
+        for (; i > 0; i -= i & (-i))       // remove lowest set bit
             total += tree[i];
         return total;
     }
 
-    int rangeQuery(int l, int r) {
+    int rangeQuery(int l, int r) {         // sum [l..r] (1-indexed)
         return query(r) - query(l - 1);
     }
 };
@@ -1310,28 +2266,81 @@ public:
 ### 18.2 Common Tricks
 
 ```cpp
-n & (n-1)              // Clear lowest set bit; n==0 if n is power of 2
-n & (-n)               // Isolate lowest set bit
-n ^ n == 0             // XOR with itself = 0
-n ^ 0 == n             // XOR with 0 = n
-a ^ b ^ a == b         // XOR cancels duplicates (find single number)
+n & (n-1)              // Clear lowest set bit; n==0 iff n is power of 2
+n & (-n)               // Isolate lowest set bit (LSB)
+n ^ n                  // == 0
+n ^ 0                  // == n
+a ^ b ^ a              // == b (XOR cancels duplicates — find single number)
 (n >> i) & 1           // Check if i-th bit is set
 n | (1 << i)           // Set i-th bit
 n & ~(1 << i)          // Clear i-th bit
 n ^ (1 << i)           // Toggle i-th bit
-__builtin_popcount(n)  // Count set bits (Hamming weight)
+__builtin_popcount(n)  // Count set bits (Hamming weight) — GCC intrinsic
+__builtin_ctz(n)       // Count trailing zeros (position of LSB)
+__builtin_clz(n)       // Count leading zeros
 ```
 
 ### 18.3 Classic Bit Problems
+
+```cpp
+// Single Number — all others appear twice
+int singleNumber(vector<int>& nums) {
+    int result = 0;
+    for (int n : nums) result ^= n;
+    return result;
+}
+
+// Count set bits (Brian Kernighan's algorithm)
+int countBits(int n) {
+    int count = 0;
+    while (n) { n &= (n - 1); count++; }
+    return count;
+}
+
+// Power of two
+bool isPowerOfTwo(int n) {
+    return n > 0 && (n & (n - 1)) == 0;
+}
+
+// Reverse bits of a 32-bit integer
+uint32_t reverseBits(uint32_t n) {
+    uint32_t result = 0;
+    for (int i = 0; i < 32; i++) {
+        result = (result << 1) | (n & 1);
+        n >>= 1;
+    }
+    return result;
+}
+
+// Sum of two integers without +/-
+int getSum(int a, int b) {
+    while (b != 0) {
+        unsigned carry = (unsigned)(a & b) << 1;
+        a = a ^ b;
+        b = carry;
+    }
+    return a;
+}
+
+// Enumerate all subsets of a set of size n
+for (int mask = 0; mask < (1 << n); mask++) {
+    // mask has bit i set iff element i is in this subset
+    for (int i = 0; i < n; i++)
+        if (mask & (1 << i)) { /* element i is in subset */ }
+}
+```
+
+### 18.4 Classic Bit Problems Table
 
 | Problem                       | Trick                                    |
 |-------------------------------|------------------------------------------|
 | Single Number (all others 2x) | XOR all numbers; duplicates cancel       |
 | Single Number (all others 3x) | Count bits mod 3                         |
 | Count set bits                | `n & (n-1)` loop                         |
-| Power of two                  | `n > 0 and (n & (n-1)) == 0`             |
+| Power of two                  | `n > 0 && (n & (n-1)) == 0`             |
 | Reverse bits                  | Extract LSB, shift result left, repeat 32x |
-| Sum of two integers without + | `a ^ b` (no carry) + `(a & b) << 1` (carry) |
+| Sum without +                 | `a ^ b` (no carry) + `(a & b) << 1` (carry) |
+| Missing number (0..n)         | XOR all indices and all values           |
 
 ---
 
@@ -1345,47 +2354,81 @@ int gcd(int a, int b) {
     while (b) { int t = b; b = a % b; a = t; }
     return a;
 }
+// C++17: __gcd(a, b) or std::gcd(a, b)
 
-// LCM
-int lcm(int a, int b) { return a / gcd(a, b) * b; }
+// LCM — lcm(a,b) = a/gcd(a,b)*b (divide first to avoid overflow)
+long long lcm(long long a, long long b) { return a / gcd(a, b) * b; }
 
 // Power with modular exponentiation — O(log exp)
 long long power(long long base, long long exp, long long mod) {
     long long result = 1;
     base %= mod;
     while (exp > 0) {
-        if (exp % 2 == 1) result = result * base % mod;
+        if (exp & 1) result = result * base % mod;
         base = base * base % mod;
-        exp /= 2;
+        exp >>= 1;
     }
     return result;
 }
 
 // Sieve of Eratosthenes — all primes up to n in O(n log log n)
 vector<int> sieve(int n) {
-    vector<bool> is_prime(n + 1, true);
-    is_prime[0] = is_prime[1] = false;
+    vector<bool> isPrime(n + 1, true);
+    isPrime[0] = isPrime[1] = false;
     for (int i = 2; (long long)i * i <= n; i++)
-        if (is_prime[i])
+        if (isPrime[i])
             for (int j = i * i; j <= n; j += i)
-                is_prime[j] = false;
+                isPrime[j] = false;
     vector<int> primes;
     for (int i = 2; i <= n; i++)
-        if (is_prime[i]) primes.push_back(i);
+        if (isPrime[i]) primes.push_back(i);
     return primes;
+}
+
+// Check if prime in O(sqrt(n))
+bool isPrime(int n) {
+    if (n < 2) return false;
+    for (int i = 2; (long long)i * i <= n; i++)
+        if (n % i == 0) return false;
+    return true;
 }
 ```
 
 ### 19.2 Combinatorics
 
 ```cpp
-// Combinations C(n, k) with Pascal's Triangle / DP
-C[0][0] = 1;
-C[n][k] = C[n-1][k-1] + C[n-1][k];
+// Pascal's Triangle — C(n, k) in O(n²) precompute
+const int MAXN = 1001;
+long long C[MAXN][MAXN];
+void buildPascal() {
+    C[0][0] = 1;
+    for (int n = 1; n < MAXN; n++) {
+        C[n][0] = 1;
+        for (int k = 1; k <= n; k++)
+            C[n][k] = C[n-1][k-1] + C[n-1][k];
+    }
+}
 
-// nCr with modular inverse (when mod is prime)
+// nCr with modular inverse (Fermat's little theorem, mod p must be prime)
 // C(n, r) = n! / (r! * (n-r)!) mod p
-// Use Fermat's little theorem: a^(-1) ≡ a^(p-2) mod p
+// Use: a^(-1) mod p = a^(p-2) mod p
+long long nCr(int n, int r, long long MOD) {
+    if (r > n) return 0;
+    long long num = 1, den = 1;
+    for (int i = 0; i < r; i++) {
+        num = num * ((n - i) % MOD) % MOD;
+        den = den * ((i + 1) % MOD) % MOD;
+    }
+    return num * power(den, MOD - 2, MOD) % MOD;
+}
+```
+
+### 19.3 Fast I/O (Competitive Programming)
+
+```cpp
+// At top of main() for faster cin/cout
+ios_base::sync_with_stdio(false);
+cin.tie(nullptr);
 ```
 
 ---
