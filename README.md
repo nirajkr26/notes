@@ -15,7 +15,7 @@ core-notes/
 ├── system-design/      # High & Low Level Design, OOP
 ├── core-cs/            # OS, Networks, DBMS
 ├── devops/             # Docker, Cloud Computing
-├── web/                # Frontend & Backend
+├── web/                # Frontend, Backend, Web3, AI/LLM
 └── interview/          # HR & Behavioural Round
 ```
 
@@ -77,7 +77,8 @@ core-notes/
 |------|----------------|
 | [web/frontend.md](web/frontend.md) | HTML, CSS, JavaScript, React, Performance, Accessibility, Browser Rendering, Webpack |
 | [web/backend.md](web/backend.md) | REST, GraphQL, Authentication, Databases, Caching, API Design, Node.js, Express |
-| [web/web3.md](web/web3.md) | Blockchain Basics, Smart Contracts, Tokens, DeFi, NFTs, Security, Solana, Scaling |
+| [web/web3.md](web/web3.md) | Blockchain Fundamentals, Ethereum/EVM, Solana, DeFi, MEV, Security, Scaling, Bridges, Governance |
+| [web/ai-llm-rag.md](web/ai-llm-rag.md) | AI/ML Basics, Transformers, LLMs, Prompting, GenAI, RAG, Vector DBs, Agents, Guardrails, LLMOps |
 
 ---
 
