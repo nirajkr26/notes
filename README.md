@@ -2,7 +2,7 @@
 
 > 📌 **GitHub:** [nirajkr26](https://github.com/nirajkr26) &nbsp;|&nbsp; **LinkedIn:** [nirajkr26](https://www.linkedin.com/in/nirajkr26)
 
-A collection of detailed, interview-ready technical notes for computer science fundamentals — with C++ code examples throughout.
+A collection of detailed, interview-ready technical notes for computer science fundamentals — with code examples throughout.
 
 ---
 
@@ -15,7 +15,7 @@ core-notes/
 ├── system-design/      # High & Low Level Design, OOP
 ├── core-cs/            # OS, Networks, DBMS
 ├── devops/             # Docker, Cloud Computing
-├── web/                # Frontend & Backend
+├── web/                # Frontend, Backend, Web3, AI/LLM
 └── interview/          # HR & Behavioural Round
 ```
 
@@ -38,6 +38,7 @@ core-notes/
 | [languages/cpp.md](languages/cpp.md) | Pointers, References, Memory Management, Smart Pointers, OOP, Templates, STL, Move Semantics, Multithreading |
 | [languages/java.md](languages/java.md) | JVM/JDK/JRE, OOP, Collections, Generics, Exception Handling, Java 8 Features, Streams, Multithreading, GC |
 | [languages/javascript.md](languages/javascript.md) | Variables, Closures, Hoisting, Prototypes, Async/Await, Event Loop, ES6+ Features, DOM, Promises |
+| [languages/python.md](languages/python.md) | Syntax, Data Types, Control Flow, Functions, OOP, Iterators, Generators, Decorators, Async, Tooling |
 
 ---
 
@@ -76,6 +77,8 @@ core-notes/
 |------|----------------|
 | [web/frontend.md](web/frontend.md) | HTML, CSS, JavaScript, React, Performance, Accessibility, Browser Rendering, Webpack |
 | [web/backend.md](web/backend.md) | REST, GraphQL, Authentication, Databases, Caching, API Design, Node.js, Express |
+| [web/web3.md](web/web3.md) | Blockchain Fundamentals, Ethereum/EVM, Solana, DeFi, MEV, Security, Scaling, Bridges, Governance |
+| [web/ai-llm-rag.md](web/ai-llm-rag.md) | AI/ML Basics, Transformers, LLMs, Prompting, GenAI, RAG, Vector DBs, Agents, Guardrails, LLMOps |
 
 ---
 
@@ -101,4 +104,3 @@ Each file includes:
 - Frequently Asked Questions (FAQs)
 - Common misconceptions
 - Quick revision checklists
-
