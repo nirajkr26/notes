@@ -1,486 +1,593 @@
-# Operating Systems — Interview & Exam Notes
+# Operating Systems — Detailed Interview & Exam Notes
 
-> 📌 **GitHub:** [nirajkr26](https://github.com/nirajkr26) &nbsp;|&nbsp; **LinkedIn:** [nirajkr26](https://www.linkedin.com/in/nirajkr26)
+> **Focus:** processes, threads, scheduling, synchronization, deadlocks, memory, virtual memory, filesystems, I/O, IPC, security, numericals, and interview preparation.
 
----
+## 1. OS Fundamentals
 
-## 1. Introduction / Overview
+An **Operating System** manages hardware resources and provides abstractions/services to applications.
 
-An **Operating System (OS)** is system software that manages computer hardware and software resources and provides common services for programs.
-
-**Functions of OS:**
-- Process management
-- Memory management
-- File system management
-- I/O device management
-- Security and access control
-- Networking support
-
-**Types of OS:**
-
-| Type                  | Description                                    | Examples               |
-|-----------------------|------------------------------------------------|------------------------|
-| Batch OS              | Jobs queued and executed without user interaction | IBM OS/360            |
-| Time-Sharing (Multi-user) | Multiple users share CPU time          | UNIX                   |
-| Real-Time OS (RTOS)   | Guarantees response within strict time bounds  | VxWorks, FreeRTOS      |
-| Distributed OS        | Manages resources across multiple machines     | Amoeba, Plan 9         |
-| Network OS            | Provides networking capabilities               | Novell NetWare         |
-| Mobile OS             | Designed for mobile devices                    | Android, iOS           |
-
----
-
-## 2. Process Management
-
-### 2.1 Process vs Program vs Thread
-
-| Feature      | Program          | Process                        | Thread                           |
-|--------------|------------------|--------------------------------|----------------------------------|
-| Definition   | Static code on disk | Program in execution       | Lightweight unit within a process|
-| Memory       | Disk             | Own address space (PCB)        | Shares process memory            |
-| State        | Passive          | Active                         | Active                           |
-| Creation     | Compiled/stored  | `fork()` / OS scheduler        | `pthread_create()`, `Thread()`   |
-
-### 2.2 Process States
-
-```
-        ┌──────────────────────────────────────────────────┐
-        │                                                  │
-  New ──►  Ready  ◄────────── Running ──► Terminated      │
-           │   ▲               │                          │
-           │   └───────────────┘   (I/O complete)         │
-           │         (dispatch)                           │
-           ▼                                              │
-         Waiting/Blocked ◄──────────── (I/O request) ────┘
+```text
+Applications
+   ↓ system calls
+Kernel
+   ├─ Processes / threads
+   ├─ Memory / virtual memory
+   ├─ Filesystems / storage
+   ├─ I/O / drivers
+   ├─ Networking
+   └─ Security / protection
+   ↓
+Hardware
 ```
 
-**States:**
-1. **New** — Process being created  
-2. **Ready** — Waiting for CPU  
-3. **Running** — Currently executing  
-4. **Waiting/Blocked** — Waiting for I/O or event  
-5. **Terminated** — Execution finished
+### Kernel and user mode
 
-### 2.3 Process Control Block (PCB)
+- **User mode:** restricted privileges; applications run here.
+- **Kernel mode:** privileged execution; kernel can access protected resources.
+- **System call:** controlled transition from user mode to kernel mode.
 
-Information stored per process:
-- Process ID (PID)
-- Process state
-- Program counter (PC)
-- CPU registers
-- CPU scheduling info (priority, queue pointers)
-- Memory management info
-- I/O status info
-- Accounting info
+### OS responsibilities
 
-### 2.4 Context Switching
+| Area | Responsibilities |
+|---|---|
+| Process | Creation, scheduling, synchronization, termination |
+| Memory | Allocation, address translation, paging, protection |
+| File system | Files, directories, metadata, permissions |
+| I/O | Drivers, interrupts, DMA, buffering |
+| Storage | Blocks, caching, disk/SSD access |
+| Security | Authentication, authorization, isolation |
+| Networking | Sockets and network buffers |
 
-> Saving the state (PCB) of the running process and loading the state of the next process.
+### OS types
 
-- **Overhead:** purely overhead; no useful work done during a context switch  
-- Triggered by: timer interrupt, I/O request, system call
+- Batch
+- Time-sharing
+- Real-time
+- Embedded
+- Distributed
+- Network
+- Mobile
 
----
+**Hard real-time** systems have strict deadlines; **soft real-time** systems tolerate occasional deadline misses.
 
-## 3. Threads
+## 2. Kernel Architecture
 
-### 3.1 Thread vs Process (detailed)
+### Monolithic kernel
 
-| Feature             | Process                        | Thread                         |
-|---------------------|--------------------------------|--------------------------------|
-| Address space       | Independent                    | Shared with parent process     |
-| Communication       | IPC (pipes, sockets, shared mem)| Direct (shared memory)        |
-| Context switch cost | High                           | Low                            |
-| Crash isolation     | Crash doesn't affect others    | Crash can affect whole process |
-| Creation time       | Slow                           | Fast                           |
+Most core services run in kernel space. High performance, but a faulty kernel component can affect the whole kernel.
 
-### 3.2 Types of Threads
+### Microkernel
 
-- **User-Level Threads (ULT):** Managed in user space by thread library; kernel unaware; faster creation but one block blocks all  
-- **Kernel-Level Threads (KLT):** Managed by OS; true concurrency on multi-core; higher overhead  
-- **Hybrid:** Mix of ULT and KLT (M:N model)
+Keeps the kernel minimal and moves more services to user space. Improves isolation/modularity but increases IPC complexity and can add overhead.
 
-### 3.3 Multithreading Models
+### Modular/hybrid designs
 
-| Model   | Description                              |
-|---------|------------------------------------------|
-| Many-to-One | Multiple ULTs → one KLT (no true parallelism) |
-| One-to-One  | Each ULT → one KLT (true parallelism, high overhead) |
-| Many-to-Many| M ULTs ↔ N KLTs (flexible, best of both) |
+Practical systems combine ideas. Linux is generally described as a monolithic kernel with loadable modules, not a pure microkernel.
 
----
+## 3. System Calls
 
-## 4. CPU Scheduling
+Common system-call families:
 
-### 4.1 Scheduling Criteria
+| Category | Examples |
+|---|---|
+| Process | `fork`, `exec`, `wait`, `exit` |
+| Files | `open`, `read`, `write`, `close` |
+| IPC | `pipe`, shared-memory/semaphore APIs |
+| Network | `socket`, `bind`, `listen`, `accept`, `connect` |
+| Information | `getpid`, time APIs |
 
-- **CPU Utilization** — keep CPU as busy as possible (↑)
-- **Throughput** — processes completed per unit time (↑)
-- **Turnaround Time** — total time from submission to completion (↓)
-- **Waiting Time** — time spent in ready queue (↓)
-- **Response Time** — time from submission to first response (↓)
+A normal function call can remain in user space; a system call crosses a protection boundary and may execute kernel code.
 
-**Key Formulas:**
-```
-Turnaround Time (TAT) = Completion Time − Arrival Time
-Waiting Time (WT)     = Turnaround Time − Burst Time
-Response Time         = Time of First CPU allocation − Arrival Time
-```
+## 4. Processes
 
-### 4.2 Scheduling Algorithms
+A **process** is an executing program plus its runtime state and resources.
 
-#### First Come First Serve (FCFS)
-- Non-preemptive; processes served in arrival order  
-- **Convoy effect** — short processes wait behind long ones  
-- Simple but poor average waiting time
+### Process memory
 
-#### Shortest Job First (SJF)
-- Non-preemptive; selects process with smallest burst time  
-- **Optimal** for minimizing average waiting time  
-- Problem: cannot know burst time in advance
-
-#### Shortest Remaining Time First (SRTF)
-- Preemptive version of SJF  
-- Can cause **starvation** of longer processes
-
-#### Round Robin (RR)
-- Time quantum `q`; each process gets CPU for `q` units, then preempted  
-- If `q` large → FCFS; if `q` → 0 → processor sharing  
-- Fair; good for time-sharing systems
-
-#### Priority Scheduling
-- Each process has a priority; highest priority runs first  
-- Can be preemptive or non-preemptive  
-- Problem: **Starvation** → Solution: **Aging** (gradually increase priority of waiting processes)
-
-#### Multilevel Queue Scheduling
-- Ready queue split into multiple queues (foreground/background)  
-- Each queue has its own algorithm
-
-#### Multilevel Feedback Queue (MLFQ)
-- Processes can move between queues based on behavior  
-- Most flexible and complex; used in practice (Linux CFS)
-
-### 4.3 Algorithm Comparison
-
-| Algorithm | Preemptive | Starvation | Overhead | Notes          |
-|-----------|-----------|------------|----------|----------------|
-| FCFS      | No        | No         | Low      | Convoy effect  |
-| SJF       | No        | Yes        | Medium   | Optimal avg WT |
-| SRTF      | Yes       | Yes        | High     | Preemptive SJF |
-| RR        | Yes       | No         | Medium   | Fair, quantum  |
-| Priority  | Both      | Yes        | Medium   | Aging fixes it |
-| MLFQ      | Yes       | No         | High     | Most practical |
-
----
-
-## 5. Process Synchronization
-
-### 5.1 Race Condition & Critical Section
-
-- **Race Condition:** Multiple processes access shared data concurrently; outcome depends on execution order  
-- **Critical Section:** Code segment that accesses shared resources
-
-**Requirements for a valid solution:**
-1. **Mutual Exclusion** — only one process in CS at a time  
-2. **Progress** — if no process is in CS, selection of entering process can't be postponed indefinitely  
-3. **Bounded Waiting** — limit on number of times others can enter CS while a process is waiting
-
-### 5.2 Synchronization Mechanisms
-
-#### Peterson's Solution (2 processes)
-- Software solution; uses `flag[]` and `turn` variables  
-- Satisfies all 3 requirements
-
-#### Semaphores
-```
-wait(S):   while (S <= 0); S--;   // P operation
-signal(S): S++;                    // V operation
-```
-- **Binary Semaphore (Mutex):** S ∈ {0,1}; mutual exclusion  
-- **Counting Semaphore:** S ≥ 0; resource counting
-
-#### Mutex vs Semaphore
-
-| Feature          | Mutex                          | Semaphore                      |
-|------------------|--------------------------------|--------------------------------|
-| Value            | Binary (locked/unlocked)       | Integer (0 to N)               |
-| Ownership        | Yes (only owner can unlock)    | No ownership                   |
-| Use case         | Mutual exclusion                | Signaling + resource counting  |
-
-#### Monitors
-- High-level synchronization construct  
-- Only one process active inside monitor at a time  
-- Use **condition variables**: `wait()`, `signal()`
-
-### 5.3 Classical Problems
-
-| Problem                    | Solution                              |
-|----------------------------|---------------------------------------|
-| Producer-Consumer          | Semaphores: `empty`, `full`, `mutex`  |
-| Readers-Writers            | Priority rules + semaphores           |
-| Dining Philosophers        | Semaphore per fork; or ordering       |
-| Sleeping Barber            | Semaphores for chairs + barber        |
-
----
-
-## 6. Deadlocks
-
-### 6.1 Definition & Conditions
-
-> A **deadlock** is a state where a set of processes are blocked, each waiting for a resource held by another.
-
-**Coffman Conditions (all 4 must hold simultaneously):**
-1. **Mutual Exclusion** — resource held non-shareably  
-2. **Hold and Wait** — process holds resource while waiting for more  
-3. **No Preemption** — resources cannot be forcibly taken  
-4. **Circular Wait** — P1 waits for P2, P2 waits for P3, ... Pn waits for P1
-
-### 6.2 Resource Allocation Graph (RAG)
-
-```
-Process → Resource  (request edge)
-Resource → Process  (assignment edge)
-
-No cycle    → No deadlock
-Cycle exists:
-  - Single instance per resource type → DEADLOCK
-  - Multiple instances → POSSIBLE deadlock (check further)
+```text
+High
++----------------+
+| Stack          | ↓
++----------------+
+| Shared libs /  |
+| mapped files   |
++----------------+
+| Heap           | ↑
++----------------+
+| BSS / Data     |
++----------------+
+| Text / Code    |
++----------------+
+Low
 ```
 
-### 6.3 Deadlock Handling Strategies
+Actual layout varies by architecture, OS, ABI, ASLR, and runtime.
 
-#### Prevention (break one of 4 conditions)
-- No mutual exclusion (not always possible)
-- No hold-and-wait: request all resources at once
-- Allow preemption: force release resources
-- No circular wait: impose ordering on resource types
+### Process states
 
-#### Avoidance — Banker's Algorithm
-- Before granting a resource, check if the system remains in a **safe state**  
-- **Safe state:** there exists a sequence in which all processes can finish  
-- Requires knowing maximum resource needs in advance
-
-```
-Safety Algorithm:
-1. Find an unfinished process whose need ≤ available
-2. Pretend it finishes, release its resources
-3. Repeat until all finish (safe) or none qualifies (unsafe)
+```text
+New → Ready → Running → Terminated
+             ↓   ↑
+           Blocked ── I/O complete ──→ Ready
+             ↑
+        I/O / event wait
 ```
 
-#### Detection & Recovery
-- Periodically check for deadlocks (RAG reduction)  
-- Recovery: terminate processes, or preempt resources
+A scheduler dispatches a ready task. A running task can block, terminate, or be preempted.
 
-#### Ignorance (Ostrich Algorithm)
-- Pretend deadlock never occurs (used in most OS, including Linux/Windows for rare deadlocks)
+### PCB
 
----
+The Process Control Block can contain PID, state, program counter, registers, scheduling information, address-space information, open files, accounting data and security credentials.
 
-## 7. Memory Management
+## 5. Context Switching
 
-### 7.1 Memory Hierarchy
+A context switch saves the current execution context and restores another.
 
-```
-Registers (fastest, smallest)
-    ↓
-Cache (L1, L2, L3)
-    ↓
-Main Memory (RAM)
-    ↓
-Secondary Storage (HDD/SSD)
-    ↓
-Tertiary (Tape — slowest, largest)
+```text
+A running → save A → load B → B running
 ```
 
-### 7.2 Contiguous Memory Allocation
+Cost includes register state changes and possible loss of cache/TLB locality. Context switching is overhead, not useful application work.
 
-- **Fixed (Static) Partitioning:** memory divided into fixed-size partitions → **internal fragmentation**  
-- **Dynamic (Variable) Partitioning:** partitions sized to process needs → **external fragmentation**
+## 6. `fork`, `exec`, and Copy-on-Write
 
-**Allocation strategies:**
-- **First Fit** — allocate first hole large enough (fast)
-- **Best Fit** — smallest hole that fits (minimizes wasted space, slow, small fragments)
-- **Worst Fit** — largest hole (maximizes remaining fragment, usually worst performance)
+On UNIX-like systems:
 
-**Fragmentation:**
-- **Internal** — allocated block larger than needed (wasted inside block)  
-- **External** — total free memory sufficient but not contiguous  
-- **Compaction** — shuffle processes to consolidate free space (expensive)
+- `fork()` creates a child process.
+- `exec()` replaces the current process image.
+- `wait()` collects child termination status.
+- `exit()` terminates a process.
 
-### 7.3 Paging
+### Copy-on-write
 
-> Divide logical memory into **pages** (fixed-size), physical memory into **frames**.
+After `fork`, parent and child can initially share physical pages. A write causes a private copy. This avoids eagerly copying the entire address space.
 
-- **Page size** = **Frame size** (power of 2, typically 4KB)  
-- **Page Table** maps page number → frame number  
-- **No external fragmentation**; internal fragmentation ≤ page size
+## 7. Threads
 
+Threads share a process's code, heap and many resources, but each thread has its own stack, registers and program counter.
+
+| Feature | Process | Thread |
+|---|---|---|
+| Address space | Separate | Shared within process |
+| Creation | Usually more expensive | Usually cheaper |
+| Communication | IPC | Shared memory/direct |
+| Isolation | Stronger | Weaker |
+| Parallel execution | Yes | Yes on multi-core |
+
+User-level threading is managed by a runtime/library; kernel-visible threads can be independently scheduled on CPU cores.
+
+## 8. CPU Scheduling
+
+### Metrics
+
+```text
+Turnaround = Completion − Arrival
+Waiting    = Turnaround − CPU Burst
+Response   = First CPU allocation − Arrival
 ```
-Logical Address = [Page Number | Page Offset]
-Physical Address = Frame Base Address + Offset
+
+Goals: maximize utilization/throughput; minimize waiting, response and turnaround; maintain fairness.
+
+### FCFS
+
+Non-preemptive, arrival order. Simple, but can suffer from the **convoy effect** when a long job precedes many short jobs.
+
+### SJF
+
+Select the shortest next CPU burst. Under standard assumptions it minimizes average waiting time among non-preemptive schedules. Exact future burst time must be estimated.
+
+### SRTF
+
+Preemptive SJF: a newly arrived shorter remaining job can preempt the current task. Long jobs can starve.
+
+### Round Robin
+
+Each task receives a time quantum.
+
+- Tiny quantum → high context-switch overhead.
+- Huge quantum → approaches FCFS.
+- Good for interactive time-sharing.
+
+### Priority scheduling
+
+Highest-priority runnable task is selected according to policy. Can be preemptive/non-preemptive. **Starvation** can be reduced by **aging**.
+
+### Priority inversion
+
+A high-priority task waits for a resource held by a low-priority task while medium-priority work runs. **Priority inheritance** is a common mitigation.
+
+### MLFQ
+
+Tasks can move between priority queues based on CPU behavior and waiting. Do not equate textbook MLFQ directly with Linux's modern scheduler; Linux uses more nuanced scheduling mechanisms.
+
+## 9. Synchronization
+
+A **race condition** occurs when correctness depends on concurrent timing/interleaving.
+
+A **critical section** accesses shared state.
+
+Correct mutual exclusion requires:
+
+1. Mutual exclusion
+2. Progress
+3. Bounded waiting
+
+### Mutex
+
+Protects a critical section with ownership-style lock/unlock semantics.
+
+### Semaphore
+
+Counter-based primitive used for signaling or controlling a number of resources.
+
+- Binary semaphore: 0/1.
+- Counting semaphore: 0..N.
+
+### Condition variable
+
+Allows a thread to sleep until a condition changes. Recheck the condition in a loop because wakeups can be spurious.
+
+```c
+lock(m);
+while (!ready) wait(cv, m);
+use_data();
+unlock(m);
 ```
 
-**TLB (Translation Lookaside Buffer):**
-- Cache for page table entries  
-- **Effective Access Time (EAT)** = α(cache hit time) + (1−α)(memory access time)  
-  where α = TLB hit ratio
+### Classical problems
 
-### 7.4 Segmentation
+- Producer-consumer → bounded buffer + synchronization.
+- Readers-writers → multiple readers, exclusive writers; fairness policy matters.
+- Dining philosophers → demonstrates deadlock/starvation; resource ordering can prevent cycles.
 
-> Divide logical memory into **variable-size segments** (code, data, stack)
+## 10. Deadlocks
 
-- **Segment Table:** base address + limit for each segment  
-- External fragmentation possible; matches programmer's view  
-- Protection per segment
+Deadlock is a set of tasks waiting forever because each depends on resources held/waited for by others.
 
-### 7.5 Virtual Memory & Demand Paging
+### Coffman conditions
 
-> Allow processes to execute even if not fully in memory; load pages **on demand**.
+All four are necessary for classic resource deadlock:
 
-- **Page Fault** — referenced page not in memory → OS loads it from disk  
-- **Swap Space** — reserved disk area for swapped-out pages
+1. Mutual exclusion
+2. Hold and wait
+3. No preemption
+4. Circular wait
 
-**Page Fault Handling:**
-1. Check if reference is valid
-2. Find free frame (or use replacement)
-3. Load page from disk into frame
-4. Update page table
-5. Restart instruction
+### Prevention
 
-### 7.6 Page Replacement Algorithms
+Break one condition, e.g. impose global resource ordering to prevent circular wait.
 
-| Algorithm | Description                               | Belady's Anomaly? |
-|-----------|-------------------------------------------|-------------------|
-| FIFO      | Replace oldest page                       | Yes ✅             |
-| LRU       | Replace least recently used               | No ❌              |
-| Optimal (OPT) | Replace page not used for longest time | No ❌           |
-| LFU       | Replace least frequently used             | No ❌              |
-| Clock (Second Chance) | FIFO with use bit                | No ❌         |
+### Avoidance
 
-**Belady's Anomaly:** More frames → more page faults (occurs only in FIFO).
+Grant a request only if the resulting state remains safe. **Banker's algorithm** uses available, allocated and maximum/remaining resource needs.
 
-**Thrashing:** Process spends more time paging than executing (too many processes, insufficient frames).
+### Detection/recovery
 
----
+Detect cycles or unsafe resource relationships, then terminate processes, preempt recoverable resources, or roll back when supported.
 
-## 8. File Systems
+## 11. Memory Management
 
-### 8.1 File Concepts
+- Virtual/logical address: generated by CPU/program.
+- Physical address: RAM location.
+- MMU: translates virtual to physical addresses.
 
-- **File:** named collection of related information stored on secondary storage  
-- **File attributes:** name, identifier, type, location, size, protection, timestamps
+### Fragmentation
 
-### 8.2 Directory Structure
+- **Internal:** unused space inside an allocated block.
+- **External:** free memory exists but is fragmented into separate holes.
+- **Compaction:** moves allocations to consolidate holes; expensive.
 
-| Structure       | Description                                |
-|-----------------|--------------------------------------------|
-| Single-level    | All files in one directory                 |
-| Two-level       | Separate directory per user                |
-| Tree-structured | Hierarchical; absolute/relative paths      |
-| Acyclic Graph   | Allows shared files (links)                |
-| General Graph   | Allows cycles; requires cycle detection    |
+## 12. Paging
 
-### 8.3 File Allocation Methods
+Virtual memory is divided into fixed-size **pages**; physical memory into same-size **frames**.
 
-| Method       | Description                          | Pros                  | Cons                           |
-|--------------|--------------------------------------|-----------------------|--------------------------------|
-| Contiguous   | Files stored in contiguous blocks    | Fast sequential access| External fragmentation         |
-| Linked       | Blocks linked via pointers           | No fragmentation      | No random access; pointer overhead |
-| Indexed      | Index block holds all block pointers | Random access         | Overhead for small files       |
+```text
+Virtual address = [ page number | offset ]
+Page table: page number → frame number
+Physical address = [ frame number | offset ]
+```
 
-### 8.4 Disk Scheduling Algorithms
+If page size is `2^n`, offset is `n` bits.
 
-| Algorithm | Strategy                                   | Notes                         |
-|-----------|--------------------------------------------|-------------------------------|
-| FCFS      | Service in order of arrival                | Simple; poor seek time        |
-| SSTF      | Shortest seek time first                   | Good avg; starvation possible |
-| SCAN      | Elevator; service in one direction then reverse | Good throughput       |
-| C-SCAN    | SCAN but only one direction; jump to start | More uniform wait times       |
-| LOOK/C-LOOK | SCAN/C-SCAN but only go as far as last request | Better than SCAN/C-SCAN |
+Example: 32-bit virtual address + 4 KiB pages (`2^12`) → 12 offset bits + 20 page-number bits.
 
----
+Paging removes external fragmentation but can create internal fragmentation.
 
-## 9. I/O Systems
+## 13. Page Tables and TLB
 
-- **Programmed I/O (Polling):** CPU continuously checks device status (wastes CPU cycles)  
-- **Interrupt-driven I/O:** Device interrupts CPU when ready (efficient)  
-- **DMA (Direct Memory Access):** Device controller transfers data directly to memory without CPU  
-- **Spooling:** Simultaneous Peripheral Operations OnLine; e.g., print queue
+A page-table entry can contain frame number plus present, permission, accessed/reference and dirty bits.
 
----
+The **TLB** caches recent virtual→physical translations.
 
-## 10. Real-world Use Cases
+```text
+CPU virtual address → TLB
+                    ├─ hit → frame
+                    └─ miss → page table → frame
+```
 
-| Concept              | Example                                       |
-|----------------------|-----------------------------------------------|
-| Scheduling (RR)      | Time-sharing on UNIX/Linux terminals          |
-| Virtual Memory       | Running large applications on limited RAM     |
-| Semaphores           | Database connection pools                     |
-| Deadlock avoidance   | Banker's algorithm in resource managers       |
-| File systems         | ext4 (Linux), NTFS (Windows), APFS (macOS)    |
-| Paging               | Every modern OS (Windows, Linux, macOS)       |
+**TLB miss ≠ page fault.** A TLB miss can still find a resident page in the page table.
 
----
+### Multi-level page tables
 
-## 11. Frequently Asked Questions (FAQs)
+Large virtual address spaces use hierarchical page tables so unused regions do not require fully allocated lower-level tables.
 
-**Q1. What is the difference between process and thread?**  
-> A process is an independent program in execution with its own address space. A thread is a unit of execution within a process, sharing the process's memory.
+## 14. Segmentation
 
-**Q2. What is a context switch?**  
-> Saving the state of the current process and loading the state of the next process. It's pure overhead but necessary for multitasking.
+Segmentation divides an address space into variable-size logical units such as code, data and stack.
 
-**Q3. What is a race condition? How do you prevent it?**  
-> When multiple processes access shared data concurrently and the outcome depends on execution order. Prevented using synchronization (mutex, semaphores, monitors).
+| Paging | Segmentation |
+|---|---|
+| Fixed-size units | Variable-size units |
+| No external fragmentation | External fragmentation possible |
+| Mostly transparent | Matches logical program structure |
+| Page-level protection | Segment-level protection |
 
-**Q4. What are the Coffman conditions for deadlock?**  
-> Mutual exclusion, Hold & Wait, No preemption, Circular wait — all four must hold simultaneously.
+## 15. Virtual Memory and Page Faults
 
-**Q5. What is Belady's Anomaly?**  
-> In FIFO page replacement, increasing the number of frames sometimes increases the number of page faults.
+Virtual memory provides large, isolated address spaces while only part of each process needs to reside in RAM.
 
-**Q6. What is thrashing?**  
-> When a process spends more time in paging than executing due to insufficient frames, leading to very low CPU utilization.
+A **page fault** occurs when a referenced page requires OS handling because it is not currently resident or the access is otherwise not immediately satisfiable.
 
-**Q7. Difference between paging and segmentation?**  
-> Paging: fixed-size units (pages/frames), no external fragmentation, hardware-driven. Segmentation: variable-size logical units, programmer's view, can cause external fragmentation.
+Typical flow:
 
-**Q8. What is the difference between a mutex and a semaphore?**  
-> Mutex has ownership (only the locking thread can unlock); binary. Semaphore has no ownership; can be binary or counting.
+1. CPU references page.
+2. Hardware detects non-resident page.
+3. Trap to kernel.
+4. Validate access.
+5. Find free frame or victim.
+6. Read page from backing storage if needed.
+7. Update page table/TLB.
+8. Restart instruction.
 
-**Q9. What is the purpose of TLB?**  
-> TLB (Translation Lookaside Buffer) is a fast cache for page table entries that speeds up virtual-to-physical address translation.
+Page faults are normal in demand paging; not every page fault indicates a bug.
 
-**Q10. What is a zombie process?**  
-> A process that has completed execution but still has an entry in the process table because its parent hasn't read its exit status using `wait()`.
+## 16. Page Replacement
 
----
+| Algorithm | Idea | Key point |
+|---|---|---|
+| FIFO | Oldest page out | Can show Belady anomaly |
+| OPT | Farthest future use | Theoretical optimum |
+| LRU | Least recently used | Uses temporal locality |
+| Clock | Reference-bit approximation | Practical LRU approximation |
+| LFU | Least frequently used | Can retain stale popular pages |
 
-## 12. Common Misconceptions
+### Belady's anomaly
 
-- ❌ *"Threads don't share anything"* → Threads share heap, global variables, code; only stack and registers are private.  
-- ❌ *"Deadlock and livelock are the same"* → Livelock: processes keep changing state in response to each other but make no progress.  
-- ❌ *"Optimal page replacement is practical"* → It's theoretical; requires knowing the future.  
-- ❌ *"More RAM always prevents thrashing"* → Thrashing is also caused by too many processes; working-set model helps.  
-- ❌ *"Starvation and deadlock are the same"* → Deadlock: processes blocked forever; Starvation: process waits indefinitely but others make progress.
+Increasing frames can increase faults under FIFO. True LRU is a stack algorithm and does not have this anomaly.
 
----
+### Thrashing
 
-## 13. Quick Revision Checklist
+The system spends excessive time paging and too little time executing. Mitigations include reducing multiprogramming or increasing effective frame allocation.
 
-- [ ] Process states (5 states and transitions)  
-- [ ] PCB contents  
-- [ ] Scheduling algorithms + formulas (TAT, WT)  
-- [ ] Coffman conditions for deadlock  
-- [ ] Banker's algorithm steps  
-- [ ] Paging: address translation, TLB, EAT formula  
-- [ ] Page replacement algorithms + Belady's anomaly  
-- [ ] Semaphore operations (wait/signal)  
-- [ ] Classical synchronization problems  
-- [ ] File allocation methods  
-- [ ] Disk scheduling algorithms  
-- [ ] Thrashing and working-set model  
+### Locality
 
----
+- Temporal locality: recent items likely reused.
+- Spatial locality: nearby addresses likely used soon.
 
-*Last updated: 2026 | Suitable for: GATE, university exams, software engineering interviews*
+Caches, TLBs and virtual memory exploit locality.
+
+## 17. File Systems
+
+A file system manages persistent data, metadata and namespaces.
+
+Typical metadata includes name, size, ownership, permissions, timestamps and block/extents information.
+
+### Inodes
+
+In UNIX-like systems, a directory maps a filename to an inode. The inode stores metadata and references/extents for the file's data. Filename and inode are different concepts.
+
+### Allocation
+
+| Method | Advantage | Disadvantage |
+|---|---|---|
+| Contiguous | Fast sequential/random access | Fragmentation/growth problem |
+| Linked | Easy growth | Poor random access |
+| Indexed | Random access | Metadata overhead |
+| Extents | Compact representation of contiguous ranges | More complex allocation |
+
+## 18. Disk Scheduling
+
+Classical seek algorithms target magnetic disks: FCFS, SSTF, SCAN, C-SCAN, LOOK and C-LOOK.
+
+SSDs do not have mechanical seek heads, so classical seek optimization is less directly relevant to them.
+
+## 19. I/O
+
+### Polling
+
+CPU repeatedly checks device state. Simple but can waste CPU.
+
+### Interrupt-driven I/O
+
+Device notifies CPU when service/completion needs attention.
+
+### DMA
+
+A device/DMA controller transfers blocks between device and memory with minimal CPU copying.
+
+```text
+Device ↔ DMA/controller ↔ RAM
+              ↑
+       CPU configures transfer
+```
+
+### Buffering vs caching vs spooling
+
+- **Buffering:** absorbs rate/burst mismatch.
+- **Caching:** stores likely-reused data.
+- **Spooling:** queues work for a sequential device such as a printer.
+
+## 20. IPC
+
+Common inter-process communication mechanisms:
+
+- Pipes/FIFOs
+- Message queues
+- Shared memory
+- Semaphores
+- Signals
+- Sockets
+
+Shared memory is fast but requires synchronization. Sockets can communicate between processes on the same machine or across a network.
+
+## 21. Signals and Process Control
+
+UNIX-like systems use signals for asynchronous notifications.
+
+- `SIGTERM`: request graceful termination.
+- `SIGKILL`: unconditional termination; cannot be caught or ignored.
+- `SIGINT`: terminal interrupt, commonly Ctrl+C.
+- `SIGHUP`: terminal hangup; commonly also used by daemons as a reload signal.
+
+## 22. Security and Protection
+
+- Authentication: who are you?
+- Authorization: what can you do?
+- Least privilege: grant only necessary permissions.
+- Isolation: prevent one process from corrupting another's state.
+- Memory permissions: read/write/execute controls.
+
+## 23. OS Numericals
+
+### CPU scheduling
+
+Given arrival/burst times:
+
+1. Draw the Gantt chart.
+2. Find completion time.
+3. `TAT = CT - AT`.
+4. `WT = TAT - BT`.
+5. `RT = first start - AT`.
+6. Average the metrics.
+
+### Page replacement
+
+Process a reference string left-to-right, mark hits/faults, apply the selected policy and count page faults.
+
+### Address translation
+
+For page size `2^n`, the lower `n` address bits are the offset; remaining bits identify the virtual page.
+
+## 24. Interview Questions & Answers
+
+### Q1. Process vs program?
+
+A program is passive code/data; a process is a running instance with execution state and resources.
+
+### Q2. Process vs thread?
+
+A process owns an address space/resource context; threads are execution units within that process and normally share its address space.
+
+### Q3. Why are threads usually cheaper?
+
+They share address-space resources, so less setup and isolation work is required. They still incur scheduling and synchronization overhead.
+
+### Q4. What is context switching?
+
+Saving one execution context and restoring another. It is overhead and can hurt cache/TLB locality.
+
+### Q5. What is a race condition?
+
+A correctness problem whose result depends on the timing/interleaving of concurrent operations.
+
+### Q6. Mutex vs semaphore?
+
+A mutex primarily provides ownership-based mutual exclusion; a semaphore is a counter used for signaling or controlling a resource count.
+
+### Q7. Coffman conditions?
+
+Mutual exclusion, hold-and-wait, no preemption and circular wait.
+
+### Q8. Deadlock prevention vs avoidance?
+
+Prevention breaks a necessary condition structurally. Avoidance checks whether granting a request keeps the system in a safe state.
+
+### Q9. Starvation vs deadlock?
+
+Starvation means a task may wait indefinitely because policy repeatedly favors others. Deadlock is a cyclic dependency where involved tasks cannot proceed.
+
+### Q10. What is aging?
+
+Increasing the priority of long-waiting tasks to reduce starvation.
+
+### Q11. What is a page fault?
+
+A trap/exception requiring OS handling because the referenced virtual page is not immediately resident or accessible.
+
+### Q12. Page fault vs TLB miss?
+
+TLB miss means the translation cache missed. Page fault means the memory access requires page-fault handling; a TLB miss can resolve without a page fault.
+
+### Q13. Why is TLB needed?
+
+It caches recent address translations, avoiding a page-table walk for every memory access.
+
+### Q14. What is virtual memory?
+
+An address-space abstraction providing process isolation and allowing only portions of an address space to be resident in RAM.
+
+### Q15. What is thrashing?
+
+Excessive paging that leaves little CPU time for useful application work.
+
+### Q16. Why use copy-on-write after `fork`?
+
+Because parent and child often do not modify all pages; copying only modified pages saves memory and time.
+
+### Q17. What is DMA?
+
+Direct Memory Access lets a device controller move data to/from RAM with minimal CPU involvement.
+
+### Q18. Kernel mode vs user mode?
+
+Kernel mode has privileged access; user mode is restricted and must use controlled OS interfaces.
+
+### Q19. What is priority inversion?
+
+A high-priority task is blocked indirectly by a low-priority task holding a needed resource, often worsened by medium-priority work.
+
+### Q20. Why does page size matter?
+
+Larger pages reduce page-table overhead but can increase internal fragmentation and the amount of data moved on a fault.
+
+### Q21. Is every page fault an error?
+
+No. Demand paging intentionally generates page faults when pages are first accessed.
+
+### Q22. Is Linux a microkernel?
+
+No. Linux is generally described as a monolithic kernel with modular/loadable components.
+
+### Q23. Is virtual memory the same as swap?
+
+No. Virtual memory is the address-space abstraction; swap is one possible backing-storage mechanism.
+
+### Q24. Why can a blocked process improve CPU utilization?
+
+While it waits for I/O, the scheduler can run another ready task instead of leaving the CPU idle.
+
+### Q25. Why are classical disk algorithms less important for SSDs?
+
+SSDs lack mechanical seek heads, so dominant costs and optimization strategies differ from magnetic disks.
+
+## 25. Quick Revision Checklist
+
+- [ ] Kernel/user mode and system calls
+- [ ] Process states and PCB
+- [ ] `fork`, `exec`, `wait`, COW
+- [ ] Threads and context switches
+- [ ] FCFS/SJF/SRTF/RR/Priority/MLFQ
+- [ ] Scheduling numericals
+- [ ] Race conditions and critical sections
+- [ ] Mutex/semaphore/condition variable
+- [ ] Classical synchronization problems
+- [ ] Deadlock conditions and Banker's algorithm
+- [ ] Paging/segmentation
+- [ ] Page tables and TLB
+- [ ] Virtual memory/page faults
+- [ ] FIFO/LRU/OPT/Clock and thrashing
+- [ ] File systems/inodes/extents
+- [ ] Disk scheduling
+- [ ] Interrupts/DMA
+- [ ] IPC/signals
+- [ ] Security/protection
