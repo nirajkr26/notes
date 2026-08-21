@@ -1,2453 +1,1571 @@
-# Data Structures & Algorithms (DSA) — Super Detailed Interview & Exam Notes (C++)
+# Data Structures & Algorithms — Detailed Interview, Exam & Multi-Language Guide
 
-> 📌 **GitHub:** [nirajkr26](https://github.com/nirajkr26) &nbsp;|&nbsp; **LinkedIn:** [nirajkr26](https://www.linkedin.com/in/nirajkr26)
-
----
-
-## 1. Introduction / Overview
-
-**Data Structures** are ways to organize and store data so operations can be performed efficiently.  
-**Algorithms** are step-by-step procedures to solve a problem or perform a computation.
-
-**Why DSA Matters:**
-- Determines performance at scale (O(n) vs O(n²) is the difference between seconds and hours)
-- Every major tech interview tests DSA knowledge
-- Foundation for system design, compilers, databases, and operating systems
+> **Languages:** C++ + Python + JavaScript
+>
+> **Focus:** problem-solving patterns, complexity, data structures, algorithms, interview strategy, implementation templates, edge cases, and coding-round preparation across common company tech stacks.
 
 ---
 
-## 2. Complexity Analysis
+## 1. DSA Mental Model
 
-### 2.1 Big-O Notation
+Data structures organize information so operations can be performed efficiently. Algorithms describe how to transform input into output.
 
-Describes the **worst-case** growth rate of time or space as input size `n` grows.
+The interview skill is **pattern recognition**, not memorizing hundreds of solutions.
 
-| Notation     | Name         | Example                                      |
-|--------------|--------------|----------------------------------------------|
-| O(1)         | Constant     | Array access by index, HashMap get/put        |
-| O(log n)     | Logarithmic  | Binary search, balanced BST operations        |
-| O(n)         | Linear       | Linear search, array traversal                |
-| O(n log n)   | Linearithmic | Merge sort, heap sort, efficient sorts        |
-| O(n²)        | Quadratic    | Bubble sort, nested loops                     |
-| O(n³)        | Cubic        | Matrix multiplication (naive)                 |
-| O(2ⁿ)        | Exponential  | Subset enumeration, naive recursion           |
-| O(n!)        | Factorial    | Permutation generation                        |
+```text
+Problem → Constraints → Brute force → Bottleneck → Pattern → Data structure
+       → Invariant/correctness → Complexity → Code → Edge cases
+```
 
-**Growth order:** O(1) < O(log n) < O(√n) < O(n) < O(n log n) < O(n²) < O(2ⁿ) < O(n!)
+### Pattern recognition
 
-### 2.2 Space Complexity
-
-Accounts for **extra memory** used (not including input). Recursive calls use O(depth) stack space.
-
-### 2.3 Amortized Analysis
-
-Average cost per operation over a sequence. Example: Dynamic array doubling — individual resize is O(n) but amortized O(1) per append.
-
-### 2.4 Recurrence Relations
-
-| Recurrence          | Solution    | Algorithm         |
-|---------------------|-------------|-------------------|
-| T(n) = T(n/2) + O(1)| O(log n)    | Binary search     |
-| T(n) = T(n-1) + O(1)| O(n)        | Linear recursion  |
-| T(n) = 2T(n/2) + O(n)| O(n log n) | Merge sort        |
-| T(n) = 2T(n/2) + O(1)| O(n)       | Tree traversal    |
-| T(n) = T(n-1) + O(n)| O(n²)       | Selection sort    |
+| Signal | Pattern |
+|---|---|
+| Sorted input | Binary search / two pointers |
+| Contiguous range | Sliding window / prefix sum |
+| Frequency or membership | Hash map / set |
+| Next greater/smaller | Monotonic stack |
+| Top K / repeated min/max | Heap |
+| Shortest unweighted path | BFS |
+| Non-negative weighted shortest path | Dijkstra |
+| Dependencies/order | Topological sort |
+| Connectivity | DFS/BFS/DSU |
+| All combinations | Backtracking |
+| Repeated overlapping states | DP |
+| Prefix lookup | Trie |
+| “Can we achieve X?” | Binary search on answer |
 
 ---
 
-## 3. Arrays
+# 2. Complexity Analysis
 
-### 3.1 Properties
+| Complexity | Typical example |
+|---|---|
+| O(1) | Array access |
+| O(log n) | Binary search |
+| O(n) | Single traversal |
+| O(n log n) | Efficient comparison sort |
+| O(n²) | Pairwise comparison |
+| O(2ⁿ) | Subset enumeration |
+| O(n!) | Permutations |
 
-- Contiguous memory; O(1) access by index
-- Fixed size (static) or dynamic (`std::vector` doubles capacity)
-- Insert/delete at middle: O(n) due to shifting
+Big-O describes asymptotic growth. Real performance also depends on constants, allocations, cache locality, runtime, and input size.
 
-### 3.2 Key Techniques
+### Best / average / worst case
 
-#### Two Pointers
-Find pair summing to target in sorted array — avoids nested loops.
+State which one you mean. Hash lookup is typically O(1) average but can degrade to O(n) worst case.
 
-```cpp
-// Returns {i, j} such that arr[i] + arr[j] == target, or {-1,-1}
-pair<int,int> twoSum(vector<int>& arr, int target) {
-    int left = 0, right = (int)arr.size() - 1;
-    while (left < right) {
-        int sum = arr[left] + arr[right];
-        if (sum == target) return {left, right};
-        else if (sum < target) left++;
-        else right--;
-    }
-    return {-1, -1};
-}
-```
+### Space
 
-#### Sliding Window
-Maintain a window `[left, right]` and expand/shrink as needed.
+Separate input storage, auxiliary space, recursion stack, and output space.
 
-```cpp
-// Longest subarray with sum <= k
-int longestSubarrayWithSumAtMostK(vector<int>& arr, int k) {
-    int left = 0, sum = 0, maxLen = 0;
-    for (int right = 0; right < (int)arr.size(); right++) {
-        sum += arr[right];
-        while (sum > k) sum -= arr[left++];
-        maxLen = max(maxLen, right - left + 1);
-    }
-    return maxLen;
-}
-```
+### Amortized analysis
 
-#### Prefix Sum
-Precompute cumulative sums for O(1) range sum queries.
-
-```cpp
-// Build prefix array (1-indexed)
-vector<int> buildPrefix(vector<int>& arr) {
-    int n = arr.size();
-    vector<int> prefix(n + 1, 0);
-    for (int i = 0; i < n; i++)
-        prefix[i + 1] = prefix[i] + arr[i];
-    return prefix;
-}
-// rangeSum(l, r) = prefix[r+1] - prefix[l]  (0-indexed, inclusive)
-int rangeSum(vector<int>& prefix, int l, int r) {
-    return prefix[r + 1] - prefix[l];
-}
-```
-
-#### Kadane's Algorithm (Max Subarray Sum)
-
-```cpp
-int maxSubarraySum(vector<int>& arr) {
-    int maxSum = arr[0], currentSum = arr[0];
-    for (int i = 1; i < (int)arr.size(); i++) {
-        currentSum = max(arr[i], currentSum + arr[i]);
-        maxSum = max(maxSum, currentSum);
-    }
-    return maxSum;
-}
-```
-
-#### Trapping Rain Water (Two Pointers)
-
-```cpp
-int trap(vector<int>& height) {
-    int left = 0, right = (int)height.size() - 1;
-    int leftMax = 0, rightMax = 0, water = 0;
-    while (left < right) {
-        if (height[left] < height[right]) {
-            leftMax = max(leftMax, height[left]);
-            water += leftMax - height[left];
-            left++;
-        } else {
-            rightMax = max(rightMax, height[right]);
-            water += rightMax - height[right];
-            right--;
-        }
-    }
-    return water;
-}
-```
-
-#### Merge Intervals
-
-```cpp
-vector<vector<int>> merge(vector<vector<int>>& intervals) {
-    sort(intervals.begin(), intervals.end());
-    vector<vector<int>> result;
-    for (auto& interval : intervals) {
-        if (result.empty() || result.back()[1] < interval[0])
-            result.push_back(interval);
-        else
-            result.back()[1] = max(result.back()[1], interval[1]);
-    }
-    return result;
-}
-```
-
-#### Rotate Array (3 Reverses)
-
-```cpp
-void reverse(vector<int>& arr, int l, int r) {
-    while (l < r) swap(arr[l++], arr[r--]);
-}
-void rotate(vector<int>& arr, int k) {
-    int n = arr.size();
-    k %= n;
-    reverse(arr, 0, n - 1);
-    reverse(arr, 0, k - 1);
-    reverse(arr, k, n - 1);
-}
-```
-
-### 3.3 Common Array Problems
-
-| Problem                      | Technique              | Complexity      |
-|------------------------------|------------------------|-----------------|
-| Two Sum                      | HashMap                | O(n)            |
-| 3Sum                         | Sort + Two Pointers    | O(n²)           |
-| Max Subarray                 | Kadane's               | O(n)            |
-| Product Except Self          | Prefix + Suffix arrays | O(n)            |
-| Rotate Array                 | Reverse three times    | O(n)            |
-| Trapping Rain Water          | Two Pointers / Stack   | O(n)            |
-| Merge Intervals              | Sort + greedy          | O(n log n)      |
-| Longest Consecutive Sequence | HashSet                | O(n)            |
+A dynamic array append is O(1) amortized even though occasional resizing costs O(n).
 
 ---
 
-## 4. Strings
+# 3. Interview Problem-Solving Framework
 
-### 4.1 Key Operations
+1. Restate the problem.
+2. Clarify constraints and assumptions.
+3. Give brute force.
+4. Identify the bottleneck.
+5. Recognize the pattern.
+6. Choose the data structure.
+7. State the invariant.
+8. Explain correctness.
+9. Analyze time and space.
+10. Code.
+11. Test edge cases.
 
-| Operation         | Technique                          | Complexity      |
-|-------------------|------------------------------------|-----------------|
-| Palindrome check  | Two pointers                       | O(n)            |
-| Anagram check     | Frequency array / sort             | O(n)            |
-| Substring search  | KMP / Rabin-Karp                   | O(n+m)          |
-| Longest palindrome substring | Expand around center    | O(n²) / Manacher O(n) |
-| Valid parentheses | Stack                              | O(n)            |
+Useful heuristic:
 
-### 4.2 Sliding Window on Strings
-
-```cpp
-// Longest substring without repeating characters
-int lengthOfLongestSubstring(string s) {
-    unordered_map<char, int> seen;  // char -> last seen index
-    int left = 0, maxLen = 0;
-    for (int right = 0; right < (int)s.size(); right++) {
-        auto it = seen.find(s[right]);
-        if (it != seen.end() && it->second >= left)
-            left = it->second + 1;
-        seen[s[right]] = right;
-        maxLen = max(maxLen, right - left + 1);
-    }
-    return maxLen;
-}
-
-// Minimum window substring (contains all chars of t)
-string minWindow(string s, string t) {
-    unordered_map<char, int> need, window;
-    for (char c : t) need[c]++;
-    int left = 0, matched = 0, minLen = INT_MAX, start = 0;
-    for (int right = 0; right < (int)s.size(); right++) {
-        char c = s[right];
-        if (need.count(c) && ++window[c] == need[c]) matched++;
-        while (matched == (int)need.size()) {
-            if (right - left + 1 < minLen) {
-                minLen = right - left + 1;
-                start = left;
-            }
-            char l = s[left++];
-            if (need.count(l) && window[l]-- == need[l]) matched--;
-        }
-    }
-    return minLen == INT_MAX ? "" : s.substr(start, minLen);
-}
-```
-
-### 4.3 KMP (Knuth-Morris-Pratt)
-
-Build failure function (lps[]) — longest proper prefix that is also suffix. Avoids redundant comparisons.
-
-```cpp
-// Build LPS (longest proper prefix-suffix) array — O(m)
-vector<int> buildLPS(const string& pattern) {
-    int m = pattern.size();
-    vector<int> lps(m, 0);
-    int len = 0, i = 1;
-    while (i < m) {
-        if (pattern[i] == pattern[len]) {
-            lps[i++] = ++len;
-        } else if (len != 0) {
-            len = lps[len - 1];
-        } else {
-            lps[i++] = 0;
-        }
-    }
-    return lps;
-}
-
-// KMP search — returns all starting indices of pattern in text — O(n+m)
-vector<int> kmpSearch(const string& text, const string& pattern) {
-    int n = text.size(), m = pattern.size();
-    vector<int> lps = buildLPS(pattern);
-    vector<int> matches;
-    int i = 0, j = 0;  // i = text index, j = pattern index
-    while (i < n) {
-        if (text[i] == pattern[j]) { i++; j++; }
-        if (j == m) {
-            matches.push_back(i - j);
-            j = lps[j - 1];
-        } else if (i < n && text[i] != pattern[j]) {
-            if (j != 0) j = lps[j - 1];
-            else i++;
-        }
-    }
-    return matches;
-}
-```
-
-### 4.4 Palindrome — Expand Around Center
-
-```cpp
-// Returns length of longest palindrome centered at (l, r)
-int expand(const string& s, int l, int r) {
-    while (l >= 0 && r < (int)s.size() && s[l] == s[r]) { l--; r++; }
-    return r - l - 1;  // length of palindrome
-}
-
-string longestPalindrome(string s) {
-    int start = 0, maxLen = 1;
-    for (int i = 0; i < (int)s.size(); i++) {
-        int odd  = expand(s, i, i);       // odd-length
-        int even = expand(s, i, i + 1);   // even-length
-        int best = max(odd, even);
-        if (best > maxLen) {
-            maxLen = best;
-            start = i - (best - 1) / 2;
-        }
-    }
-    return s.substr(start, maxLen);
-}
+```text
+n ≈ 20    → exponential may be possible
+n ≈ 10³   → O(n²) may be possible
+n ≈ 10⁵   → usually O(n log n) or O(n)
 ```
 
 ---
 
-## 5. Linked Lists
+# 4. Arrays
 
-### 5.1 Node Definition
+Dynamic arrays typically provide O(1) indexing and O(1) amortized append; middle insertion/deletion is O(n).
 
+## 4.1 Two Sum — Hash Map
+
+**Time:** O(n) average. **Space:** O(n).
+
+### C++
 ```cpp
-struct ListNode {
-    int val;
-    ListNode* next;
-    ListNode(int x) : val(x), next(nullptr) {}
-};
-```
-
-### 5.2 Types
-
-| Type              | Description                                    | Space |
-|-------------------|------------------------------------------------|-------|
-| Singly Linked     | Each node has `next` pointer                   | O(n)  |
-| Doubly Linked     | Each node has `prev` and `next`                | O(n)  |
-| Circular Singly   | Last node's `next` points to head              | O(n)  |
-
-### 5.3 Operations Complexity
-
-| Operation       | Singly LL | With Tail Pointer |
-|-----------------|-----------|-------------------|
-| Access by index | O(n)      | O(n)              |
-| Prepend         | O(1)      | O(1)              |
-| Append          | O(n)      | O(1)              |
-| Delete head     | O(1)      | O(1)              |
-| Delete by value | O(n)      | O(n)              |
-| Search          | O(n)      | O(n)              |
-
-### 5.4 Classic Techniques
-
-#### Reverse a Linked List
-
-```cpp
-ListNode* reverseList(ListNode* head) {
-    ListNode* prev = nullptr;
-    ListNode* curr = head;
-    while (curr) {
-        ListNode* next = curr->next;
-        curr->next = prev;
-        prev = curr;
-        curr = next;
+vector<int> twoSum(const vector<int>& nums, int target) {
+    unordered_map<int,int> index;
+    for (int i=0;i<(int)nums.size();++i) {
+        int need=target-nums[i];
+        if (index.count(need)) return {index[need],i};
+        index[nums[i]]=i;
     }
-    return prev;  // new head
+    return {};
+}
+```
+### Python
+```python
+def two_sum(nums: list[int], target: int) -> list[int]:
+    index = {}
+    for i, x in enumerate(nums):
+        need = target - x
+        if need in index:
+            return [index[need], i]
+        index[x] = i
+    return []
+```
+### JavaScript
+```javascript
+function twoSum(nums, target) {
+  const index = new Map();
+  for (let i = 0; i < nums.length; i++) {
+    const need = target - nums[i];
+    if (index.has(need)) return [index.get(need), i];
+    index.set(nums[i], i);
+  }
+  return [];
 }
 ```
 
-#### Floyd's Cycle Detection (Fast/Slow Pointers)
+## 4.2 Maximum Subarray — Kadane
+
+Track the best sum ending at the current position. **Time:** O(n), **space:** O(1).
+
+### C++
+```cpp
+long long maxSubarraySum(const vector<int>& nums) {
+    long long current=nums[0], best=nums[0];
+    for (int i=1;i<(int)nums.size();++i) {
+        current=max((long long)nums[i],current+nums[i]);
+        best=max(best,current);
+    }
+    return best;
+}
+```
+### Python
+```python
+def max_subarray_sum(nums: list[int]) -> int:
+    current = best = nums[0]
+    for x in nums[1:]:
+        current = max(x, current + x)
+        best = max(best, current)
+    return best
+```
+### JavaScript
+```javascript
+function maxSubarraySum(nums) {
+  let current = nums[0], best = nums[0];
+  for (let i = 1; i < nums.length; i++) {
+    current = Math.max(nums[i], current + nums[i]);
+    best = Math.max(best, current);
+  }
+  return best;
+}
+```
+
+**Pitfall:** initializing the answer to zero fails for all-negative input.
+
+## 4.3 Prefix Sum
+
+`prefix[i+1] = prefix[i] + nums[i]`; inclusive range `[l,r]` is `prefix[r+1]-prefix[l]`.
+
+### C++
+```cpp
+vector<long long> buildPrefix(const vector<int>& a) {
+    vector<long long> p(a.size()+1);
+    for (size_t i=0;i<a.size();++i) p[i+1]=p[i]+a[i];
+    return p;
+}
+```
+### Python
+```python
+def build_prefix(a: list[int]) -> list[int]:
+    p = [0] * (len(a) + 1)
+    for i, x in enumerate(a):
+        p[i + 1] = p[i] + x
+    return p
+```
+### JavaScript
+```javascript
+function buildPrefix(a) {
+  const p = new Array(a.length + 1).fill(0);
+  for (let i = 0; i < a.length; i++) p[i + 1] = p[i] + a[i];
+  return p;
+}
+```
+
+## 4.4 Merge Intervals
+
+Sort by start, then merge overlaps. **Time:** O(n log n).
+
+### C++
+```cpp
+vector<vector<int>> mergeIntervals(vector<vector<int>> a) {
+    sort(a.begin(),a.end());
+    vector<vector<int>> ans;
+    for (auto &x:a) {
+        if (ans.empty() || ans.back()[1] < x[0]) ans.push_back(x);
+        else ans.back()[1]=max(ans.back()[1],x[1]);
+    }
+    return ans;
+}
+```
+### Python
+```python
+def merge_intervals(a: list[list[int]]) -> list[list[int]]:
+    a.sort()
+    ans = []
+    for start, end in a:
+        if not ans or ans[-1][1] < start:
+            ans.append([start, end])
+        else:
+            ans[-1][1] = max(ans[-1][1], end)
+    return ans
+```
+### JavaScript
+```javascript
+function mergeIntervals(a) {
+  a.sort((x, y) => x[0] - y[0]);
+  const ans = [];
+  for (const [start, end] of a) {
+    if (!ans.length || ans[ans.length - 1][1] < start) ans.push([start, end]);
+    else ans[ans.length - 1][1] = Math.max(ans[ans.length - 1][1], end);
+  }
+  return ans;
+}
+```
+
+**JavaScript pitfall:** default numeric `sort()` is lexicographic.
+
+---
+
+# 5. Strings
+
+Master frequency counting, two pointers, sliding windows, palindrome expansion, KMP/Z, and rolling hash.
+
+## 5.1 Valid Anagram
+
+### C++
+```cpp
+bool isAnagram(const string& a,const string& b){
+    if(a.size()!=b.size()) return false;
+    array<int,26> f{};
+    for(char c:a) ++f[c-'a'];
+    for(char c:b) --f[c-'a'];
+    return all_of(f.begin(),f.end(),[](int x){return x==0;});
+}
+```
+### Python
+```python
+from collections import Counter
+
+def is_anagram(a: str, b: str) -> bool:
+    return Counter(a) == Counter(b)
+```
+### JavaScript
+```javascript
+function isAnagram(a, b) {
+  if (a.length !== b.length) return false;
+  const f = new Map();
+  for (const c of a) f.set(c, (f.get(c) ?? 0) + 1);
+  for (const c of b) {
+    if (!f.has(c)) return false;
+    const n = f.get(c) - 1;
+    if (n === 0) f.delete(c); else f.set(c, n);
+  }
+  return f.size === 0;
+}
+```
+
+## 5.2 Longest Unique Substring
+
+Sliding window + last-seen index. **Time:** O(n).
+
+### C++
+```cpp
+int longestUnique(const string& s){
+    unordered_map<char,int> last;
+    int left=0,best=0;
+    for(int right=0;right<(int)s.size();++right){
+        if(last.count(s[right])) left=max(left,last[s[right]]+1);
+        last[s[right]]=right;
+        best=max(best,right-left+1);
+    }
+    return best;
+}
+```
+### Python
+```python
+def longest_unique(s: str) -> int:
+    last = {}
+    left = best = 0
+    for right, c in enumerate(s):
+        if c in last:
+            left = max(left, last[c] + 1)
+        last[c] = right
+        best = max(best, right - left + 1)
+    return best
+```
+### JavaScript
+```javascript
+function longestUnique(s) {
+  const last = new Map();
+  let left = 0, best = 0;
+  for (let right = 0; right < s.length; right++) {
+    const c = s[right];
+    if (last.has(c)) left = Math.max(left, last.get(c) + 1);
+    last.set(c, right);
+    best = Math.max(best, right - left + 1);
+  }
+  return best;
+}
+```
+
+---
+
+# 6. Hashing
+
+| Concept | C++ | Python | JavaScript |
+|---|---|---|---|
+| Hash map | `unordered_map` | `dict` | `Map` |
+| Hash set | `unordered_set` | `set` | `Set` |
+| Ordered map | `map` | library/sorted structure | no direct built-in equivalent |
+
+Average hash lookup is O(1); worst case can degrade.
+
+### Frequency
 
 ```cpp
-bool hasCycle(ListNode* head) {
-    ListNode* slow = head;
-    ListNode* fast = head;
-    while (fast && fast->next) {
-        slow = slow->next;
-        fast = fast->next->next;
-        if (slow == fast) return true;
+unordered_map<int,int> freq;
+for(int x:nums) ++freq[x];
+```
+
+```python
+from collections import Counter
+freq = Counter(nums)
+```
+
+```javascript
+const freq = new Map();
+for (const x of nums) freq.set(x, (freq.get(x) ?? 0) + 1);
+```
+
+---
+
+# 7. Two Pointers
+
+Use when sorted order or another monotonic property lets pointer movement eliminate candidates.
+
+## Pair Sum in Sorted Array
+
+### C++
+```cpp
+pair<int,int> pairSum(const vector<int>& a,int target){
+    int l=0,r=(int)a.size()-1;
+    while(l<r){
+        long long s=(long long)a[l]+a[r];
+        if(s==target) return {l,r};
+        if(s<target) ++l; else --r;
     }
+    return {-1,-1};
+}
+```
+### Python
+```python
+def pair_sum(a: list[int], target: int) -> tuple[int, int]:
+    l, r = 0, len(a) - 1
+    while l < r:
+        s = a[l] + a[r]
+        if s == target: return l, r
+        if s < target: l += 1
+        else: r -= 1
+    return -1, -1
+```
+### JavaScript
+```javascript
+function pairSum(a, target) {
+  let l=0,r=a.length-1;
+  while(l<r){
+    const s=a[l]+a[r];
+    if(s===target) return [l,r];
+    if(s<target) l++; else r--;
+  }
+  return [-1,-1];
+}
+```
+
+---
+
+# 8. Sliding Window
+
+Use for contiguous ranges when window state can be updated incrementally.
+
+## Fixed Window Maximum Sum
+
+### C++
+```cpp
+long long maxWindow(const vector<int>& a,int k){
+    if(k<=0 || k>(int)a.size()) return 0;
+    long long w=0; for(int i=0;i<k;++i) w+=a[i];
+    long long best=w;
+    for(int i=k;i<(int)a.size();++i){ w+=a[i]-a[i-k]; best=max(best,w); }
+    return best;
+}
+```
+### Python
+```python
+def max_window(a: list[int], k: int) -> int:
+    if k <= 0 or k > len(a): return 0
+    w = sum(a[:k]); best = w
+    for i in range(k, len(a)):
+        w += a[i] - a[i-k]
+        best = max(best, w)
+    return best
+```
+### JavaScript
+```javascript
+function maxWindow(a,k){
+  if(k<=0 || k>a.length) return 0;
+  let w=0; for(let i=0;i<k;i++) w+=a[i];
+  let best=w;
+  for(let i=k;i<a.length;i++){ w+=a[i]-a[i-k]; best=Math.max(best,w); }
+  return best;
+}
+```
+
+**Important:** variable-window sum techniques such as “shrink while sum > k” generally require non-negative values. Negative values break monotonicity.
+
+---
+
+# 9. Prefix Sum — Subarray Sum = K
+
+If `prefix[j] - prefix[i] = k`, then the earlier prefix is `prefix[j]-k`. Store counts.
+
+### C++
+```cpp
+int subarraySumK(const vector<int>& a,int k){
+    unordered_map<long long,int> cnt{{0,1}};
+    long long p=0; int ans=0;
+    for(int x:a){ p+=x; if(cnt.count(p-k)) ans+=cnt[p-k]; ++cnt[p]; }
+    return ans;
+}
+```
+### Python
+```python
+def subarray_sum_k(a: list[int], k: int) -> int:
+    cnt = {0: 1}; p = ans = 0
+    for x in a:
+        p += x
+        ans += cnt.get(p-k, 0)
+        cnt[p] = cnt.get(p, 0) + 1
+    return ans
+```
+### JavaScript
+```javascript
+function subarraySumK(a,k){
+  const cnt=new Map([[0,1]]); let p=0,ans=0;
+  for(const x of a){ p+=x; ans+=cnt.get(p-k)??0; cnt.set(p,(cnt.get(p)??0)+1); }
+  return ans;
+}
+```
+
+---
+
+# 10. Binary Search
+
+The general pattern is searching a monotonic predicate.
+
+## Standard Search
+
+### C++
+```cpp
+int binarySearch(const vector<int>& a,int target){
+    int l=0,r=(int)a.size()-1;
+    while(l<=r){
+        int m=l+(r-l)/2;
+        if(a[m]==target) return m;
+        if(a[m]<target) l=m+1; else r=m-1;
+    }
+    return -1;
+}
+```
+### Python
+```python
+def binary_search(a: list[int], target: int) -> int:
+    l, r = 0, len(a)-1
+    while l <= r:
+        m = l + (r-l)//2
+        if a[m] == target: return m
+        if a[m] < target: l = m+1
+        else: r = m-1
+    return -1
+```
+### JavaScript
+```javascript
+function binarySearch(a,target){
+  let l=0,r=a.length-1;
+  while(l<=r){
+    const m=l+Math.floor((r-l)/2);
+    if(a[m]===target) return m;
+    if(a[m]<target) l=m+1; else r=m-1;
+  }
+  return -1;
+}
+```
+
+## Lower Bound
+
+First index where `a[i] >= target`.
+
+### C++
+```cpp
+int lowerBound(const vector<int>& a,int target){
+    int l=0,r=a.size();
+    while(l<r){ int m=l+(r-l)/2; if(a[m]<target) l=m+1; else r=m; }
+    return l;
+}
+```
+### Python
+```python
+from bisect import bisect_left
+def lower_bound(a, target): return bisect_left(a, target)
+```
+### JavaScript
+```javascript
+function lowerBound(a,target){
+  let l=0,r=a.length;
+  while(l<r){ const m=l+Math.floor((r-l)/2); if(a[m]<target) l=m+1; else r=m; }
+  return l;
+}
+```
+
+### Binary search on answer
+
+If feasibility looks like `false false false true true`, binary search the first feasible answer. Common examples: minimum capacity/speed, page allocation, maximum minimum distance.
+
+---
+
+# 11. Linked Lists
+
+Linked lists trade random access for pointer rewiring.
+
+## Node
+
+### C++
+```cpp
+struct ListNode { int val; ListNode* next; ListNode(int x):val(x),next(nullptr){} };
+```
+### Python
+```python
+class ListNode:
+    def __init__(self, val=0, next=None): self.val, self.next = val, next
+```
+### JavaScript
+```javascript
+class ListNode { constructor(val=0,next=null){ this.val=val; this.next=next; } }
+```
+
+## Reverse List
+
+### C++
+```cpp
+ListNode* reverseList(ListNode* head){
+    ListNode *prev=nullptr,*cur=head;
+    while(cur){ auto* next=cur->next; cur->next=prev; prev=cur; cur=next; }
+    return prev;
+}
+```
+### Python
+```python
+def reverse_list(head):
+    prev=None; cur=head
+    while cur:
+        nxt=cur.next; cur.next=prev; prev,cur=cur,nxt
+    return prev
+```
+### JavaScript
+```javascript
+function reverseList(head){
+  let prev=null,cur=head;
+  while(cur){ const next=cur.next; cur.next=prev; prev=cur; cur=next; }
+  return prev;
+}
+```
+
+## Cycle Detection — Floyd
+
+### C++
+```cpp
+bool hasCycle(ListNode* head){
+    ListNode *slow=head,*fast=head;
+    while(fast&&fast->next){ slow=slow->next; fast=fast->next->next; if(slow==fast) return true; }
     return false;
 }
-
-// Find cycle start — after meeting point, reset one pointer to head
-ListNode* detectCycleStart(ListNode* head) {
-    ListNode* slow = head, *fast = head;
-    while (fast && fast->next) {
-        slow = slow->next;
-        fast = fast->next->next;
-        if (slow == fast) {
-            slow = head;
-            while (slow != fast) { slow = slow->next; fast = fast->next; }
-            return slow;  // cycle start
-        }
-    }
-    return nullptr;
+```
+### Python
+```python
+def has_cycle(head):
+    slow=fast=head
+    while fast and fast.next:
+        slow=slow.next; fast=fast.next.next
+        if slow is fast: return True
+    return False
+```
+### JavaScript
+```javascript
+function hasCycle(head){
+  let slow=head,fast=head;
+  while(fast&&fast.next){ slow=slow.next; fast=fast.next.next; if(slow===fast) return true; }
+  return false;
 }
 ```
 
-#### Find Middle Node
-
-```cpp
-ListNode* findMiddle(ListNode* head) {
-    ListNode* slow = head, *fast = head;
-    while (fast && fast->next) {
-        slow = slow->next;
-        fast = fast->next->next;
-    }
-    return slow;  // middle node (second middle for even length)
-}
-```
-
-#### Merge Two Sorted Lists
-
-```cpp
-ListNode* mergeTwoLists(ListNode* l1, ListNode* l2) {
-    ListNode dummy(0);
-    ListNode* curr = &dummy;
-    while (l1 && l2) {
-        if (l1->val <= l2->val) { curr->next = l1; l1 = l1->next; }
-        else                    { curr->next = l2; l2 = l2->next; }
-        curr = curr->next;
-    }
-    curr->next = l1 ? l1 : l2;
-    return dummy.next;
-}
-```
-
-#### Reverse Nodes in k-Group
-
-```cpp
-ListNode* reverseKGroup(ListNode* head, int k) {
-    ListNode* check = head;
-    for (int i = 0; i < k; i++) {
-        if (!check) return head;  // fewer than k nodes left
-        check = check->next;
-    }
-    // Reverse k nodes
-    ListNode* prev = nullptr, *curr = head;
-    for (int i = 0; i < k; i++) {
-        ListNode* next = curr->next;
-        curr->next = prev;
-        prev = curr;
-        curr = next;
-    }
-    head->next = reverseKGroup(curr, k);  // head is now tail of reversed group
-    return prev;  // new head
-}
-```
-
-### 5.5 Common Problems
-
-| Problem                        | Approach                        |
-|--------------------------------|---------------------------------|
-| Reverse Linked List            | Iterative prev/curr/next        |
-| Detect Cycle                   | Floyd's two-pointer             |
-| Find Cycle Start               | Floyd's + reset one pointer     |
-| Merge Two Sorted Lists         | Two pointers + dummy head       |
-| Reverse Nodes in k-Group       | Reverse in chunks               |
-| Copy List with Random Pointers | HashMap node→copy OR interleave |
-| LRU Cache                      | HashMap + Doubly Linked List    |
+Other must-know list problems: find middle, merge sorted lists, remove nth from end, reverse k-group, palindrome list, copy random-pointer list, and LRU cache.
 
 ---
 
-## 6. Stacks & Queues
+# 12. Stacks
 
-### 6.1 Stack — LIFO
+LIFO. Applications: parentheses, DFS, parsing, monotonic-stack problems.
 
+## Valid Parentheses
+
+### C++
 ```cpp
-#include <stack>
-
-stack<int> st;
-st.push(x);       // add to top   O(1)
-st.pop();         // remove top   O(1)
-st.top();         // view top     O(1)
-st.empty();       // check empty  O(1)
-st.size();        // number of elements
-```
-
-**Applications:**
-- Function call stack / recursion simulation
-- Undo/redo history
-- Balanced parentheses checking
-- Monotonic stack problems (next greater element)
-- Postfix expression evaluation
-
-#### Balanced Parentheses
-
-```cpp
-bool isValid(string s) {
+bool validParentheses(const string& s){
     stack<char> st;
-    for (char c : s) {
-        if (c == '(' || c == '[' || c == '{') {
-            st.push(c);
-        } else {
-            if (st.empty()) return false;
-            char top = st.top(); st.pop();
-            if ((c == ')' && top != '(') ||
-                (c == ']' && top != '[') ||
-                (c == '}' && top != '{')) return false;
-        }
+    for(char c:s){
+        if(c=='('||c=='['||c=='{') st.push(c);
+        else { if(st.empty()) return false; char t=st.top(); st.pop(); if((c==')'&&t!='(')||(c==']'&&t!='[')||(c=='}'&&t!='{')) return false; }
     }
     return st.empty();
 }
 ```
+### Python
+```python
+def valid_parentheses(s):
+    pairs={')':'(',']':'[','}':'{'}; st=[]
+    for c in s:
+        if c in '([{': st.append(c)
+        elif not st or st.pop()!=pairs[c]: return False
+    return not st
+```
+### JavaScript
+```javascript
+function validParentheses(s){
+  const pairs=new Map([[')','('],[']','['],['}','{']]), st=[];
+  for(const c of s){ if(pairs.has(c)){ if(st.pop()!==pairs.get(c)) return false; } else st.push(c); }
+  return st.length===0;
+}
+```
 
-#### Monotonic Stack (Next Greater Element)
+## Monotonic Stack — Next Greater
 
+Each element is pushed/popped at most once → O(n).
+
+### C++
 ```cpp
-// For each element, find the next element strictly greater than it
-vector<int> nextGreaterElement(vector<int>& arr) {
-    int n = arr.size();
-    vector<int> result(n, -1);
-    stack<int> stk;  // stack of indices
-    for (int i = 0; i < n; i++) {
-        while (!stk.empty() && arr[stk.top()] < arr[i]) {
-            result[stk.top()] = arr[i];
-            stk.pop();
-        }
-        stk.push(i);
-    }
-    return result;
+vector<int> nextGreater(const vector<int>& a){
+    vector<int> ans(a.size(),-1); stack<int> st;
+    for(int i=0;i<(int)a.size();++i){ while(!st.empty()&&a[st.top()]<a[i]){ans[st.top()]=a[i];st.pop();} st.push(i); }
+    return ans;
 }
 ```
-
-#### Largest Rectangle in Histogram
-
-```cpp
-int largestRectangleArea(vector<int>& heights) {
-    stack<int> stk;
-    int maxArea = 0;
-    heights.push_back(0);  // sentinel
-    for (int i = 0; i < (int)heights.size(); i++) {
-        while (!stk.empty() && heights[stk.top()] > heights[i]) {
-            int h = heights[stk.top()]; stk.pop();
-            int w = stk.empty() ? i : i - stk.top() - 1;
-            maxArea = max(maxArea, h * w);
-        }
-        stk.push(i);
-    }
-    return maxArea;
-}
+### Python
+```python
+def next_greater(a):
+    ans=[-1]*len(a); st=[]
+    for i,x in enumerate(a):
+        while st and a[st[-1]]<x: ans[st.pop()]=x
+        st.append(i)
+    return ans
 ```
-
-### 6.2 Queue — FIFO
-
-```cpp
-#include <queue>
-
-queue<int> q;
-q.push(x);        // add to back  O(1)
-q.pop();          // remove front O(1)
-q.front();        // view front   O(1)
-q.back();         // view back    O(1)
-q.empty();        // check empty  O(1)
-```
-
-**Applications:**
-- BFS (breadth-first search)
-- Level-order tree traversal
-- Sliding window maximum (monotonic deque)
-- Round-robin scheduling
-
-### 6.3 Deque (Double-Ended Queue)
-
-Supports push/pop at both ends in O(1).
-
-```cpp
-#include <deque>
-
-deque<int> dq;
-dq.push_front(x);  dq.push_back(x);
-dq.pop_front();    dq.pop_back();
-dq.front();        dq.back();
-```
-
-#### Sliding Window Maximum (Monotonic Deque)
-
-```cpp
-// Maximum value in every window of size k — O(n)
-vector<int> maxSlidingWindow(vector<int>& nums, int k) {
-    deque<int> dq;  // stores indices; front = max
-    vector<int> result;
-    for (int i = 0; i < (int)nums.size(); i++) {
-        // Remove indices out of window
-        while (!dq.empty() && dq.front() < i - k + 1) dq.pop_front();
-        // Remove indices with smaller values (they can never be max)
-        while (!dq.empty() && nums[dq.back()] < nums[i]) dq.pop_back();
-        dq.push_back(i);
-        if (i >= k - 1) result.push_back(nums[dq.front()]);
-    }
-    return result;
-}
-```
-
-### 6.4 Stack-Based Queue (Two-Stack Queue)
-
-```cpp
-// Amortized O(1) per operation
-class MyQueue {
-    stack<int> inbox, outbox;
-    void transfer() {
-        if (outbox.empty())
-            while (!inbox.empty()) { outbox.push(inbox.top()); inbox.pop(); }
-    }
-public:
-    void push(int x) { inbox.push(x); }
-    int pop()  { transfer(); int v = outbox.top(); outbox.pop(); return v; }
-    int peek() { transfer(); return outbox.top(); }
-    bool empty() { return inbox.empty() && outbox.empty(); }
-};
-```
-
----
-
-## 7. Hashing
-
-### 7.1 Hash Function
-
-A **hash function** maps a key to a bucket index: `h(key) → [0, capacity)`.
-
-**Properties of a good hash function:**
-- **Deterministic** — same key always produces the same hash
-- **Uniform distribution** — spreads keys evenly across buckets (minimizes collisions)
-- **Fast to compute** — ideally O(1)
-- **Avalanche effect** — small change in key → large change in hash
-
-**Common approaches:**
-| Key type   | Technique                                      |
-|------------|------------------------------------------------|
-| Integer    | `key % capacity` (use prime capacity)          |
-| String     | Polynomial rolling hash: `Σ c[i] * p^i mod M` |
-| Object     | Combine field hashes with XOR / multiply-shift |
-
-### 7.2 Load Factor & Rehashing
-
-```
-load_factor = number_of_elements / number_of_buckets
-```
-
-- **Target load factor:** typically 0.75 (C++ `unordered_map` default is 1.0)
-- When `load_factor > threshold`, **rehash**: allocate a new (usually 2×) table and reinsert all elements — amortized O(1) per insert
-- Too low → wasted memory; too high → degraded O(n) performance from long chains
-
-### 7.3 Collision Resolution
-
-| Method              | Description                                           | Pros / Cons                                  |
-|---------------------|-------------------------------------------------------|----------------------------------------------|
-| **Separate Chaining** | Each bucket holds a linked list (or small vector)   | Simple; handles high load; extra pointer overhead |
-| **Linear Probing**  | On collision, scan `+1, +2, …` until empty slot      | Cache-friendly; suffers from primary clustering |
-| **Quadratic Probing** | Probe at `+1², +2², +3², …`                        | Reduces primary clustering; may not cover all slots |
-| **Double Hashing**  | Second hash `h2(key)` determines probe step           | Minimizes clustering; requires careful `h2` design |
-| **Robin Hood Hashing** | Displace entries with shorter probe distance       | Low variance probe length; used in fast open-address tables |
-
-### 7.4 C++ Hash Map & Hash Set API
-
-```cpp
-#include <unordered_map>
-#include <unordered_set>
-
-// --- unordered_map<K, V> ---
-unordered_map<string, int> freq;
-freq["apple"]++;                     // insert or increment
-freq.count("apple");                 // 1 if present, 0 otherwise
-freq.find("apple") != freq.end();    // safe lookup
-freq.erase("apple");                 // remove key
-freq.size();                         // number of entries
-for (auto& [key, val] : freq) { }   // range-for (C++17 structured binding)
-
-// Default value on missing key (inserts 0)
-freq["missing"];  // creates entry with value 0
-
-// --- unordered_set<K> ---
-unordered_set<int> seen;
-seen.insert(42);
-seen.count(42);                      // 1 if present
-seen.erase(42);
-
-// --- Performance hints ---
-freq.reserve(1 << 16);               // pre-allocate buckets to avoid rehashes
-freq.max_load_factor(0.25);          // lower -> fewer collisions, more memory
-```
-
-### 7.5 Custom Hash Functions
-
-The default `std::hash` covers built-in types. For custom types or better performance, supply your own:
-
-```cpp
-// Option 1: inject into std namespace (for pair<int,int>)
-struct PairHash {
-    size_t operator()(const pair<int,int>& p) const {
-        size_t h1 = hash<int>{}(p.first);
-        size_t h2 = hash<int>{}(p.second);
-        return h1 ^ (h2 * 2654435761ULL);   // Knuth multiplicative hash
-    }
-};
-unordered_map<pair<int,int>, int, PairHash> dp;
-
-// Option 2: combine hashes with boost-style seed mixing
-size_t hashCombine(size_t seed, size_t val) {
-    return seed ^ (val + 0x9e3779b9 + (seed << 6) + (seed >> 2));
-}
-
-// Option 3: anti-hack hash (randomize to defeat adversarial inputs)
-struct SafeHash {
-    static uint64_t splitmix64(uint64_t x) {
-        x += 0x9e3779b97f4a7c15;
-        x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9;
-        x = (x ^ (x >> 27)) * 0x94d049bb133111eb;
-        return x ^ (x >> 31);
-    }
-    size_t operator()(uint64_t x) const {
-        static const uint64_t FIXED_RANDOM =
-            chrono::steady_clock::now().time_since_epoch().count();
-        return splitmix64(x + FIXED_RANDOM);
-    }
-};
-unordered_map<int, int, SafeHash> safe_map;
-```
-
-### 7.6 Polynomial Rolling Hash (String Hashing)
-
-Used for **O(1) substring comparison** and duplicate detection.
-
-```cpp
-// Precompute prefix hashes for string s
-// hash(s[l..r]) = (H[r+1] - H[l] * P[r-l+1]) % MOD
-const long long MOD = 1e9 + 7, BASE = 31;
-
-string s = "...";
-int n = s.size();
-vector<long long> H(n + 1, 0), P(n + 1, 1);
-
-for (int i = 0; i < n; i++) {
-    H[i+1] = (H[i] * BASE + (s[i] - 'a' + 1)) % MOD;
-    P[i+1] = P[i] * BASE % MOD;
-}
-
-// Hash of substring s[l..r] (0-indexed, inclusive)
-auto getHash = [&](int l, int r) -> long long {
-    return (H[r+1] - H[l] * P[r-l+1] % MOD + MOD * 2) % MOD;
-};
-
-// Use two different (BASE, MOD) pairs to reduce collision probability
-```
-
-**Applications:** Longest duplicate substring (binary search + rolling hash), Rabin-Karp pattern matching.
-
-### 7.7 Common Hashing Patterns (C++)
-
-```cpp
-// --- Frequency count ---
-unordered_map<char, int> freq;
-for (char c : s) freq[c]++;
-
-// --- Two Sum ---
-unordered_map<int, int> seen;  // value -> index
-for (int i = 0; i < (int)nums.size(); i++) {
-    int complement = target - nums[i];
-    if (seen.count(complement))
-        return {seen[complement], i};
-    seen[nums[i]] = i;
-}
-
-// --- Anagram grouping ---
-unordered_map<string, vector<string>> groups;
-for (auto& word : words) {
-    string key = word;
-    sort(key.begin(), key.end());
-    groups[key].push_back(word);
-}
-
-// --- Subarray sum equals k (prefix sum + hash map) ---
-unordered_map<int, int> prefixCount{{0, 1}};
-int sum = 0, count = 0;
-for (int num : nums) {
-    sum += num;
-    count += prefixCount[sum - k];
-    prefixCount[sum]++;
-}
-
-// --- Longest consecutive sequence ---
-unordered_set<int> numSet(nums.begin(), nums.end());
-int longest = 0;
-for (int n : numSet) {
-    if (!numSet.count(n - 1)) {       // start of a sequence
-        int len = 1;
-        while (numSet.count(n + len)) len++;
-        longest = max(longest, len);
-    }
-}
-```
-
-### 7.8 Classic Hashing Problems
-
-| Problem                          | Key Idea                                              | Complexity   |
-|----------------------------------|-------------------------------------------------------|--------------|
-| Two Sum                          | Store `value -> index`; look up complement            | O(n)         |
-| Group Anagrams                   | Sorted string (or char freq array) as key             | O(n·k log k) |
-| Subarray Sum Equals K            | Prefix sums + frequency map                           | O(n)         |
-| Longest Consecutive Sequence     | Set lookup for sequence start                         | O(n)         |
-| First Non-Repeating Character    | Ordered map / two-pass frequency count                | O(n)         |
-| 4-Sum Count (4 arrays)           | Split into two pairs; store pair-sum counts           | O(n²)        |
-| Rabin-Karp String Match          | Rolling hash for O(n+m) average pattern search        | O(n+m)       |
-| Longest Duplicate Substring      | Binary search length + rolling hash                   | O(n log n)   |
-| Minimum Window Substring         | Sliding window + character frequency maps             | O(n)         |
-| LRU Cache                        | `unordered_map` + doubly-linked list                  | O(1)         |
-
----
-
-## 8. Trees
-
-### 8.1 TreeNode Definition
-
-```cpp
-struct TreeNode {
-    int val;
-    TreeNode* left;
-    TreeNode* right;
-    TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
-};
-```
-
-### 8.2 Binary Tree Properties
-
-```
-Height: max edges from root to leaf
-Depth:  edges from root to node
-Full:   every node has 0 or 2 children
-Complete: all levels filled except last (filled left to right)
-Perfect: all internal nodes have 2 children; all leaves at same level
-Balanced: |height(left) - height(right)| <= 1 for all nodes
-```
-
-### 8.3 Tree Traversals
-
-```cpp
-// --- Recursive traversals ---
-void inorder(TreeNode* node, vector<int>& result) {
-    if (!node) return;
-    inorder(node->left, result);   // Left -> Root -> Right (gives sorted order for BST)
-    result.push_back(node->val);
-    inorder(node->right, result);
-}
-
-void preorder(TreeNode* node, vector<int>& result) {
-    if (!node) return;
-    result.push_back(node->val);   // Root -> Left -> Right (used for copy/serialize)
-    preorder(node->left, result);
-    preorder(node->right, result);
-}
-
-void postorder(TreeNode* node, vector<int>& result) {
-    if (!node) return;
-    postorder(node->left, result);
-    postorder(node->right, result);
-    result.push_back(node->val);   // Left -> Right -> Root (used for delete/evaluate)
-}
-
-// --- Level-order (BFS) ---
-vector<vector<int>> levelOrder(TreeNode* root) {
-    if (!root) return {};
-    vector<vector<int>> result;
-    queue<TreeNode*> q;
-    q.push(root);
-    while (!q.empty()) {
-        int size = q.size();
-        vector<int> level;
-        for (int i = 0; i < size; i++) {
-            TreeNode* node = q.front(); q.pop();
-            level.push_back(node->val);
-            if (node->left)  q.push(node->left);
-            if (node->right) q.push(node->right);
-        }
-        result.push_back(level);
-    }
-    return result;
-}
-
-// --- Iterative Inorder (using stack) ---
-vector<int> inorderIterative(TreeNode* root) {
-    vector<int> result;
-    stack<TreeNode*> stk;
-    TreeNode* curr = root;
-    while (curr || !stk.empty()) {
-        while (curr) { stk.push(curr); curr = curr->left; }
-        curr = stk.top(); stk.pop();
-        result.push_back(curr->val);
-        curr = curr->right;
-    }
-    return result;
-}
-
-// --- Iterative Preorder (using stack) ---
-vector<int> preorderIterative(TreeNode* root) {
-    if (!root) return {};
-    vector<int> result;
-    stack<TreeNode*> stk;
-    stk.push(root);
-    while (!stk.empty()) {
-        TreeNode* node = stk.top(); stk.pop();
-        result.push_back(node->val);
-        if (node->right) stk.push(node->right);  // push right first
-        if (node->left)  stk.push(node->left);
-    }
-    return result;
-}
-```
-
-### 8.4 Binary Search Tree (BST)
-
-**BST Property:** left subtree < node < right subtree
-
-| Operation | Average | Worst (skewed) |
-|-----------|---------|----------------|
-| Search    | O(log n)| O(n)           |
-| Insert    | O(log n)| O(n)           |
-| Delete    | O(log n)| O(n)           |
-
-```cpp
-// BST Insert
-TreeNode* insert(TreeNode* root, int val) {
-    if (!root) return new TreeNode(val);
-    if (val < root->val) root->left  = insert(root->left,  val);
-    else if (val > root->val) root->right = insert(root->right, val);
-    return root;
-}
-
-// BST Delete
-TreeNode* deleteNode(TreeNode* root, int key) {
-    if (!root) return nullptr;
-    if (key < root->val) {
-        root->left = deleteNode(root->left, key);
-    } else if (key > root->val) {
-        root->right = deleteNode(root->right, key);
-    } else {
-        if (!root->left)  return root->right;
-        if (!root->right) return root->left;
-        // Two children: replace with inorder successor (min of right subtree)
-        TreeNode* minNode = root->right;
-        while (minNode->left) minNode = minNode->left;
-        root->val = minNode->val;
-        root->right = deleteNode(root->right, minNode->val);
-    }
-    return root;
-}
-
-// Validate BST (pass min/max bounds)
-bool isValidBST(TreeNode* node, long long minVal, long long maxVal) {
-    if (!node) return true;
-    if (node->val <= minVal || node->val >= maxVal) return false;
-    return isValidBST(node->left,  minVal, node->val) &&
-           isValidBST(node->right, node->val, maxVal);
-}
-bool isValidBST(TreeNode* root) {
-    return isValidBST(root, LLONG_MIN, LLONG_MAX);
-}
-```
-
-### 8.5 AVL Tree
-
-Self-balancing BST. After insert/delete, **rotations** restore balance factor.
-
-```
-Balance Factor = height(left) - height(right)
-Valid range: {-1, 0, 1}
-
-Rotations:
-- Left Rotation:  right-heavy -> rotate left
-- Right Rotation: left-heavy  -> rotate right
-- Left-Right:     left child is right-heavy -> left rotate child, then right rotate
-- Right-Left:     right child is left-heavy -> right rotate child, then left rotate
-```
-
-### 8.6 Lowest Common Ancestor (LCA)
-
-```cpp
-TreeNode* lca(TreeNode* root, TreeNode* p, TreeNode* q) {
-    if (!root || root == p || root == q) return root;
-    TreeNode* left  = lca(root->left,  p, q);
-    TreeNode* right = lca(root->right, p, q);
-    if (left && right) return root;   // p in one subtree, q in other
-    return left ? left : right;
-}
-```
-
-### 8.7 Tree Height & Diameter
-
-```cpp
-// Max depth (height) of tree
-int maxDepth(TreeNode* root) {
-    if (!root) return 0;
-    return 1 + max(maxDepth(root->left), maxDepth(root->right));
-}
-
-// Diameter — longest path between any two nodes
-int diameterOfBinaryTree(TreeNode* root) {
-    int diameter = 0;
-    function<int(TreeNode*)> dfs = [&](TreeNode* node) -> int {
-        if (!node) return 0;
-        int left  = dfs(node->left);
-        int right = dfs(node->right);
-        diameter = max(diameter, left + right);
-        return 1 + max(left, right);
-    };
-    dfs(root);
-    return diameter;
-}
-
-// Check if tree is balanced (|height difference| <= 1 at every node)
-int checkBalanced(TreeNode* node) {
-    if (!node) return 0;
-    int left  = checkBalanced(node->left);
-    if (left == -1) return -1;
-    int right = checkBalanced(node->right);
-    if (right == -1) return -1;
-    if (abs(left - right) > 1) return -1;
-    return 1 + max(left, right);
-}
-bool isBalanced(TreeNode* root) { return checkBalanced(root) != -1; }
-```
-
-### 8.8 Serialize / Deserialize Binary Tree
-
-```cpp
-// Preorder serialization with null markers
-string serialize(TreeNode* root) {
-    if (!root) return "#,";
-    return to_string(root->val) + "," + serialize(root->left) + serialize(root->right);
-}
-
-TreeNode* deserialize(istringstream& ss) {
-    string token;
-    getline(ss, token, ',');
-    if (token == "#") return nullptr;
-    TreeNode* node = new TreeNode(stoi(token));
-    node->left  = deserialize(ss);
-    node->right = deserialize(ss);
-    return node;
-}
-TreeNode* deserialize(string data) {
-    istringstream ss(data);
-    return deserialize(ss);
-}
-```
-
-### 8.9 Common Tree Problems
-
-| Problem                         | Key Idea                           |
-|---------------------------------|------------------------------------|
-| Max depth / height              | DFS; max(left, right) + 1          |
-| Diameter of binary tree         | Max left_depth + right_depth at each node |
-| Balanced tree check             | Post-order; return -1 for unbalanced |
-| Same tree                       | Recursively compare all nodes      |
-| Invert binary tree              | Swap children recursively          |
-| Path sum                        | DFS subtract target; return true at leaf |
-| Serialize/Deserialize tree      | Preorder + null markers            |
-| Validate BST                    | Pass min/max bounds through recursion |
-
----
-
-## 9. Heaps (Priority Queue)
-
-### 9.1 Properties
-
-- **Min-heap:** parent ≤ children; root is the minimum
-- **Max-heap:** parent ≥ children; root is the maximum
-- Stored as array: parent at `i`, children at `2i+1`, `2i+2`
-
-| Operation    | Time    |
-|--------------|---------|
-| insert       | O(log n)|
-| extract-min/max | O(log n)|
-| peek         | O(1)    |
-| build heap   | O(n)    |
-| heapify      | O(log n)|
-
-### 9.2 C++ Priority Queue API
-
-```cpp
-#include <queue>
-#include <vector>
-
-// Min-heap
-priority_queue<int, vector<int>, greater<int>> minHeap;
-minHeap.push(3);
-minHeap.push(1);
-minHeap.push(2);
-minHeap.top();   // returns 1
-minHeap.pop();
-
-// Max-heap (default)
-priority_queue<int> maxHeap;
-maxHeap.push(val);
-maxHeap.top();
-
-// Custom comparator (min-heap by first element of pair)
-using P = pair<int,int>;
-priority_queue<P, vector<P>, greater<P>> pq;
-
-// K largest elements: maintain min-heap of size k
-priority_queue<int, vector<int>, greater<int>> kLargest;
-for (int x : nums) {
-    kLargest.push(x);
-    if ((int)kLargest.size() > k) kLargest.pop();
-}
-// kLargest.top() = k-th largest
-```
-
-### 9.3 Top-K Problems
-
-```cpp
-// K most frequent elements — O(n log k)
-vector<int> topKFrequent(vector<int>& nums, int k) {
-    unordered_map<int, int> freq;
-    for (int n : nums) freq[n]++;
-    // min-heap: {count, value}
-    priority_queue<pair<int,int>, vector<pair<int,int>>, greater<>> pq;
-    for (auto& [val, cnt] : freq) {
-        pq.push({cnt, val});
-        if ((int)pq.size() > k) pq.pop();
-    }
-    vector<int> result;
-    while (!pq.empty()) { result.push_back(pq.top().second); pq.pop(); }
-    return result;
-}
-
-// K closest points to origin — O(n log k)
-vector<vector<int>> kClosest(vector<vector<int>>& points, int k) {
-    // max-heap of size k (distance, index)
-    using T = pair<int,int>;
-    priority_queue<T> pq;
-    for (int i = 0; i < (int)points.size(); i++) {
-        int d = points[i][0]*points[i][0] + points[i][1]*points[i][1];
-        pq.push({d, i});
-        if ((int)pq.size() > k) pq.pop();
-    }
-    vector<vector<int>> result;
-    while (!pq.empty()) { result.push_back(points[pq.top().second]); pq.pop(); }
-    return result;
-}
-
-// Merge K sorted lists — O(N log K) where N = total nodes
-// Uses min-heap of (value, list_index, element_index)
-```
-
-### 9.4 Median from Data Stream
-
-```cpp
-// Two heaps: max-heap for lower half, min-heap for upper half
-class MedianFinder {
-    priority_queue<int> lower;                            // max-heap
-    priority_queue<int, vector<int>, greater<int>> upper; // min-heap
-public:
-    void addNum(int num) {
-        lower.push(num);
-        upper.push(lower.top()); lower.pop();
-        if (lower.size() < upper.size()) {
-            lower.push(upper.top()); upper.pop();
-        }
-    }
-    double findMedian() {
-        if (lower.size() > upper.size()) return lower.top();
-        return (lower.top() + upper.top()) / 2.0;
-    }
-};
-```
-
----
-
-## 10. Graphs
-
-### 10.1 Representations
-
-```cpp
-// Adjacency List (space-efficient for sparse graphs)
-int n;  // number of vertices
-vector<vector<pair<int,int>>> graph(n);    // graph[u] = {(v, weight), ...}
-graph[0].push_back({1, weight});
-graph[1].push_back({0, weight});
-
-// Adjacency Matrix (fast edge lookup for dense graphs)
-vector<vector<int>> matrix(n, vector<int>(n, 0));
-matrix[0][1] = weight;
-
-// Edge List
-vector<tuple<int,int,int>> edges = {{0, 1, weight}, {1, 2, weight}};
-```
-
-### 10.2 Graph Traversals
-
-#### BFS (Breadth-First Search)
-
-```cpp
-// Shortest path (unweighted), level-order traversal — O(V+E)
-vector<int> bfs(int start, vector<vector<int>>& graph) {
-    int n = graph.size();
-    vector<int> dist(n, -1);
-    queue<int> q;
-    dist[start] = 0;
-    q.push(start);
-    while (!q.empty()) {
-        int node = q.front(); q.pop();
-        for (int neighbor : graph[node]) {
-            if (dist[neighbor] == -1) {
-                dist[neighbor] = dist[node] + 1;
-                q.push(neighbor);
-            }
-        }
-    }
-    return dist;
-}
-```
-
-#### DFS (Depth-First Search)
-
-```cpp
-// Recursive DFS — O(V+E)
-void dfs(int node, vector<vector<int>>& graph, vector<bool>& visited) {
-    visited[node] = true;
-    for (int neighbor : graph[node])
-        if (!visited[neighbor])
-            dfs(neighbor, graph, visited);
-}
-
-// Iterative DFS
-void dfsIterative(int start, vector<vector<int>>& graph) {
-    int n = graph.size();
-    vector<bool> visited(n, false);
-    stack<int> stk;
-    stk.push(start);
-    visited[start] = true;
-    while (!stk.empty()) {
-        int node = stk.top(); stk.pop();
-        for (int neighbor : graph[node]) {
-            if (!visited[neighbor]) {
-                visited[neighbor] = true;
-                stk.push(neighbor);
-            }
-        }
-    }
-}
-```
-
-### 10.3 Shortest Path Algorithms
-
-#### Dijkstra's Algorithm (non-negative weights)
-
-```cpp
-// O((V + E) log V) with min-heap
-vector<int> dijkstra(int src, vector<vector<pair<int,int>>>& graph) {
-    int n = graph.size();
-    vector<int> dist(n, INT_MAX);
-    priority_queue<pair<int,int>, vector<pair<int,int>>, greater<>> pq;
-    dist[src] = 0;
-    pq.push({0, src});
-    while (!pq.empty()) {
-        auto [d, u] = pq.top(); pq.pop();
-        if (d > dist[u]) continue;  // stale entry
-        for (auto [v, w] : graph[u]) {
-            if (dist[u] + w < dist[v]) {
-                dist[v] = dist[u] + w;
-                pq.push({dist[v], v});
-            }
-        }
-    }
-    return dist;
-}
-```
-
-#### Bellman-Ford (handles negative weights)
-
-```cpp
-// O(VE); detects negative cycles
-vector<int> bellmanFord(int src, int n, vector<tuple<int,int,int>>& edges) {
-    vector<int> dist(n, INT_MAX);
-    dist[src] = 0;
-    for (int i = 0; i < n - 1; i++) {         // relax V-1 times
-        for (auto [u, v, w] : edges) {
-            if (dist[u] != INT_MAX && dist[u] + w < dist[v])
-                dist[v] = dist[u] + w;
-        }
-    }
-    // Check for negative cycle
-    for (auto [u, v, w] : edges)
-        if (dist[u] != INT_MAX && dist[u] + w < dist[v])
-            return {};  // negative cycle detected
-    return dist;
-}
-```
-
-#### Floyd-Warshall (all-pairs shortest path)
-
-```cpp
-// O(V³)
-void floydWarshall(vector<vector<int>>& dist) {
-    int n = dist.size();
-    for (int k = 0; k < n; k++)
-        for (int i = 0; i < n; i++)
-            for (int j = 0; j < n; j++)
-                if (dist[i][k] != INT_MAX && dist[k][j] != INT_MAX)
-                    dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j]);
-}
-```
-
-### 10.4 Minimum Spanning Tree
-
-#### Kruskal's Algorithm
-
-```cpp
-// O(E log E) — sort edges; use Union-Find to avoid cycles
-struct Edge { int u, v, w; };
-
-int find(vector<int>& parent, int x) {
-    if (parent[x] != x) parent[x] = find(parent, parent[x]);
-    return parent[x];
-}
-bool unite(vector<int>& parent, vector<int>& rank, int x, int y) {
-    int px = find(parent, x), py = find(parent, y);
-    if (px == py) return false;
-    if (rank[px] < rank[py]) swap(px, py);
-    parent[py] = px;
-    if (rank[px] == rank[py]) rank[px]++;
-    return true;
-}
-
-int kruskal(int n, vector<Edge>& edges) {
-    sort(edges.begin(), edges.end(), [](const Edge& a, const Edge& b){ return a.w < b.w; });
-    vector<int> parent(n), rank(n, 0);
-    iota(parent.begin(), parent.end(), 0);
-    int mstWeight = 0, edgesUsed = 0;
-    for (auto& e : edges) {
-        if (unite(parent, rank, e.u, e.v)) {
-            mstWeight += e.w;
-            if (++edgesUsed == n - 1) break;
-        }
-    }
-    return mstWeight;
-}
-```
-
-#### Prim's Algorithm
-
-```cpp
-// O((V + E) log V) — grow MST from a seed vertex using min-heap
-int prim(int n, vector<vector<pair<int,int>>>& graph) {
-    vector<bool> inMST(n, false);
-    priority_queue<pair<int,int>, vector<pair<int,int>>, greater<>> pq;
-    pq.push({0, 0});  // (weight, vertex)
-    int total = 0;
-    while (!pq.empty()) {
-        auto [w, u] = pq.top(); pq.pop();
-        if (inMST[u]) continue;
-        inMST[u] = true;
-        total += w;
-        for (auto [v, weight] : graph[u])
-            if (!inMST[v]) pq.push({weight, v});
-    }
-    return total;
-}
-```
-
-### 10.5 Topological Sort
-
-For **Directed Acyclic Graphs (DAGs)** — linear ordering where all edges go forward.
-
-```cpp
-// Kahn's Algorithm (BFS-based) — detects cycle if not all nodes processed
-vector<int> topoSort(int n, vector<vector<int>>& graph) {
-    vector<int> inDegree(n, 0);
-    for (int u = 0; u < n; u++)
-        for (int v : graph[u]) inDegree[v]++;
-    queue<int> q;
-    for (int v = 0; v < n; v++) if (inDegree[v] == 0) q.push(v);
-    vector<int> order;
-    while (!q.empty()) {
-        int u = q.front(); q.pop();
-        order.push_back(u);
-        for (int v : graph[u])
-            if (--inDegree[v] == 0) q.push(v);
-    }
-    return (int)order.size() == n ? order : vector<int>{};  // empty = cycle
-}
-
-// DFS-based topological sort
-void dfsTopoSort(int node, vector<vector<int>>& graph,
-                 vector<bool>& visited, stack<int>& stk) {
-    visited[node] = true;
-    for (int neighbor : graph[node])
-        if (!visited[neighbor])
-            dfsTopoSort(neighbor, graph, visited, stk);
-    stk.push(node);
-}
-
-vector<int> topoSortDFS(int n, vector<vector<int>>& graph) {
-    vector<bool> visited(n, false);
-    stack<int> stk;
-    for (int i = 0; i < n; i++)
-        if (!visited[i]) dfsTopoSort(i, graph, visited, stk);
-    vector<int> order;
-    while (!stk.empty()) { order.push_back(stk.top()); stk.pop(); }
-    return order;
-}
-```
-
-### 10.6 Union-Find (Disjoint Set Union)
-
-```cpp
-class UnionFind {
-    vector<int> parent, rank_;
-public:
-    UnionFind(int n) : parent(n), rank_(n, 0) {
-        iota(parent.begin(), parent.end(), 0);
-    }
-    int find(int x) {
-        if (parent[x] != x)
-            parent[x] = find(parent[x]);  // path compression
-        return parent[x];
-    }
-    bool unite(int x, int y) {
-        int px = find(x), py = find(y);
-        if (px == py) return false;
-        if (rank_[px] < rank_[py]) swap(px, py);
-        parent[py] = px;
-        if (rank_[px] == rank_[py]) rank_[px]++;
-        return true;
-    }
-    bool connected(int x, int y) { return find(x) == find(y); }
-};
-// Operations: near O(1) amortized with path compression + union by rank
-```
-
-**Applications:** Connected components, cycle detection, Kruskal's MST.
-
-### 10.7 Cycle Detection
-
-```cpp
-// Undirected graph — Union-Find approach
-bool hasCycleUndirected(int n, vector<pair<int,int>>& edges) {
-    UnionFind uf(n);
-    for (auto [u, v] : edges)
-        if (!uf.unite(u, v)) return true;  // same component -> cycle
-    return false;
-}
-
-// Directed graph — DFS with 3-color (white=0, gray=1, black=2)
-bool dfsCycle(int node, vector<vector<int>>& graph, vector<int>& color) {
-    color[node] = 1;  // gray (in progress)
-    for (int neighbor : graph[node]) {
-        if (color[neighbor] == 1) return true;   // back edge -> cycle
-        if (color[neighbor] == 0 && dfsCycle(neighbor, graph, color)) return true;
-    }
-    color[node] = 2;  // black (done)
-    return false;
-}
-bool hasCycleDirected(int n, vector<vector<int>>& graph) {
-    vector<int> color(n, 0);
-    for (int i = 0; i < n; i++)
-        if (color[i] == 0 && dfsCycle(i, graph, color)) return true;
-    return false;
+### JavaScript
+```javascript
+function nextGreater(a){
+  const ans=new Array(a.length).fill(-1),st=[];
+  for(let i=0;i<a.length;i++){ while(st.length&&a[st.at(-1)]<a[i]) ans[st.pop()]=a[i]; st.push(i); }
+  return ans;
 }
 ```
 
 ---
 
-## 11. Sorting Algorithms
+# 13. Queues & Deques
 
-### 11.1 Comparison-Based Sorts
+### Queue templates
 
-| Algorithm     | Best     | Average   | Worst    | Space  | Stable |
-|---------------|----------|-----------|----------|--------|--------|
-| Bubble Sort   | O(n)     | O(n²)     | O(n²)    | O(1)   | Yes    |
-| Selection Sort| O(n²)    | O(n²)     | O(n²)    | O(1)   | No     |
-| Insertion Sort| O(n)     | O(n²)     | O(n²)    | O(1)   | Yes    |
-| Merge Sort    | O(n log n)| O(n log n)| O(n log n)| O(n)  | Yes    |
-| Quick Sort    | O(n log n)| O(n log n)| O(n²)   | O(log n)| No   |
-| Heap Sort     | O(n log n)| O(n log n)| O(n log n)| O(1) | No     |
-| Tim Sort      | O(n)     | O(n log n)| O(n log n)| O(n)  | Yes    |
-
-### 11.2 Merge Sort
-
+**C++**
 ```cpp
-void merge(vector<int>& arr, int left, int mid, int right) {
-    vector<int> temp(right - left + 1);
-    int i = left, j = mid + 1, k = 0;
-    while (i <= mid && j <= right) {
-        if (arr[i] <= arr[j]) temp[k++] = arr[i++];
-        else                  temp[k++] = arr[j++];
-    }
-    while (i <= mid)   temp[k++] = arr[i++];
-    while (j <= right) temp[k++] = arr[j++];
-    for (int x = 0; x < k; x++) arr[left + x] = temp[x];
-}
-
-void mergeSort(vector<int>& arr, int left, int right) {
-    if (left >= right) return;
-    int mid = left + (right - left) / 2;
-    mergeSort(arr, left,    mid);
-    mergeSort(arr, mid + 1, right);
-    merge(arr, left, mid, right);
-}
+queue<int> q; q.push(source); while(!q.empty()){ int u=q.front(); q.pop(); }
 ```
 
-### 11.3 Quick Sort
-
-```cpp
-int partition(vector<int>& arr, int low, int high) {
-    // Random pivot to avoid O(n²) worst case on sorted input
-    int randIdx = low + rand() % (high - low + 1);
-    swap(arr[randIdx], arr[high]);
-    int pivot = arr[high];
-    int i = low - 1;
-    for (int j = low; j < high; j++) {
-        if (arr[j] <= pivot) {
-            i++;
-            swap(arr[i], arr[j]);
-        }
-    }
-    swap(arr[i + 1], arr[high]);
-    return i + 1;
-}
-
-void quickSort(vector<int>& arr, int low, int high) {
-    if (low < high) {
-        int pi = partition(arr, low, high);
-        quickSort(arr, low,    pi - 1);
-        quickSort(arr, pi + 1, high);
-    }
-}
+**Python**
+```python
+from collections import deque
+q=deque([source])
+while q: u=q.popleft()
 ```
 
-### 11.4 Heap Sort
-
-```cpp
-void heapify(vector<int>& arr, int n, int i) {
-    int largest = i, l = 2*i+1, r = 2*i+2;
-    if (l < n && arr[l] > arr[largest]) largest = l;
-    if (r < n && arr[r] > arr[largest]) largest = r;
-    if (largest != i) {
-        swap(arr[i], arr[largest]);
-        heapify(arr, n, largest);
-    }
-}
-
-void heapSort(vector<int>& arr) {
-    int n = arr.size();
-    for (int i = n/2 - 1; i >= 0; i--) heapify(arr, n, i);  // build max-heap O(n)
-    for (int i = n - 1; i > 0; i--) {
-        swap(arr[0], arr[i]);   // move max to end
-        heapify(arr, i, 0);     // restore heap on reduced array
-    }
-}
+**JavaScript**
+```javascript
+const q=[source]; let head=0;
+while(head<q.length){ const u=q[head++]; }
 ```
 
-### 11.5 Non-Comparison Sorts
+**JS note:** avoid repeated `shift()` for large queues.
 
-| Algorithm      | Time    | Space  | Constraint                      |
-|----------------|---------|--------|---------------------------------|
-| Counting Sort  | O(n+k)  | O(k)   | Integer keys in range [0, k]    |
-| Radix Sort     | O(nk)   | O(n+k) | Integer keys; k = max digits    |
-| Bucket Sort    | O(n+k)  | O(n)   | Uniformly distributed floats    |
+## Sliding Window Maximum
 
+Use a decreasing deque of indices. **Time:** O(n).
+
+### C++
 ```cpp
-// Counting Sort
-void countingSort(vector<int>& arr, int maxVal) {
-    vector<int> count(maxVal + 1, 0);
-    for (int x : arr) count[x]++;
-    int idx = 0;
-    for (int v = 0; v <= maxVal; v++)
-        while (count[v]--) arr[idx++] = v;
-}
-
-// STL sort (introsort — O(n log n) worst case)
-sort(arr.begin(), arr.end());                                   // ascending
-sort(arr.begin(), arr.end(), greater<int>());                   // descending
-sort(arr.begin(), arr.end(), [](int a, int b){ return a > b; }); // custom
-stable_sort(arr.begin(), arr.end());                            // stable
-```
-
----
-
-## 12. Searching Algorithms
-
-### 12.1 Binary Search
-
-```cpp
-int binarySearch(vector<int>& arr, int target) {
-    int left = 0, right = (int)arr.size() - 1;
-    while (left <= right) {
-        int mid = left + (right - left) / 2;  // avoid overflow
-        if      (arr[mid] == target) return mid;
-        else if (arr[mid] <  target) left  = mid + 1;
-        else                         right = mid - 1;
-    }
-    return -1;
+vector<int> maxWindow(const vector<int>& a,int k){
+    deque<int> d; vector<int> ans;
+    for(int i=0;i<(int)a.size();++i){
+        while(!d.empty()&&d.front()<=i-k)d.pop_front();
+        while(!d.empty()&&a[d.back()]<=a[i])d.pop_back(); d.push_back(i);
+        if(i>=k-1)ans.push_back(a[d.front()]);
+    } return ans;
 }
 ```
-
-### 12.2 Binary Search Variants
-
-```cpp
-// Find leftmost position where condition is true (lower_bound)
-// First index where arr[i] >= target
-int lowerBound(vector<int>& arr, int target) {
-    int left = 0, right = (int)arr.size();
-    while (left < right) {
-        int mid = (left + right) / 2;
-        if (arr[mid] < target) left = mid + 1;
-        else right = mid;
-    }
-    return left;
-}
-
-// First index where arr[i] > target (upper_bound)
-int upperBound(vector<int>& arr, int target) {
-    int left = 0, right = (int)arr.size();
-    while (left < right) {
-        int mid = (left + right) / 2;
-        if (arr[mid] <= target) left = mid + 1;
-        else right = mid;
-    }
-    return left;
-}
-
-// Binary search on answer space
-// "Find minimum X such that condition(X) is true"
-// Requires: condition is monotone (false...false, true...true)
-int binarySearchOnAnswer(int minPossible, int maxPossible,
-                         function<bool(int)> condition) {
-    int left = minPossible, right = maxPossible;
-    while (left < right) {
-        int mid = left + (right - left) / 2;
-        if (condition(mid)) right = mid;
-        else left = mid + 1;
-    }
-    return left;
-}
-
-// STL wrappers (require sorted container)
-auto it = lower_bound(arr.begin(), arr.end(), target);
-auto it2 = upper_bound(arr.begin(), arr.end(), target);
-bool found = binary_search(arr.begin(), arr.end(), target);
+### Python
+```python
+from collections import deque
+def max_window_values(a,k):
+    d=deque(); ans=[]
+    for i,x in enumerate(a):
+        while d and d[0]<=i-k:d.popleft()
+        while d and a[d[-1]]<=x:d.pop()
+        d.append(i)
+        if i>=k-1:ans.append(a[d[0]])
+    return ans
 ```
-
-### 12.3 Search in Rotated Sorted Array
-
-```cpp
-int search(vector<int>& nums, int target) {
-    int left = 0, right = (int)nums.size() - 1;
-    while (left <= right) {
-        int mid = left + (right - left) / 2;
-        if (nums[mid] == target) return mid;
-        if (nums[left] <= nums[mid]) {  // left half is sorted
-            if (nums[left] <= target && target < nums[mid]) right = mid - 1;
-            else left = mid + 1;
-        } else {                        // right half is sorted
-            if (nums[mid] < target && target <= nums[right]) left = mid + 1;
-            else right = mid - 1;
-        }
-    }
-    return -1;
+### JavaScript
+```javascript
+function maxWindowValues(a,k){
+  const d=[],ans=[]; let head=0;
+  for(let i=0;i<a.length;i++){
+    while(head<d.length&&d[head]<=i-k)head++;
+    while(head<d.length&&a[d.at(-1)]<=a[i])d.pop(); d.push(i);
+    if(i>=k-1)ans.push(a[d[head]]);
+  } return ans;
 }
 ```
 
 ---
 
-## 13. Recursion & Backtracking
+# 14. Sorting
 
-### 13.1 Recursion Template
+| Algorithm | Best | Average | Worst | Stable |
+|---|---:|---:|---:|---|
+| Bubble | O(n) | O(n²) | O(n²) | Yes |
+| Insertion | O(n) | O(n²) | O(n²) | Yes |
+| Selection | O(n²) | O(n²) | O(n²) | Usually no |
+| Merge | O(n log n) | O(n log n) | O(n log n) | Yes |
+| Quick | O(n log n) | O(n log n) | O(n²) | Usually no |
+| Heap | O(n log n) | O(n log n) | O(n log n) | No |
 
+Know how to implement merge sort and partition-based quicksort, but prefer the language's optimized sort in production.
+
+### Merge sort — all three stacks
+
+**C++**
 ```cpp
-// Generic recursion pattern
-ReturnType solve(Parameters params) {
-    // 1. Base case
-    if (baseCondition(params)) return baseResult;
-
-    // 2. Recursive case — break into smaller subproblems
-    auto subResult = solve(smallerParams);
-    return combine(subResult, ...);
+void mergeSort(vector<int>& a){
+    if(a.size()<=1)return;
+    vector<int> t(a.size());
+    function<void(int,int)> f=[&](int l,int r){
+        if(r-l<=1)return; int m=l+(r-l)/2; f(l,m);f(m,r);
+        int i=l,j=m,k=l; while(i<m&&j<r)t[k++]=a[i]<=a[j]?a[i++]:a[j++];
+        while(i<m)t[k++]=a[i++]; while(j<r)t[k++]=a[j++];
+        for(int p=l;p<r;++p)a[p]=t[p];
+    }; f(0,a.size());
 }
 ```
-
-### 13.2 Backtracking Template
-
-```cpp
-void backtrack(State& state, int start, vector<Result>& results) {
-    if (isSolution(state)) {
-        results.push_back(state);
-        return;
-    }
-    for (int i = start; i < choices.size(); i++) {
-        if (!isValid(choices[i], state)) continue;
-        makeChoice(state, choices[i]);          // choose
-        backtrack(state, i + 1, results);       // explore
-        undoChoice(state, choices[i]);          // unchoose (backtrack)
-    }
-}
+**Python**
+```python
+def merge_sort(a):
+    if len(a)<=1:return a[:]
+    m=len(a)//2; l=merge_sort(a[:m]); r=merge_sort(a[m:]); out=[];i=j=0
+    while i<len(l) and j<len(r):
+        if l[i]<=r[j]:out.append(l[i]);i+=1
+        else:out.append(r[j]);j+=1
+    return out+l[i:]+r[j:]
 ```
-
-### 13.3 Classic Backtracking Problems
-
-#### Permutations
-
-```cpp
-vector<vector<int>> permute(vector<int>& nums) {
-    vector<vector<int>> result;
-    vector<int> path;
-    vector<bool> used(nums.size(), false);
-    function<void()> backtrack = [&]() {
-        if ((int)path.size() == (int)nums.size()) {
-            result.push_back(path);
-            return;
-        }
-        for (int i = 0; i < (int)nums.size(); i++) {
-            if (!used[i]) {
-                used[i] = true;
-                path.push_back(nums[i]);
-                backtrack();
-                path.pop_back();
-                used[i] = false;
-            }
-        }
-    };
-    backtrack();
-    return result;
-}
-```
-
-#### Subsets
-
-```cpp
-vector<vector<int>> subsets(vector<int>& nums) {
-    vector<vector<int>> result;
-    vector<int> path;
-    function<void(int)> backtrack = [&](int start) {
-        result.push_back(path);
-        for (int i = start; i < (int)nums.size(); i++) {
-            path.push_back(nums[i]);
-            backtrack(i + 1);
-            path.pop_back();
-        }
-    };
-    backtrack(0);
-    return result;
-}
-```
-
-#### Combination Sum
-
-```cpp
-// Find all combinations that sum to target (elements can be reused)
-vector<vector<int>> combinationSum(vector<int>& candidates, int target) {
-    vector<vector<int>> result;
-    vector<int> path;
-    function<void(int, int)> backtrack = [&](int start, int remaining) {
-        if (remaining == 0) { result.push_back(path); return; }
-        for (int i = start; i < (int)candidates.size(); i++) {
-            if (candidates[i] > remaining) break;  // prune if sorted
-            path.push_back(candidates[i]);
-            backtrack(i, remaining - candidates[i]);  // i not i+1 (can reuse)
-            path.pop_back();
-        }
-    };
-    sort(candidates.begin(), candidates.end());
-    backtrack(0, target);
-    return result;
-}
-```
-
-#### N-Queens
-
-```cpp
-vector<vector<string>> solveNQueens(int n) {
-    vector<vector<string>> result;
-    vector<string> board(n, string(n, '.'));
-    unordered_set<int> cols, diag1, diag2;
-    function<void(int)> backtrack = [&](int row) {
-        if (row == n) {
-            result.push_back(board);
-            return;
-        }
-        for (int col = 0; col < n; col++) {
-            if (cols.count(col) || diag1.count(row-col) || diag2.count(row+col))
-                continue;
-            cols.insert(col); diag1.insert(row-col); diag2.insert(row+col);
-            board[row][col] = 'Q';
-            backtrack(row + 1);
-            board[row][col] = '.';
-            cols.erase(col); diag1.erase(row-col); diag2.erase(row+col);
-        }
-    };
-    backtrack(0);
-    return result;
-}
-```
-
-#### Sudoku Solver
-
-```cpp
-bool isValidPlacement(vector<vector<char>>& board, int row, int col, char c) {
-    for (int i = 0; i < 9; i++) {
-        if (board[row][i] == c) return false;
-        if (board[i][col] == c) return false;
-        if (board[3*(row/3) + i/3][3*(col/3) + i%3] == c) return false;
-    }
-    return true;
-}
-
-bool solveSudoku(vector<vector<char>>& board) {
-    for (int r = 0; r < 9; r++) {
-        for (int c = 0; c < 9; c++) {
-            if (board[r][c] != '.') continue;
-            for (char ch = '1'; ch <= '9'; ch++) {
-                if (isValidPlacement(board, r, c, ch)) {
-                    board[r][c] = ch;
-                    if (solveSudoku(board)) return true;
-                    board[r][c] = '.';
-                }
-            }
-            return false;  // no valid placement
-        }
-    }
-    return true;  // board fully filled
+**JavaScript**
+```javascript
+function mergeSort(a){
+  if(a.length<=1)return [...a]; const m=Math.floor(a.length/2);
+  const l=mergeSort(a.slice(0,m)),r=mergeSort(a.slice(m)),out=[]; let i=0,j=0;
+  while(i<l.length&&j<r.length)out.push(l[i]<=r[j]?l[i++]:r[j++]);
+  return out.concat(l.slice(i),r.slice(j));
 }
 ```
 
 ---
 
-## 14. Dynamic Programming
+# 15. Recursion & Backtracking
 
-### 14.1 Framework
+Pattern: **choose → recurse → undo**.
 
-1. **Define state:** `dp[i]` = answer to subproblem of size i
-2. **Recurrence relation:** how dp[i] depends on smaller states
-3. **Base case:** smallest valid state
-4. **Order of computation:** ensure dependencies computed first
+## Generate Subsets
 
-**Top-Down (Memoization) vs Bottom-Up (Tabulation):**
-- Memoization: recursive; only compute needed states; easier to reason
-- Tabulation: iterative; no recursion overhead; sometimes O(1) space with rolling array
-
-### 14.2 1D DP Patterns
-
-#### Fibonacci / Climbing Stairs
-
+### C++
 ```cpp
-int climbStairs(int n) {
-    if (n <= 2) return n;
-    int a = 1, b = 2;
-    for (int i = 3; i <= n; i++) {
-        int c = a + b;
-        a = b; b = c;
-    }
-    return b;  // O(1) space
+void dfs(const vector<int>& a,int i,vector<int>& path,vector<vector<int>>& ans){
+    if(i==(int)a.size()){ans.push_back(path);return;}
+    dfs(a,i+1,path,ans); path.push_back(a[i]); dfs(a,i+1,path,ans); path.pop_back();
+}
+```
+### Python
+```python
+def subsets(a):
+    ans=[]; path=[]
+    def dfs(i):
+        if i==len(a): ans.append(path.copy()); return
+        dfs(i+1); path.append(a[i]); dfs(i+1); path.pop()
+    dfs(0); return ans
+```
+### JavaScript
+```javascript
+function subsets(a){
+  const ans=[],path=[];
+  function dfs(i){ if(i===a.length){ans.push([...path]);return;} dfs(i+1);path.push(a[i]);dfs(i+1);path.pop(); }
+  dfs(0); return ans;
 }
 ```
 
-#### House Robber
+**Complexity:** O(n·2ⁿ) if each result is copied.
 
-```cpp
-int rob(vector<int>& nums) {
-    int prev2 = 0, prev1 = 0;
-    for (int num : nums) {
-        int curr = max(prev1, prev2 + num);
-        prev2 = prev1;
-        prev1 = curr;
-    }
-    return prev1;
-}
-```
-
-#### Longest Increasing Subsequence (LIS)
-
-```cpp
-// O(n²) DP
-int lisDP(vector<int>& nums) {
-    int n = nums.size();
-    vector<int> dp(n, 1);
-    int maxLen = 1;
-    for (int i = 1; i < n; i++)
-        for (int j = 0; j < i; j++)
-            if (nums[j] < nums[i]) {
-                dp[i] = max(dp[i], dp[j] + 1);
-                maxLen = max(maxLen, dp[i]);
-            }
-    return maxLen;
-}
-
-// O(n log n) — patience sorting with binary search
-int lisFast(vector<int>& nums) {
-    vector<int> tails;  // tails[i] = smallest tail of all IS of length i+1
-    for (int num : nums) {
-        auto it = lower_bound(tails.begin(), tails.end(), num);
-        if (it == tails.end()) tails.push_back(num);
-        else *it = num;
-    }
-    return (int)tails.size();
-}
-```
-
-### 14.3 2D DP Patterns
-
-#### Longest Common Subsequence (LCS)
-
-```cpp
-int longestCommonSubsequence(string s1, string s2) {
-    int m = s1.size(), n = s2.size();
-    vector<vector<int>> dp(m + 1, vector<int>(n + 1, 0));
-    for (int i = 1; i <= m; i++)
-        for (int j = 1; j <= n; j++)
-            if (s1[i-1] == s2[j-1]) dp[i][j] = dp[i-1][j-1] + 1;
-            else                     dp[i][j] = max(dp[i-1][j], dp[i][j-1]);
-    return dp[m][n];
-}
-```
-
-#### Edit Distance
-
-```cpp
-int minDistance(string s1, string s2) {
-    int m = s1.size(), n = s2.size();
-    // dp[i][j] = min operations to convert s1[:i] to s2[:j]
-    vector<vector<int>> dp(m + 1, vector<int>(n + 1));
-    for (int i = 0; i <= m; i++) dp[i][0] = i;
-    for (int j = 0; j <= n; j++) dp[0][j] = j;
-    for (int i = 1; i <= m; i++)
-        for (int j = 1; j <= n; j++)
-            if (s1[i-1] == s2[j-1]) dp[i][j] = dp[i-1][j-1];
-            else dp[i][j] = 1 + min({dp[i-1][j],    // delete from s1
-                                     dp[i][j-1],    // insert into s1
-                                     dp[i-1][j-1]}); // replace
-    return dp[m][n];
-}
-```
-
-#### 0/1 Knapsack
-
-```cpp
-int knapsack(int W, vector<int>& weight, vector<int>& value) {
-    int n = weight.size();
-    // Space-optimized: 1D dp, iterate weights in reverse
-    vector<int> dp(W + 1, 0);
-    for (int i = 0; i < n; i++)
-        for (int w = W; w >= weight[i]; w--)
-            dp[w] = max(dp[w], dp[w - weight[i]] + value[i]);
-    return dp[W];
-}
-```
-
-#### Coin Change
-
-```cpp
-int coinChange(vector<int>& coins, int amount) {
-    vector<int> dp(amount + 1, INT_MAX);
-    dp[0] = 0;
-    for (int a = 1; a <= amount; a++)
-        for (int coin : coins)
-            if (coin <= a && dp[a - coin] != INT_MAX)
-                dp[a] = min(dp[a], dp[a - coin] + 1);
-    return dp[amount] == INT_MAX ? -1 : dp[amount];
-}
-```
-
-#### Unique Paths
-
-```cpp
-int uniquePaths(int m, int n) {
-    vector<int> dp(n, 1);  // base: one way to reach each cell in first row
-    for (int i = 1; i < m; i++)
-        for (int j = 1; j < n; j++)
-            dp[j] += dp[j - 1];
-    return dp[n - 1];
-}
-```
-
-#### Word Break
-
-```cpp
-bool wordBreak(string s, vector<string>& wordDict) {
-    unordered_set<string> dict(wordDict.begin(), wordDict.end());
-    int n = s.size();
-    vector<bool> dp(n + 1, false);
-    dp[0] = true;
-    for (int i = 1; i <= n; i++)
-        for (int j = 0; j < i; j++)
-            if (dp[j] && dict.count(s.substr(j, i - j))) { dp[i] = true; break; }
-    return dp[n];
-}
-```
-
-#### Longest Palindromic Substring (DP)
-
-```cpp
-string longestPalindromicSubstringDP(string s) {
-    int n = s.size(), start = 0, maxLen = 1;
-    vector<vector<bool>> dp(n, vector<bool>(n, false));
-    for (int i = 0; i < n; i++) dp[i][i] = true;
-    for (int len = 2; len <= n; len++) {
-        for (int i = 0; i <= n - len; i++) {
-            int j = i + len - 1;
-            dp[i][j] = (s[i] == s[j]) && (len == 2 || dp[i+1][j-1]);
-            if (dp[i][j] && len > maxLen) { maxLen = len; start = i; }
-        }
-    }
-    return s.substr(start, maxLen);
-}
-```
-
-### 14.4 Classic DP Problems
-
-| Problem                        | State                                   | Transition                            |
-|--------------------------------|-----------------------------------------|---------------------------------------|
-| Coin Change                    | `dp[amount]` = min coins                | `dp[a] = min(dp[a-coin]+1)` for each coin |
-| Unique Paths                   | `dp[i][j]` = paths to cell             | `dp[i][j] = dp[i-1][j] + dp[i][j-1]` |
-| Word Break                     | `dp[i]` = can break s[:i]              | Try all words ending at i             |
-| Palindrome Partitioning        | `dp[i][j]` = is palindrome            | Expand; `dp[i][j] = dp[i+1][j-1] and s[i]==s[j]` |
-| Stock Buy/Sell                 | State: day + hold/not                  | Choose action each day                |
-| Matrix Chain Multiplication    | `dp[i][j]` = min multiplications      | Split at each k between i and j       |
+Other must-know backtracking: permutations, combination sum, subsets with duplicates, N-Queens, word search, and Sudoku.
 
 ---
 
-## 15. Greedy Algorithms
+# 16. Trees
 
-### 15.1 When to Use Greedy
+A tree with n nodes has n−1 edges.
 
-Greedy works when a **locally optimal choice** leads to a **globally optimal solution**. Prove via exchange argument or matroid theory.
+## Node
 
-### 15.2 Classic Greedy Problems
-
-| Problem                    | Greedy Choice                             |
-|----------------------------|-------------------------------------------|
-| Activity Selection         | Always pick activity with earliest end time |
-| Fractional Knapsack        | Sort by value/weight ratio; take greedily |
-| Huffman Coding             | Merge two lowest-frequency nodes first    |
-| Jump Game                  | Track max reachable index at each step    |
-| Gas Station Circuit        | Start from any point; reset if tank < 0  |
-| Interval Scheduling        | Sort by end time; pick non-overlapping    |
-| Minimum Platforms          | Sort arrivals/departures; track count     |
-
-#### Jump Game (Can Reach End?)
-
+### C++
 ```cpp
-bool canJump(vector<int>& nums) {
-    int maxReach = 0;
-    for (int i = 0; i < (int)nums.size(); i++) {
-        if (i > maxReach) return false;
-        maxReach = max(maxReach, i + nums[i]);
-    }
-    return true;
-}
+struct TreeNode{int val;TreeNode*left,*right;TreeNode(int x):val(x),left(nullptr),right(nullptr){}};
+```
+### Python
+```python
+class TreeNode:
+    def __init__(self,val=0,left=None,right=None): self.val,self.left,self.right=val,left,right
+```
+### JavaScript
+```javascript
+class TreeNode{constructor(val=0,left=null,right=null){this.val=val;this.left=left;this.right=right;}}
 ```
 
-#### Jump Game II (Min Jumps)
+## Traversals
 
-```cpp
-int jump(vector<int>& nums) {
-    int jumps = 0, currentEnd = 0, farthest = 0;
-    for (int i = 0; i < (int)nums.size() - 1; i++) {
-        farthest = max(farthest, i + nums[i]);
-        if (i == currentEnd) {
-            jumps++;
-            currentEnd = farthest;
-        }
-    }
-    return jumps;
-}
+```text
+Preorder: root → left → right
+Inorder: left → root → right
+Postorder: left → right → root
 ```
 
-#### Activity Selection / Interval Scheduling
-
+**C++**
 ```cpp
-// Maximum number of non-overlapping intervals
-int eraseOverlapIntervals(vector<vector<int>>& intervals) {
-    sort(intervals.begin(), intervals.end(),
-         [](const vector<int>& a, const vector<int>& b){ return a[1] < b[1]; });
-    int count = 0, end = INT_MIN;
-    for (auto& iv : intervals) {
-        if (iv[0] >= end) end = iv[1];  // no overlap, take it
-        else count++;                    // overlap, remove it
-    }
-    return count;
-}
+void inorder(TreeNode* r,vector<int>&o){if(!r)return;inorder(r->left,o);o.push_back(r->val);inorder(r->right,o);}
+```
+**Python**
+```python
+def inorder(r,out):
+    if not r:return
+    inorder(r.left,out);out.append(r.val);inorder(r.right,out)
+```
+**JavaScript**
+```javascript
+function inorder(r,out=[]){if(!r)return out;inorder(r.left,out);out.push(r.val);inorder(r.right,out);return out;}
 ```
 
-#### Gas Station
+## Level Order
 
+**C++**
 ```cpp
-int canCompleteCircuit(vector<int>& gas, vector<int>& cost) {
-    int total = 0, tank = 0, start = 0;
-    for (int i = 0; i < (int)gas.size(); i++) {
-        int diff = gas[i] - cost[i];
-        total += diff;
-        tank  += diff;
-        if (tank < 0) { start = i + 1; tank = 0; }  // can't start from here
-    }
-    return total >= 0 ? start : -1;
-}
+vector<vector<int>> levelOrder(TreeNode* root){if(!root)return{};queue<TreeNode*>q{{root}};vector<vector<int>>ans;while(!q.empty()){int n=q.size();vector<int>v;while(n--){auto*x=q.front();q.pop();v.push_back(x->val);if(x->left)q.push(x->left);if(x->right)q.push(x->right);}ans.push_back(v);}return ans;}
+```
+**Python**
+```python
+from collections import deque
+def level_order(root):
+    if not root:return []
+    q=deque([root]);ans=[]
+    while q:
+        level=[]
+        for _ in range(len(q)):
+            x=q.popleft();level.append(x.val)
+            if x.left:q.append(x.left)
+            if x.right:q.append(x.right)
+        ans.append(level)
+    return ans
+```
+**JavaScript**
+```javascript
+function levelOrder(root){if(!root)return[];const q=[root];let h=0,ans=[];while(h<q.length){const end=q.length,level=[];while(h<end){const x=q[h++];level.push(x.val);if(x.left)q.push(x.left);if(x.right)q.push(x.right);}ans.push(level);}return ans;}
+```
+
+## Maximum Depth
+
+**C++**
+```cpp
+int maxDepth(TreeNode*r){return r?1+max(maxDepth(r->left),maxDepth(r->right)):0;}
+```
+**Python**
+```python
+def max_depth(r): return 0 if not r else 1+max(max_depth(r.left),max_depth(r.right))
+```
+**JavaScript**
+```javascript
+function maxDepth(r){return r?1+Math.max(maxDepth(r.left),maxDepth(r.right)):0;}
+```
+
+## LCA — Binary Tree
+
+**C++**
+```cpp
+TreeNode* lca(TreeNode*r,TreeNode*p,TreeNode*q){if(!r||r==p||r==q)return r;auto*l=lca(r->left,p,q),*x=lca(r->right,p,q);return l&&x?r:l?l:x;}
+```
+**Python**
+```python
+def lca(r,p,q):
+    if not r or r is p or r is q:return r
+    l=lca(r.left,p,q); x=lca(r.right,p,q)
+    return r if l and x else l or x
+```
+**JavaScript**
+```javascript
+function lca(r,p,q){if(!r||r===p||r===q)return r;const l=lca(r.left,p,q),x=lca(r.right,p,q);return l&&x?r:l||x;}
 ```
 
 ---
 
-## 16. Trie (Prefix Tree)
+# 17. Binary Search Trees
 
+BST invariant: every left value is smaller and every right value is larger (according to the problem's duplicate policy).
+
+## Validate BST
+
+Use global bounds or inorder monotonicity; local child comparisons are insufficient.
+
+**C++**
 ```cpp
-struct TrieNode {
-    TrieNode* children[26];
-    bool isEnd;
-    TrieNode() : isEnd(false) {
-        fill(children, children + 26, nullptr);
-    }
-};
-
-class Trie {
-    TrieNode* root;
-public:
-    Trie() : root(new TrieNode()) {}
-
-    void insert(const string& word) {
-        TrieNode* node = root;
-        for (char c : word) {
-            int idx = c - 'a';
-            if (!node->children[idx])
-                node->children[idx] = new TrieNode();
-            node = node->children[idx];
-        }
-        node->isEnd = true;
-    }
-
-    bool search(const string& word) {
-        TrieNode* node = root;
-        for (char c : word) {
-            int idx = c - 'a';
-            if (!node->children[idx]) return false;
-            node = node->children[idx];
-        }
-        return node->isEnd;
-    }
-
-    bool startsWith(const string& prefix) {
-        TrieNode* node = root;
-        for (char c : prefix) {
-            int idx = c - 'a';
-            if (!node->children[idx]) return false;
-            node = node->children[idx];
-        }
-        return true;
-    }
-
-    // Count words with given prefix
-    int countWordsWithPrefix(const string& prefix) {
-        TrieNode* node = root;
-        for (char c : prefix) {
-            int idx = c - 'a';
-            if (!node->children[idx]) return 0;
-            node = node->children[idx];
-        }
-        // DFS count from here
-        int count = 0;
-        function<void(TrieNode*)> dfs = [&](TrieNode* n) {
-            if (n->isEnd) count++;
-            for (int i = 0; i < 26; i++)
-                if (n->children[i]) dfs(n->children[i]);
-        };
-        dfs(node);
-        return count;
-    }
-};
+bool valid(TreeNode*r,long long lo,long long hi){if(!r)return true;if(r->val<=lo||r->val>=hi)return false;return valid(r->left,lo,r->val)&&valid(r->right,r->val,hi);}
 ```
-
-**Applications:** Autocomplete, spell check, IP routing, word search in grid, longest prefix matching.
-
----
-
-## 17. Segment Tree & Binary Indexed Tree (BIT)
-
-### 17.1 Segment Tree
-
-- Supports **range queries** and **point updates** in O(log n)
-- Build: O(n); each node stores aggregate for a range
-- Use 4*n size array to store the tree
-
-```cpp
-class SegmentTree {
-    int n;
-    vector<int> tree;
-
-    void build(vector<int>& arr, int node, int start, int end) {
-        if (start == end) {
-            tree[node] = arr[start];
-        } else {
-            int mid = (start + end) / 2;
-            build(arr, 2*node, start, mid);
-            build(arr, 2*node+1, mid+1, end);
-            tree[node] = tree[2*node] + tree[2*node+1];  // sum; change for min/max
-        }
-    }
-
-    void update(int node, int start, int end, int idx, int val) {
-        if (start == end) {
-            tree[node] = val;
-        } else {
-            int mid = (start + end) / 2;
-            if (idx <= mid) update(2*node,   start, mid,   idx, val);
-            else            update(2*node+1, mid+1, end,   idx, val);
-            tree[node] = tree[2*node] + tree[2*node+1];
-        }
-    }
-
-    int query(int node, int start, int end, int l, int r) {
-        if (r < start || end < l) return 0;      // out of range
-        if (l <= start && end <= r) return tree[node]; // fully in range
-        int mid = (start + end) / 2;
-        return query(2*node, start, mid, l, r) +
-               query(2*node+1, mid+1, end, l, r);
-    }
-
-public:
-    SegmentTree(vector<int>& arr) : n(arr.size()), tree(4 * arr.size(), 0) {
-        build(arr, 1, 0, n - 1);
-    }
-    void update(int idx, int val)     { update(1, 0, n-1, idx, val); }
-    int  query(int l, int r)          { return query(1, 0, n-1, l, r); }
-};
+**Python**
+```python
+def valid(r,lo=float('-inf'),hi=float('inf')):
+    if not r:return True
+    if not lo<r.val<hi:return False
+    return valid(r.left,lo,r.val) and valid(r.right,r.val,hi)
 ```
-
-### 17.2 Binary Indexed Tree (Fenwick Tree)
-
-Simpler implementation; supports **prefix sum queries** and **point updates** in O(log n).
-
-```cpp
-class BIT {
-    int n;
-    vector<int> tree;
-public:
-    BIT(int n) : n(n), tree(n + 1, 0) {}
-
-    void update(int i, int delta) {        // 1-indexed
-        for (; i <= n; i += i & (-i))      // add lowest set bit
-            tree[i] += delta;
-    }
-
-    int query(int i) {                     // prefix sum [1..i]
-        int total = 0;
-        for (; i > 0; i -= i & (-i))       // remove lowest set bit
-            total += tree[i];
-        return total;
-    }
-
-    int rangeQuery(int l, int r) {         // sum [l..r] (1-indexed)
-        return query(r) - query(l - 1);
-    }
-};
+**JavaScript**
+```javascript
+function validBST(r,lo=-Infinity,hi=Infinity){if(!r)return true;if(!(lo<r.val&&r.val<hi))return false;return validBST(r.left,lo,r.val)&&validBST(r.right,r.val,hi);}
 ```
 
 ---
 
-## 18. Bit Manipulation
+# 18. Heaps & Priority Queues
 
-### 18.1 Bitwise Operators
+- Peek: O(1).
+- Insert: O(log n).
+- Extract: O(log n).
+- Build heap: O(n).
 
-| Operator | Symbol | Example (5=101, 3=011) | Result |
-|----------|--------|------------------------|--------|
-| AND      | &      | 101 & 011              | 001 = 1 |
-| OR       | \|     | 101 \| 011             | 111 = 7 |
-| XOR      | ^      | 101 ^ 011              | 110 = 6 |
-| NOT      | ~      | ~101                   | ...11111010 |
-| Left shift | <<   | 101 << 1               | 1010 = 10 |
-| Right shift | >>  | 101 >> 1               | 010 = 2 |
+## Top K
 
-### 18.2 Common Tricks
+Keep a min-heap of size K for K largest elements.
 
+**C++**
 ```cpp
-n & (n-1)              // Clear lowest set bit; n==0 iff n is power of 2
-n & (-n)               // Isolate lowest set bit (LSB)
-n ^ n                  // == 0
-n ^ 0                  // == n
-a ^ b ^ a              // == b (XOR cancels duplicates — find single number)
-(n >> i) & 1           // Check if i-th bit is set
-n | (1 << i)           // Set i-th bit
-n & ~(1 << i)          // Clear i-th bit
-n ^ (1 << i)           // Toggle i-th bit
-__builtin_popcount(n)  // Count set bits (Hamming weight) — GCC intrinsic
-__builtin_ctz(n)       // Count trailing zeros (position of LSB)
-__builtin_clz(n)       // Count leading zeros
+vector<int> topK(const vector<int>&a,int k){priority_queue<int,vector<int>,greater<int>>q;for(int x:a){q.push(x);if((int)q.size()>k)q.pop();}vector<int>r;while(!q.empty()){r.push_back(q.top());q.pop();}return r;}
 ```
-
-### 18.3 Classic Bit Problems
-
-```cpp
-// Single Number — all others appear twice
-int singleNumber(vector<int>& nums) {
-    int result = 0;
-    for (int n : nums) result ^= n;
-    return result;
-}
-
-// Count set bits (Brian Kernighan's algorithm)
-int countBits(int n) {
-    int count = 0;
-    while (n) { n &= (n - 1); count++; }
-    return count;
-}
-
-// Power of two
-bool isPowerOfTwo(int n) {
-    return n > 0 && (n & (n - 1)) == 0;
-}
-
-// Reverse bits of a 32-bit integer
-uint32_t reverseBits(uint32_t n) {
-    uint32_t result = 0;
-    for (int i = 0; i < 32; i++) {
-        result = (result << 1) | (n & 1);
-        n >>= 1;
-    }
-    return result;
-}
-
-// Sum of two integers without +/-
-int getSum(int a, int b) {
-    while (b != 0) {
-        unsigned carry = (unsigned)(a & b) << 1;
-        a = a ^ b;
-        b = carry;
-    }
-    return a;
-}
-
-// Enumerate all subsets of a set of size n
-for (int mask = 0; mask < (1 << n); mask++) {
-    // mask has bit i set iff element i is in this subset
-    for (int i = 0; i < n; i++)
-        if (mask & (1 << i)) { /* element i is in subset */ }
-}
+**Python**
+```python
+import heapq
+def top_k(a,k):
+    h=[]
+    for x in a:
+        heapq.heappush(h,x)
+        if len(h)>k:heapq.heappop(h)
+    return h
 ```
-
-### 18.4 Classic Bit Problems Table
-
-| Problem                       | Trick                                    |
-|-------------------------------|------------------------------------------|
-| Single Number (all others 2x) | XOR all numbers; duplicates cancel       |
-| Single Number (all others 3x) | Count bits mod 3                         |
-| Count set bits                | `n & (n-1)` loop                         |
-| Power of two                  | `n > 0 && (n & (n-1)) == 0`             |
-| Reverse bits                  | Extract LSB, shift result left, repeat 32x |
-| Sum without +                 | `a ^ b` (no carry) + `(a & b) << 1` (carry) |
-| Missing number (0..n)         | XOR all indices and all values           |
-
----
-
-## 19. Math & Number Theory
-
-### 19.1 Essential Math for DSA
-
-```cpp
-// GCD (Euclidean algorithm) — O(log min(a,b))
-int gcd(int a, int b) {
-    while (b) { int t = b; b = a % b; a = t; }
-    return a;
-}
-// C++17: __gcd(a, b) or std::gcd(a, b)
-
-// LCM — lcm(a,b) = a/gcd(a,b)*b (divide first to avoid overflow)
-long long lcm(long long a, long long b) { return a / gcd(a, b) * b; }
-
-// Power with modular exponentiation — O(log exp)
-long long power(long long base, long long exp, long long mod) {
-    long long result = 1;
-    base %= mod;
-    while (exp > 0) {
-        if (exp & 1) result = result * base % mod;
-        base = base * base % mod;
-        exp >>= 1;
-    }
-    return result;
-}
-
-// Sieve of Eratosthenes — all primes up to n in O(n log log n)
-vector<int> sieve(int n) {
-    vector<bool> isPrime(n + 1, true);
-    isPrime[0] = isPrime[1] = false;
-    for (int i = 2; (long long)i * i <= n; i++)
-        if (isPrime[i])
-            for (int j = i * i; j <= n; j += i)
-                isPrime[j] = false;
-    vector<int> primes;
-    for (int i = 2; i <= n; i++)
-        if (isPrime[i]) primes.push_back(i);
-    return primes;
-}
-
-// Check if prime in O(sqrt(n))
-bool isPrime(int n) {
-    if (n < 2) return false;
-    for (int i = 2; (long long)i * i <= n; i++)
-        if (n % i == 0) return false;
-    return true;
-}
-```
-
-### 19.2 Combinatorics
-
-```cpp
-// Pascal's Triangle — C(n, k) in O(n²) precompute
-const int MAXN = 1001;
-long long C[MAXN][MAXN];
-void buildPascal() {
-    C[0][0] = 1;
-    for (int n = 1; n < MAXN; n++) {
-        C[n][0] = 1;
-        for (int k = 1; k <= n; k++)
-            C[n][k] = C[n-1][k-1] + C[n-1][k];
-    }
-}
-
-// nCr with modular inverse (Fermat's little theorem, mod p must be prime)
-// C(n, r) = n! / (r! * (n-r)!) mod p
-// Use: a^(-1) mod p = a^(p-2) mod p
-long long nCr(int n, int r, long long MOD) {
-    if (r > n) return 0;
-    long long num = 1, den = 1;
-    for (int i = 0; i < r; i++) {
-        num = num * ((n - i) % MOD) % MOD;
-        den = den * ((i + 1) % MOD) % MOD;
-    }
-    return num * power(den, MOD - 2, MOD) % MOD;
-}
-```
-
-### 19.3 Fast I/O (Competitive Programming)
-
-```cpp
-// At top of main() for faster cin/cout
-ios_base::sync_with_stdio(false);
-cin.tie(nullptr);
+**JavaScript**
+```javascript
+// JavaScript has no standard heap; implement MinHeap or use the interview platform's heap.
 ```
 
 ---
 
-## 20. Problem-Solving Patterns Cheat Sheet
+# 19. Graphs
 
-| Pattern               | Problems it Solves                                  | Hint to Recognize           |
-|-----------------------|-----------------------------------------------------|-----------------------------|
-| Two Pointers          | Sorted array pair sum, container with most water    | Sorted input, find pair     |
-| Sliding Window        | Subarray/substring with constraint                  | Contiguous subarray         |
-| Prefix Sum            | Range sum queries                                   | Multiple range queries      |
-| Binary Search         | Search in sorted/monotonic space                    | Sorted, O(log n) asked      |
-| BFS                   | Shortest path (unweighted), level-order             | Shortest, level-by-level    |
-| DFS / Backtracking    | All paths, permutations, combinations               | Explore all possibilities   |
-| Dynamic Programming   | Optimization with overlapping subproblems           | Max/min, count ways         |
-| Greedy                | Activity selection, interval scheduling             | Local optimal = global      |
-| Monotonic Stack       | Next greater/smaller element, histogram             | Range span, NGE problems    |
-| Heap / Priority Queue | K-th largest, streaming median                      | K-th, top-K, streaming      |
-| Union-Find            | Connected components, cycle detection               | Group/connect elements      |
-| Trie                  | Prefix matching, autocomplete                       | String prefix queries       |
-| Bit Manipulation      | XOR tricks, subset enumeration                      | Single number, power of 2   |
-| Segment Tree / BIT    | Range queries with updates                          | Range sum/min/max + updates |
+- Adjacency list: O(V+E) space.
+- Adjacency matrix: O(V²) space.
+
+## DFS
+
+**C++**
+```cpp
+void dfs(int u,const vector<vector<int>>&g,vector<bool>&seen){seen[u]=true;for(int v:g[u])if(!seen[v])dfs(v,g,seen);}
+```
+**Python**
+```python
+def dfs(u,g,seen):
+    seen[u]=True
+    for v in g[u]:
+        if not seen[v]:dfs(v,g,seen)
+```
+**JavaScript**
+```javascript
+function dfs(u,g,seen){seen[u]=true;for(const v of g[u])if(!seen[v])dfs(v,g,seen);}
+```
+
+## BFS — Unweighted Shortest Path
+
+**C++**
+```cpp
+vector<int>bfs(int s,const vector<vector<int>>&g){vector<int>d(g.size(),-1);queue<int>q;q.push(s);d[s]=0;while(!q.empty()){int u=q.front();q.pop();for(int v:g[u])if(d[v]==-1){d[v]=d[u]+1;q.push(v);}}return d;}
+```
+**Python**
+```python
+from collections import deque
+def bfs(s,g):
+    d=[-1]*len(g);d[s]=0;q=deque([s])
+    while q:
+        u=q.popleft()
+        for v in g[u]:
+            if d[v]==-1:d[v]=d[u]+1;q.append(v)
+    return d
+```
+**JavaScript**
+```javascript
+function bfs(s,g){const d=new Array(g.length).fill(-1),q=[s];let h=0;d[s]=0;while(h<q.length){const u=q[h++];for(const v of g[u])if(d[v]===-1){d[v]=d[u]+1;q.push(v);}}return d;}
+```
+
+## Topological Sort — Kahn
+
+A DAG has a valid ordering. If fewer than V nodes are processed, a cycle exists.
+
+**C++**
+```cpp
+vector<int> topo(int n,const vector<vector<int>>&g){vector<int>in(n);for(int u=0;u<n;++u)for(int v:g[u])++in[v];queue<int>q;for(int i=0;i<n;++i)if(!in[i])q.push(i);vector<int>o;while(!q.empty()){int u=q.front();q.pop();o.push_back(u);for(int v:g[u])if(--in[v]==0)q.push(v);}return o.size()==(size_t)n?o:vector<int>{};}
+```
+**Python**
+```python
+from collections import deque
+def topo(n,g):
+    indeg=[0]*n
+    for u in range(n):
+        for v in g[u]:indeg[v]+=1
+    q=deque(i for i,d in enumerate(indeg) if d==0);o=[]
+    while q:
+        u=q.popleft();o.append(u)
+        for v in g[u]:
+            indeg[v]-=1
+            if indeg[v]==0:q.append(v)
+    return o if len(o)==n else []
+```
+**JavaScript**
+```javascript
+function topo(n,g){const d=new Array(n).fill(0);for(let u=0;u<n;u++)for(const v of g[u])d[v]++;const q=[];let h=0;for(let i=0;i<n;i++)if(d[i]===0)q.push(i);const o=[];while(h<q.length){const u=q[h++];o.push(u);for(const v of g[u])if(--d[v]===0)q.push(v);}return o.length===n?o:[];}
+```
+
+## Dijkstra
+
+Use only when edge weights are non-negative. Adjacency list + binary heap: O((V+E) log V).
+
+**C++**
+```cpp
+vector<long long>dijkstra(int s,const vector<vector<pair<int,int>>>&g){const long long INF=LLONG_MAX/4;vector<long long>d(g.size(),INF);using S=pair<long long,int>;priority_queue<S,vector<S>,greater<S>>q;d[s]=0;q.push({0,s});while(!q.empty()){auto [du,u]=q.top();q.pop();if(du!=d[u])continue;for(auto [v,w]:g[u])if(d[v]>du+w){d[v]=du+w;q.push({d[v],v});}}return d;}
+```
+**Python**
+```python
+import heapq
+def dijkstra(s,g):
+    INF=10**30;d=[INF]*len(g);d[s]=0;h=[(0,s)]
+    while h:
+        du,u=heapq.heappop(h)
+        if du!=d[u]:continue
+        for v,w in g[u]:
+            nd=du+w
+            if nd<d[v]:d[v]=nd;heapq.heappush(h,(nd,v))
+    return d
+```
+**JavaScript**
+```javascript
+// Use a MinHeap of [distance,node]. JavaScript has no standard heap.
+function dijkstra(s,g,heap){const d=new Array(g.length).fill(Infinity);d[s]=0;heap.push([0,s]);while(heap.size){const [du,u]=heap.pop();if(du!==d[u])continue;for(const [v,w] of g[u]){const nd=du+w;if(nd<d[v]){d[v]=nd;heap.push([nd,v]);}}}return d;}
+```
+
+Other graph algorithms: Bellman-Ford, Floyd-Warshall, Prim, Kruskal, bipartite check, SCC, and DSU.
+
+---
+
+# 20. Disjoint Set Union
+
+Path compression + union by size/rank gives O(α(n)) amortized operations.
+
+**C++**
+```cpp
+class DSU{vector<int>p,sz;public:DSU(int n):p(n),sz(n,1){iota(p.begin(),p.end(),0);}int find(int x){return p[x]==x?x:p[x]=find(p[x]);}bool unite(int a,int b){a=find(a);b=find(b);if(a==b)return false;if(sz[a]<sz[b])swap(a,b);p[b]=a;sz[a]+=sz[b];return true;}};
+```
+**Python**
+```python
+class DSU:
+    def __init__(self,n):self.p=list(range(n));self.sz=[1]*n
+    def find(self,x):
+        if self.p[x]!=x:self.p[x]=self.find(self.p[x])
+        return self.p[x]
+    def union(self,a,b):
+        a,b=self.find(a),self.find(b)
+        if a==b:return False
+        if self.sz[a]<self.sz[b]:a,b=b,a
+        self.p[b]=a;self.sz[a]+=self.sz[b];return True
+```
+**JavaScript**
+```javascript
+class DSU{constructor(n){this.p=Array.from({length:n},(_,i)=>i);this.sz=new Array(n).fill(1);}find(x){if(this.p[x]!==x)this.p[x]=this.find(this.p[x]);return this.p[x];}union(a,b){a=this.find(a);b=this.find(b);if(a===b)return false;if(this.sz[a]<this.sz[b])[a,b]=[b,a];this.p[b]=a;this.sz[a]+=this.sz[b];return true;}}
+```
+
+Applications: Kruskal, dynamic connectivity, components, undirected cycle detection.
+
+---
+
+# 21. Greedy Algorithms
+
+A greedy algorithm needs a correctness argument, not just an intuition that the local choice “looks best.” Common proofs include exchange arguments, cut properties, and staying-ahead arguments.
+
+Classic problems:
+
+- Activity selection → earliest finish.
+- Fractional knapsack → highest value/weight.
+- Interval partitioning → min-heap of finishing times.
+- Kruskal/Prim → MST cut property.
+
+**Do not use fractional-knapsack reasoning for 0/1 knapsack.**
+
+---
+
+# 22. Dynamic Programming
+
+DP usually requires overlapping subproblems + optimal substructure.
+
+```text
+State → Transition → Base case → Order → Answer
+```
+
+## Climbing Stairs
+
+**C++**
+```cpp
+int climbStairs(int n){int a=1,b=1;for(int i=2;i<=n;++i){int c=a+b;a=b;b=c;}return b;}
+```
+**Python**
+```python
+def climb_stairs(n):
+    a=b=1
+    for _ in range(2,n+1):a,b=b,a+b
+    return b
+```
+**JavaScript**
+```javascript
+function climbStairs(n){let a=1,b=1;for(let i=2;i<=n;i++)[a,b]=[b,a+b];return b;}
+```
+
+## 0/1 Knapsack
+
+**C++**
+```cpp
+int knapsack01(const vector<int>&w,const vector<int>&v,int C){vector<int>dp(C+1);for(int i=0;i<(int)w.size();++i)for(int c=C;c>=w[i];--c)dp[c]=max(dp[c],v[i]+dp[c-w[i]]);return dp[C];}
+```
+**Python**
+```python
+def knapsack01(w,v,C):
+    dp=[0]*(C+1)
+    for wi,vi in zip(w,v):
+        for c in range(C,wi-1,-1):dp[c]=max(dp[c],vi+dp[c-wi])
+    return dp[C]
+```
+**JavaScript**
+```javascript
+function knapsack01(w,v,C){const dp=new Array(C+1).fill(0);for(let i=0;i<w.length;i++)for(let c=C;c>=w[i];c--)dp[c]=Math.max(dp[c],v[i]+dp[c-w[i]]);return dp[C];}
+```
+
+**Critical:** backward capacity iteration prevents reusing an item in 0/1 knapsack.
+
+Master DP families: 1D, grid, knapsack, subset sum, LCS, edit distance, LIS, interval DP, tree DP, and bitmask DP.
+
+---
+
+# 23. Tries
+
+Trie operation: O(L), where L is key length.
+
+**C++**
+```cpp
+struct TrieNode{array<TrieNode*,26>child{};bool terminal=false;TrieNode(){child.fill(nullptr);}};
+```
+**Python**
+```python
+class TrieNode:
+    def __init__(self):self.children={};self.terminal=False
+```
+**JavaScript**
+```javascript
+class TrieNode{constructor(){this.children=new Map();this.terminal=false;}}
+```
+
+Applications: autocomplete, prefix search, dictionary lookup, word search, XOR trie.
+
+---
+
+# 24. Bit Manipulation
+
+```text
+x ^ x = 0
+x ^ 0 = x
+x ^ y ^ x = y
+n & (n-1) removes the lowest set bit
+```
+
+## Single Number
+
+**C++**
+```cpp
+int singleNumber(const vector<int>&a){int x=0;for(int v:a)x^=v;return x;}
+```
+**Python**
+```python
+def single_number(a):
+    x=0
+    for v in a:x^=v
+    return x
+```
+**JavaScript**
+```javascript
+function singleNumber(a){let x=0;for(const v of a)x^=v;return x;}
+```
+
+**JS caution:** bitwise operators use signed 32-bit integer conversion. For larger exact integers, consider `BigInt` and its different operator rules.
+
+---
+
+# 25. Math & Number Theory
+
+## GCD — Euclid
+
+**C++**
+```cpp
+long long gcd(long long a,long long b){while(b){long long t=a%b;a=b;b=t;}return llabs(a);}
+```
+**Python**
+```python
+def gcd(a,b):
+    while b:a,b=b,a%b
+    return abs(a)
+```
+**JavaScript**
+```javascript
+function gcd(a,b){while(b!==0)[a,b]=[b,a%b];return Math.abs(a);}
+```
+
+Know fast exponentiation (O(log n)) and the Sieve of Eratosthenes (O(n log log n)).
+
+---
+
+# 26. Advanced Patterns
+
+Know when to reach for:
+
+- Monotonic queue.
+- Difference array.
+- Coordinate compression.
+- Fenwick tree/BIT — O(log n) update/query.
+- Segment tree — O(log n) query/update; lazy propagation for supported range updates.
+- Meet in the middle.
+- Bitmask DP.
+- Sweep line.
+- Reservoir sampling.
+- KMP/Z algorithm.
+- Rolling hash.
+- SCC algorithms.
+- Advanced shortest paths.
+
+---
+
+# 27. Complexity Cheat Sheet
+
+| Structure / Algorithm | Typical complexity |
+|---|---:|
+| Array access | O(1) |
+| Hash lookup | O(1) average |
+| Balanced BST | O(log n) |
+| Heap insert/extract | O(log n) |
+| Binary search | O(log n) |
+| Merge/heap sort | O(n log n) |
+| BFS/DFS | O(V+E) |
+| Dijkstra | O((V+E) log V) |
+| Bellman-Ford | O(VE) |
+| Floyd-Warshall | O(V³) |
+| Topological sort | O(V+E) |
+| DSU | O(α(n)) amortized |
+| Trie operation | O(L) |
+
+---
+
+# 28. Language-Specific Interview Notes
+
+## C++
+
+Know `vector`, `string`, `unordered_map`, `unordered_set`, `map`, `set`, `stack`, `queue`, `deque`, `priority_queue`, `sort`, `lower_bound`, iterators, references, const correctness, comparators, `long long`, and pointer lifetime.
+
+## Python
+
+Know `list`, `dict`, `set`, `collections.deque`, `heapq`, `bisect`, `Counter`, `defaultdict`, `itertools`, comprehensions, tuple unpacking, recursion limits, and copy/slicing costs.
+
+## JavaScript
+
+Know `Array`, `Map`, `Set`, numeric sort comparator, array+head queue, custom heap, `Number.MAX_SAFE_INTEGER`, `BigInt`, `Map` vs object, and recursion-depth considerations.
+
+### Translation table
+
+```text
+C++ unordered_map  → Python dict → JavaScript Map
+C++ unordered_set  → Python set → JavaScript Set
+C++ priority_queue → Python heapq → JavaScript custom heap
+C++ queue          → Python deque → JavaScript array + head
+C++ lower_bound    → Python bisect_left → JavaScript binary search
+```
+
+Translate the **algorithm and invariant**, not syntax line-by-line.
+
+---
+
+# 29. Common Interview Mistakes
+
+1. Coding before constraints.
+2. Skipping the brute-force baseline.
+3. Forgetting all-negative cases.
+4. Ignoring integer overflow.
+5. Using sum-based sliding window with negative numbers.
+6. Mixing binary-search interval conventions.
+7. Using BFS for weighted shortest paths.
+8. Using Dijkstra with negative edges.
+9. Forgetting disconnected graph components.
+10. Forgetting recursion stack space.
+11. Mutating input when not allowed.
+12. JavaScript default numeric sort.
+13. Repeated JavaScript `shift()` on large queues.
+14. Unnecessary Python slicing in recursion.
+15. C++ iterator/reference invalidation.
+16. Treating hash tables as guaranteed O(1).
+17. Missing duplicate handling in backtracking.
+18. Confusing subsequence with substring/subarray.
+19. Ignoring output-size lower bounds.
+20. Not testing edge cases.
+
+---
+
+# 30. Interview Questions & Answers
+
+### Q1. Why can O(n) be slower than O(n log n)?
+
+Big-O ignores constants, allocations, cache locality, runtime overhead, and actual input sizes.
+
+### Q2. Hash map vs sorting?
+
+Hashing is excellent for average O(1) membership/counting. Sorting is better when ordering or two-pointer techniques matter and gives deterministic O(n log n) comparison sorting behavior.
+
+### Q3. Why is binary search O(log n)?
+
+Each iteration discards about half the remaining search space.
+
+### Q4. Why is BFS shortest path for unweighted graphs?
+
+BFS visits nodes by number of edges from the source, so the first discovery is a minimum-edge path.
+
+### Q5. Why does BFS not solve general weighted shortest paths?
+
+It minimizes edge count, not total edge weight.
+
+### Q6. Why does Dijkstra require non-negative weights?
+
+Its greedy finalization step relies on the fact that a later path cannot become smaller through a negative edge.
+
+### Q7. DFS vs BFS?
+
+DFS is natural for exhaustive traversal, recursion, backtracking, and structural graph problems. BFS is natural for levels and minimum edge distance.
+
+### Q8. What makes a problem suitable for sliding window?
+
+It concerns a contiguous range and permits efficient incremental state updates. Variable sum windows additionally need appropriate monotonicity, commonly non-negative values.
+
+### Q9. What is a binary-search invariant?
+
+A statement describing where the answer can still exist; every pointer update must preserve it.
+
+### Q10. Memoization vs tabulation?
+
+Memoization is top-down recursion plus caching; tabulation is bottom-up state computation.
+
+### Q11. Subarray vs subsequence?
+
+Subarray is contiguous; subsequence preserves order but can skip elements.
+
+### Q12. Trie vs hash set?
+
+Hash sets are excellent for exact membership; tries also support prefix operations.
+
+### Q13. Why is a monotonic stack O(n)?
+
+Every element is pushed once and popped at most once.
+
+### Q14. Why is DSU nearly constant time?
+
+Path compression and union by size/rank yield O(α(n)) amortized complexity.
+
+### Q15. What is topological sorting used for?
+
+Dependency ordering in DAGs: builds, courses, tasks, package dependencies, and similar systems.
+
+### Q16. What happens if a dependency graph has a cycle?
+
+No valid topological order exists.
+
+### Q17. Why sort intervals before merging?
+
+Sorting places potentially overlapping intervals together, allowing a linear sweep.
+
+### Q18. When should greedy be rejected?
+
+When local choices cannot be proven to preserve global optimality.
+
+### Q19. What is amortized O(1)?
+
+Average cost over a sequence is constant even if occasional individual operations are expensive.
+
+### Q20. How do you choose C++, Python, or JavaScript?
+
+Use the language in which you can most reliably express the algorithm, complexity, and edge cases, then adapt it to the company's stack.
+
+### Q21. Should you memorize all three implementations?
+
+Memorize the algorithm, invariant, and complexity first. Practice translating the same pattern across all three languages.
+
+### Q22. C++ vs Python for deep graph DFS?
+
+Python recursion can hit recursion-depth limits, so iterative DFS may be safer. C++ can also overflow the stack on extremely deep recursion.
+
+### Q23. What changes in JavaScript numeric algorithms?
+
+`Number` is floating-point and has exact integer precision only through `Number.MAX_SAFE_INTEGER`. Bitwise operations use 32-bit integer conversion. Use `BigInt` when exact larger integers are required.
+
+### Q24. Why is Python concise for DSA?
+
+Dictionaries, sets, `deque`, `heapq`, `Counter`, sorting, and comprehensions reduce implementation overhead. Hidden copies and interpreter overhead can still matter.
+
+### Q25. Why is C++ common in competitive programming?
+
+The STL provides efficient, rich data structures and algorithms, while the language offers strong performance control.
+
+---
+
+# 31. Practice Roadmap
+
+## Level 1
+
+Complexity → Arrays → Strings → Hashing → Two pointers → Sliding window → Prefix sums → Binary search.
+
+## Level 2
+
+Linked lists → Stack → Queue/deque → Trees → BST → Heap.
+
+## Level 3
+
+DFS/BFS → Components → Cycles → Bipartite → Topological sort → Shortest paths → MST → DSU.
+
+## Level 4
+
+Greedy → 1D/2D DP → Knapsack → LCS/LIS → Interval DP → Tree DP → Bitmask DP.
+
+## Level 5
+
+Trie → Fenwick → Segment tree → Monotonic queue → Sweep line → Meet-in-the-middle → Advanced graph algorithms.
+
+### Multi-language practice
+
+For each important problem:
+
+```text
+1. Solve in your strongest language.
+2. Explain the invariant without code.
+3. Re-implement in the company's likely stack.
+4. Compare standard-library equivalents.
+5. Test the same edge cases in all languages.
+```
+
+---
+
+# 32. Final Revision Checklist
+
+- [ ] Big-O and amortized analysis
+- [ ] Arrays and strings
+- [ ] Hashing
+- [ ] Two pointers
+- [ ] Sliding window
+- [ ] Prefix sums / difference arrays
+- [ ] Binary search / answer search
+- [ ] Linked lists
+- [ ] Stacks / monotonic stack
+- [ ] Queues / monotonic deque
+- [ ] Sorting
+- [ ] Backtracking
+- [ ] Tree DFS/BFS
+- [ ] BST
+- [ ] Heap / Top K
+- [ ] Graph DFS/BFS
+- [ ] Cycle detection
+- [ ] Topological sort
+- [ ] Dijkstra / Bellman-Ford
+- [ ] MST / DSU
+- [ ] Greedy proofs
+- [ ] DP state/transition/base case
+- [ ] Trie
+- [ ] Bit manipulation
+- [ ] Fenwick / segment tree awareness
+- [ ] C++ STL
+- [ ] Python standard library
+- [ ] JavaScript Map/Set/Array/heap behavior
+- [ ] Language-specific numeric/runtime pitfalls
+
+---
+
+# 33. Interview Communication Template
+
+```text
+1. “Let me confirm the constraints.”
+2. “A brute-force approach would be …”
+3. “The bottleneck is …”
+4. “This looks like a [pattern] problem because …”
+5. “I’ll maintain this invariant …”
+6. “This gives O(time) and O(space).”
+7. Code.
+8. Test edge cases.
+9. Mention language-specific considerations if relevant.
+```
+
+A strong DSA interview answer demonstrates **pattern recognition, correctness, complexity awareness, edge-case discipline, and the ability to translate the same algorithm across the company's technology stack**.
