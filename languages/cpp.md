@@ -1,988 +1,1242 @@
-# C++ — Super Detailed Interview & Exam Notes
+# C++ — Detailed Interview, Exam & Practical Notes
 
 > 📌 **GitHub:** [nirajkr26](https://github.com/nirajkr26) &nbsp;|&nbsp; **LinkedIn:** [nirajkr26](https://www.linkedin.com/in/nirajkr26)
 
----
-
-## 1. Introduction to C++
-
-C++ is a **general-purpose, statically typed, compiled, multi-paradigm** programming language created by **Bjarne Stroustrup** in 1979 as an extension of C. It supports procedural, object-oriented, and generic programming.
-
-**Key Features:**
-- High performance (close to hardware)
-- Object-Oriented Programming support
-- Templates & Generic Programming
-- Standard Template Library (STL)
-- Manual memory management + smart pointers
-- Deterministic destructors (RAII)
-
-**Compilation pipeline:**
-```
-Source (.cpp) → Preprocessor → Compiler → Assembler → Linker → Executable
-```
-
-**C++ Standards Timeline:**
-
-| Standard | Year | Notable Features |
-|----------|------|-----------------|
-| C++98/03 | 1998/2003 | Core language, STL |
-| C++11    | 2011 | auto, lambda, move semantics, threads |
-| C++14    | 2014 | Generic lambdas, relaxed constexpr |
-| C++17    | 2017 | Structured bindings, std::optional, if constexpr |
-| C++20    | 2020 | Concepts, Ranges, Coroutines, Modules |
-| C++23    | 2023 | std::expected, std::print, deducing this |
+> **Focus:** modern C++, object model, memory, RAII, STL, templates, move semantics, concurrency, performance, exceptions, C++20/23 concepts, and interview preparation.
 
 ---
 
-## 2. Basic Syntax and Structure
+## 1. C++ Overview
 
-```cpp
-#include <iostream>   // Preprocessor directive
-using namespace std;  // Bring std into scope
+C++ is a compiled, statically typed, multi-paradigm language supporting procedural programming, object-oriented programming, generic programming, and low-level systems programming.
 
-int main() {          // Entry point; returns int
-    cout << "Hello, World!" << endl;
-    return 0;         // 0 = success
-}
-```
+Modern C++ emphasizes **resource safety through RAII**, value semantics, generic algorithms, and zero/low-overhead abstractions when used appropriately.
 
-**Preprocessor Directives:**
-- `#include` — include header files
-- `#define` — macro definition
-- `#ifdef / #ifndef / #endif` — conditional compilation
-- `#pragma once` — include guard (modern alternative)
+### Standard status
+
+- **C++23** is the current published ISO C++ standard.
+- **C++26** is the next standard generation and remains a moving target during the standardization process.
+- Compiler support for individual features can lag the standard.
+
+When writing portable code, distinguish “standardized” from “implemented by my compiler/version”.
 
 ---
 
-## 3. Data Types and Variables
+## 2. Compilation Pipeline
 
-### 3.1 Fundamental Types
+A typical C++ build can be viewed as:
 
-| Type | Size (typical) | Range |
-|------|---------------|-------|
-| `bool` | 1 byte | true / false |
-| `char` | 1 byte | -128 to 127 |
-| `int` | 4 bytes | -2^31 to 2^31-1 |
-| `long long` | 8 bytes | -2^63 to 2^63-1 |
-| `float` | 4 bytes | ~7 decimal digits precision |
-| `double` | 8 bytes | ~15 decimal digits precision |
-| `void` | — | No value |
+```text
+source.cpp
+   |
+   v
+Preprocessor
+   |
+   v
+translation unit
+   |
+   v
+Compiler
+   |
+   v
+object file
+   |
+   v
+Linker + libraries
+   |
+   v
+executable / shared library
+```
 
-**Modifiers:** `signed`, `unsigned`, `short`, `long`
+### Preprocessor
 
-### 3.2 Type Qualifiers
-
-| Qualifier | Meaning |
-|-----------|---------|
-| `const` | Value cannot be changed after initialization |
-| `volatile` | Value may change externally (no optimization) |
-| `mutable` | Can be modified inside `const` member function |
-| `constexpr` (C++11) | Evaluated at compile time |
-
-### 3.3 Variable Scope
-
-- **Local** — inside a function/block; stack-allocated
-- **Global** — outside all functions; lives for program duration
-- **Static local** — retains value across function calls; initialized once
-- **Register** — hint to compiler to use CPU register (ignored in modern C++)
+Handles directives such as:
 
 ```cpp
-int globalVar = 10;           // global
-
-void func() {
-    int localVar = 5;          // local
-    static int count = 0;      // static local
-    count++;
-}
+#include <vector>
+#define SIZE 100
+#if defined(DEBUG)
+#endif
 ```
+
+Modern C++ generally prefers language constructs, templates, `constexpr`, and modules where available over excessive macro usage.
+
+### Translation unit
+
+A source file after preprocessing, including the relevant included headers, forms a translation unit that the compiler processes.
+
+### Linking
+
+The linker resolves references across object files and libraries.
+
+Common errors:
+
+- **Compile error:** syntax/type/template issue.
+- **Linker error:** declaration exists but a required definition/symbol cannot be resolved.
+- **Runtime error/undefined behavior:** program builds but execution violates requirements.
 
 ---
 
-## 4. Operators
+## 3. Basic Types
 
-| Category | Operators |
-|----------|-----------|
-| Arithmetic | `+  -  *  /  %` |
-| Relational | `==  !=  <  >  <=  >=` |
-| Logical | `&&  \|\|  !` |
-| Bitwise | `&  \|  ^  ~  <<  >>` |
-| Assignment | `=  +=  -=  *=  /=  %=  &=  \|=  ^=  <<=  >>=` |
-| Increment/Decrement | `++  --` (pre and post) |
-| Ternary | `condition ? true_val : false_val` |
-| Comma | `,` |
-| Sizeof | `sizeof(type)` |
-| Scope resolution | `::` |
-| Member access | `.  ->` |
-| Pointer | `*  &` |
+Common fundamental types include:
 
-**Operator Precedence (high → low, partial):**
+```cpp
+bool
+char
+signed char / unsigned char
+short
+int
+long
+long long
+float
+double
+long double
+void
 ```
-::  >  ()[]->  >  ++-- (post)  >  ++-- (pre) * & ! ~  >  * / %  >  + -  >  << >>  >  < > <= >=  >  == !=  >  & > ^ > | > && > || > ?: > = += -= ...
+
+Exact sizes are implementation-defined; do not blindly assume `int` is always 32 bits on every platform. `<cstdint>` provides fixed-width types when available:
+
+```cpp
+std::int32_t
+std::uint64_t
 ```
+
+### Signed vs unsigned
+
+Unsigned arithmetic is modulo `2^N` for the corresponding unsigned type. Mixing signed and unsigned values can produce surprising comparisons and conversions.
+
+```cpp
+int x = -1;
+unsigned int y = 1;
+// x < y may not behave as beginners expect because of conversions.
+```
+
+Avoid unnecessary signed/unsigned mixing.
 
 ---
 
-## 5. Control Flow
+## 4. Variables, Initialization and `auto`
 
-### 5.1 Conditionals
+Prefer initialization forms that make intent clear.
+
 ```cpp
-if (x > 0) { /* ... */ }
-else if (x == 0) { /* ... */ }
-else { /* ... */ }
-
-switch (x) {
-    case 1: cout << "one"; break;
-    case 2: cout << "two"; break;
-    default: cout << "other";
-}
+int a = 10;
+int b{20};
+std::vector<int> v{1, 2, 3};
 ```
 
-### 5.2 Loops
+Brace initialization helps prevent some narrowing conversions:
+
 ```cpp
-for (int i = 0; i < 10; i++) { /* ... */ }
-
-while (condition) { /* ... */ }
-
-do { /* ... */ } while (condition);
-
-// Range-based for (C++11)
-for (auto& elem : container) { /* ... */ }
+// int x{3.14}; // compile error: narrowing
 ```
 
-### 5.3 Jump Statements
-- `break` — exit loop/switch
-- `continue` — skip to next iteration
-- `return` — exit function
-- `goto` — unconditional jump (avoid!)
+### `auto`
+
+```cpp
+auto count = 42;          // int
+const auto name = "Bob";  // const char[4] expression rules apply to deduction
+```
+
+Use `auto` when the type is obvious from the initializer or would be verbose, but avoid hiding important semantic information in public interfaces.
+
+### `decltype`
+
+```cpp
+int x = 0;
+decltype(x) y = 1; // int
+```
+
+`decltype` preserves more type/reference information than ordinary `auto` deduction and is heavily used in templates.
 
 ---
 
-## 6. Functions
+## 5. References and Pointers
 
-### 6.1 Function Basics
+### Reference
+
 ```cpp
-returnType functionName(paramType param1, paramType param2) {
-    // body
-    return value;
-}
-```
-
-### 6.2 Default Arguments
-```cpp
-void print(int x, int y = 10) { cout << x << " " << y; }
-print(5);       // 5 10
-print(5, 20);   // 5 20
-```
-
-### 6.3 Function Overloading
-```cpp
-int add(int a, int b) { return a + b; }
-double add(double a, double b) { return a + b; }
-// Resolved at compile time based on argument types
-```
-
-### 6.4 Inline Functions
-```cpp
-inline int square(int x) { return x * x; }
-// Compiler may substitute function body at call site (avoids call overhead)
-```
-
-### 6.5 Pass by Value vs Reference vs Pointer
-```cpp
-void byValue(int x) { x = 100; }         // original unchanged
-void byRef(int& x) { x = 100; }          // original changed
-void byPtr(int* x) { *x = 100; }         // original changed via pointer
-
-int n = 5;
-byValue(n);   // n = 5
-byRef(n);     // n = 100
-byPtr(&n);    // n = 100
-```
-
-### 6.6 Recursion
-```cpp
-int factorial(int n) {
-    if (n <= 1) return 1;
-    return n * factorial(n - 1);
-}
-```
-
-### 6.7 Lambda Functions (C++11)
-```cpp
-// [capture](params) -> return_type { body }
-auto add = [](int a, int b) -> int { return a + b; };
-cout << add(3, 4);  // 7
-
 int x = 10;
-auto addX = [x](int a) { return a + x; };  // capture by value
-auto addXRef = [&x](int a) { return a + x; };  // capture by reference
+int& ref = x;
+ref = 20; // x becomes 20
 ```
 
----
+A reference is an alias-like language construct and must normally be initialized.
 
-## 7. Pointers and References
-
-### 7.1 Pointers
-A pointer stores the **memory address** of another variable.
+### Pointer
 
 ```cpp
-int x = 42;
-int* ptr = &x;   // ptr holds address of x
-
-cout << ptr;    // address (e.g., 0x7ffd...)
-cout << *ptr;   // 42 (dereference)
-
-*ptr = 100;     // x is now 100
-```
-
-**Pointer Arithmetic:**
-```cpp
-int arr[] = {10, 20, 30};
-int* p = arr;         // points to arr[0]
-p++;                  // now points to arr[1]
-cout << *(p + 1);     // arr[2] = 30
-```
-
-**Null Pointer:**
-```cpp
-int* p = nullptr;    // C++11 (preferred over NULL or 0)
-if (p == nullptr) { /* safe check */ }
-```
-
-**Pointer to Pointer:**
-```cpp
-int x = 5;
+int x = 10;
 int* p = &x;
-int** pp = &p;        // pointer to pointer
-cout << **pp;         // 5
+*p = 20;
 ```
 
-**`const` with Pointers:**
-```cpp
-const int* p = &x;    // pointer to const int (cannot change *p)
-int* const p = &x;    // const pointer to int (cannot change p itself)
-const int* const p = &x;  // both const
-```
+A pointer stores an address-like value and can be null.
 
-### 7.2 References
-A reference is an **alias** for an existing variable. Must be initialized at declaration; cannot be re-bound.
+### Pointer vs reference
 
-```cpp
-int x = 10;
-int& ref = x;   // ref is alias for x
-ref = 20;       // x is now 20
-```
+| Pointer | Reference |
+|---|---|
+| Can be null | Normally must bind to an object |
+| Can be reseated | Cannot be reseated |
+| Explicit dereference | Usually implicit access |
+| Pointer arithmetic possible | No pointer arithmetic |
+| Useful for optional/low-level ownership/non-ownership | Useful for aliasing/function parameters |
 
-**Reference vs Pointer:**
-
-| Feature | Reference | Pointer |
-|---------|-----------|---------|
-| Must be initialized | ✅ Yes | ❌ No |
-| Can be null | ❌ No | ✅ Yes |
-| Can be re-assigned | ❌ No | ✅ Yes |
-| Syntax to access | Direct (no `*`) | Dereference with `*` |
-| Use case | Safer alternative, pass params | Dynamic memory, arrays |
+Do not use raw pointers as an ownership signal when a smart pointer expresses ownership more safely.
 
 ---
 
-## 8. Arrays and Strings
+## 6. Stack, Heap and Storage Duration
 
-### 8.1 Arrays
+“Stack vs heap” is useful intuition but not the complete C++ object model.
+
+Objects have storage duration such as:
+
+- Automatic
+- Static
+- Thread
+- Dynamic
+
 ```cpp
-int arr[5] = {1, 2, 3, 4, 5};
-int matrix[3][3] = {{1,2,3},{4,5,6},{7,8,9}};
+void f() {
+  int local = 10; // automatic storage duration
+}
 
-// Dynamic array
-int* dynArr = new int[10];
-delete[] dynArr;  // must free!
+static int counter = 0; // static storage duration
+
+int* p = new int(42); // dynamic storage duration; prefer RAII wrappers
 ```
 
-### 8.2 C-style Strings
-```cpp
-char str[] = "Hello";       // null-terminated char array
-char* s = "World";          // pointer to string literal (read-only!)
-strlen(str);                // length without null
-strcpy(dest, src);          // copy
-strcat(dest, src);          // concatenate
-strcmp(s1, s2);             // compare (0 if equal)
-```
-
-### 8.3 std::string (C++)
-```cpp
-#include <string>
-string s = "Hello";
-s.length();          // 5
-s.substr(1, 3);      // "ell"
-s.find("ll");        // 2
-s += " World";       // concatenation
-s.empty();           // false
-s[0];                // 'H'
-stoi("42");          // string to int
-to_string(42);       // int to string
-```
+Modern C++ should rarely use naked `new`/`delete` in application code. Prefer containers and smart pointers.
 
 ---
 
-## 9. Memory Management
+## 7. RAII — Core Modern C++ Concept
 
-### 9.1 Stack vs Heap
+**RAII (Resource Acquisition Is Initialization)** ties resource lifetime to object lifetime.
 
-| Aspect | Stack | Heap |
-|--------|-------|------|
-| Allocation | Automatic (compiler) | Manual (`new`/`delete`) |
-| Speed | Fast (just move SP) | Slower (allocator overhead) |
-| Size | Limited (typically 1–8 MB) | Large (available RAM) |
-| Lifetime | Function scope | Until explicitly freed |
-| Fragmentation | No | Possible |
-
-### 9.2 Dynamic Memory with `new`/`delete`
 ```cpp
-int* p = new int(42);          // allocate single int
-delete p;                       // free
+class File {
+public:
+  explicit File(const char* path) {
+    // acquire resource
+  }
 
-int* arr = new int[10];        // allocate array
-delete[] arr;                   // free array (use delete[], not delete)
-
-// Always set to nullptr after delete to avoid dangling pointer
-p = nullptr;
+  ~File() {
+    // release resource
+  }
+};
 ```
 
-**Common Memory Bugs:**
-- **Memory leak** — allocated memory never freed
-- **Dangling pointer** — pointer to freed memory
-- **Double free** — freeing same memory twice
-- **Buffer overflow** — writing beyond array bounds
-- **Wild pointer** — uninitialized pointer
+The resource is released automatically when the object leaves scope, including during exception unwinding.
 
-### 9.3 Smart Pointers (C++11) — `<memory>`
+RAII applies to:
 
-> Smart pointers automate memory management using RAII (Resource Acquisition Is Initialization).
+- Memory
+- Files
+- Mutex locks
+- Sockets
+- Database connections
+- OS handles
 
-#### `unique_ptr` — sole ownership
+### Scope-based cleanup
+
 ```cpp
-unique_ptr<int> p = make_unique<int>(42);
-// Automatically deleted when p goes out of scope
-// Cannot be copied; can be moved
-unique_ptr<int> p2 = move(p);  // ownership transferred
+{
+  std::lock_guard<std::mutex> lock(mutex);
+  // critical section
+} // mutex unlocked automatically
 ```
 
-#### `shared_ptr` — shared ownership (reference-counted)
+This is one of the most important differences between modern C++ and manual-resource programming styles.
+
+---
+
+## 8. `const`, `constexpr`, `consteval`
+
+### `const`
+
+Prevents modification through that particular object/reference binding.
+
 ```cpp
-shared_ptr<int> p1 = make_shared<int>(42);
-shared_ptr<int> p2 = p1;   // ref count = 2
-// Deleted when last shared_ptr is destroyed (ref count = 0)
-p1.use_count();             // 2
+const int x = 10;
 ```
 
-#### `weak_ptr` — non-owning reference (breaks circular references)
+### `constexpr`
+
+Declares that an expression/function can participate in constant evaluation when its arguments and context allow it.
+
 ```cpp
-weak_ptr<int> wp = p1;
-if (auto sp = wp.lock()) {  // lock() returns shared_ptr or nullptr
-    cout << *sp;
+constexpr int square(int x) {
+  return x * x;
+}
+
+constexpr int n = square(5);
+```
+
+### `consteval`
+
+A `consteval` function must be evaluated at compile time when called in contexts where it is invoked.
+
+These tools enable compile-time computation without resorting to macros.
+
+---
+
+## 9. Functions
+
+```cpp
+int add(int a, int b) {
+  return a + b;
 }
 ```
 
-**When to use:**
-- `unique_ptr` — default choice; single owner (e.g., factory-returned objects)
-- `shared_ptr` — multiple owners (e.g., shared cache entries)
-- `weak_ptr` — observer/cache; avoids circular ownership
+### Pass by value
+
+```cpp
+void process(User user);
+```
+
+Copies/moves the argument into the parameter.
+
+### Pass by reference
+
+```cpp
+void process(User& user);
+```
+
+Allows modification of the caller's object.
+
+### Pass by const reference
+
+```cpp
+void print(const User& user);
+```
+
+Avoids copying while preventing modification through that reference.
+
+### Return by value
+
+Modern C++ efficiently returns objects by value using copy elision and move semantics. Do not automatically return raw pointers/references just to “avoid copying”.
 
 ---
 
-## 10. Object-Oriented Programming in C++
+## 10. Function Overloading
 
-### 10.1 Classes and Objects
+Multiple functions can share a name if their parameter lists differ sufficiently.
+
 ```cpp
-class Rectangle {
+int add(int a, int b);
+double add(double a, double b);
+```
+
+Return type alone cannot distinguish overloads.
+
+---
+
+## 11. Classes and Objects
+
+```cpp
+class User {
 private:
-    int width, height;     // data members
+  std::string name;
 
 public:
-    // Constructor
-    Rectangle(int w, int h) : width(w), height(h) {}
+  explicit User(std::string name)
+      : name(std::move(name)) {}
 
-    // Member function
-    int area() const { return width * height; }
-
-    // Destructor
-    ~Rectangle() { cout << "Destroyed\n"; }
+  const std::string& getName() const {
+    return name;
+  }
 };
-
-Rectangle r(4, 5);
-cout << r.area();   // 20
 ```
 
-### 10.2 Constructors and Destructors
+### Constructor initializer list
+
+Prefer member initialization lists. Members are initialized before the constructor body, in **declaration order**, not the order written in the initializer list.
+
+### `explicit`
+
+Prevents unwanted implicit conversions from single-argument constructors.
+
 ```cpp
-class MyClass {
-    int x;
-public:
-    MyClass() : x(0) {}                     // Default constructor
-    MyClass(int val) : x(val) {}            // Parameterized constructor
-    MyClass(const MyClass& other) : x(other.x) {}  // Copy constructor
-    MyClass(MyClass&& other) noexcept : x(other.x) { other.x = 0; }  // Move constructor (C++11)
-    ~MyClass() {}                            // Destructor
+explicit User(std::string name);
+```
+
+---
+
+## 12. `struct` vs `class`
+
+The main language difference is default access:
+
+```cpp
+struct Data {
+  int value; // public by default
+};
+
+class User {
+  int id; // private by default
 };
 ```
 
-**Rule of Three / Five / Zero:**
-- **Rule of Three:** If you define destructor, copy constructor, or copy assignment — define all three.
-- **Rule of Five (C++11):** Add move constructor and move assignment operator.
-- **Rule of Zero:** Prefer smart pointers/containers so you don't need any.
+Both can have methods, constructors, inheritance, templates, etc.
 
-### 10.3 Inheritance
+Use `struct` commonly for simple data-oriented types and `class` where encapsulation/invariants are central, but this is a style convention rather than a language requirement.
+
+---
+
+## 13. Encapsulation and Invariants
+
+Good classes protect invariants.
+
+```cpp
+class BankAccount {
+  double balance_ = 0;
+
+public:
+  void withdraw(double amount) {
+    if (amount > balance_) throw std::runtime_error("insufficient funds");
+    balance_ -= amount;
+  }
+};
+```
+
+Do not expose mutable state merely because getters/setters are easy to write. Design the interface around valid operations.
+
+---
+
+## 14. Inheritance and Polymorphism
+
 ```cpp
 class Animal {
 public:
-    string name;
-    Animal(string n) : name(n) {}
-    virtual void speak() { cout << "..."; }  // virtual for polymorphism
-    virtual ~Animal() {}                      // virtual destructor (important!)
+  virtual ~Animal() = default;
+  virtual void speak() const = 0;
 };
 
 class Dog : public Animal {
 public:
-    Dog(string n) : Animal(n) {}
-    void speak() override { cout << "Woof!"; }  // override keyword (C++11)
-};
-
-Animal* a = new Dog("Rex");
-a->speak();     // "Woof!" — dynamic dispatch
-delete a;       // calls Dog's destructor (because virtual destructor)
-```
-
-**Inheritance Access Specifiers:**
-
-| Base member | `public` inherit | `protected` inherit | `private` inherit |
-|-------------|-----------------|---------------------|-------------------|
-| `public`    | `public`        | `protected`         | `private`         |
-| `protected` | `protected`     | `protected`         | `private`         |
-| `private`   | inaccessible    | inaccessible        | inaccessible      |
-
-### 10.4 Virtual Functions and Polymorphism
-```cpp
-class Shape {
-public:
-    virtual double area() = 0;    // pure virtual function → abstract class
-    virtual ~Shape() {}
-};
-
-class Circle : public Shape {
-    double r;
-public:
-    Circle(double r) : r(r) {}
-    double area() override { return 3.14159 * r * r; }
+  void speak() const override {
+    std::cout << "Woof\n";
+  }
 };
 ```
 
-**vtable (Virtual Table):**
-- Each class with virtual functions has a hidden `vtable` (array of function pointers)
-- Each object has a `vptr` (pointer to its class's vtable)
-- Virtual dispatch: `obj->method()` → lookup vtable → call correct function
-- Cost: one extra pointer per object + one indirect call per virtual call
+### Runtime polymorphism
 
-### 10.5 Multiple Inheritance and Diamond Problem
+A base pointer/reference can refer to a derived object, and a virtual call dispatches to the appropriate override.
+
 ```cpp
-class A { public: virtual void show() { cout << "A"; } };
-class B : virtual public A {};   // virtual inheritance
+std::unique_ptr<Animal> a = std::make_unique<Dog>();
+a->speak();
+```
+
+### Why virtual destructor?
+
+If a polymorphic base is destroyed through a base pointer, the base destructor should generally be virtual so the derived destructor runs correctly.
+
+---
+
+## 15. Virtual Functions and Vtable Intuition
+
+A common implementation uses a **vtable** and a hidden pointer to support dynamic dispatch, although the C++ standard specifies behavior, not a required implementation.
+
+Typical intuition:
+
+```text
+Base pointer
+    |
+    v
+object -> vptr -> virtual function table
+                    |
+                    v
+              Derived::speak
+```
+
+Do not claim that every C++ implementation must use exactly this layout.
+
+---
+
+## 16. Multiple Inheritance and Virtual Inheritance
+
+C++ supports multiple base classes.
+
+```cpp
+class A {};
+class B {};
+class C : public A, public B {};
+```
+
+### Diamond problem
+
+```text
+      A
+     / \
+    B   C
+     \ /
+      D
+```
+
+If B and C each inherit A normally, D can contain two A subobjects.
+
+Virtual inheritance can share a single A subobject:
+
+```cpp
+class B : virtual public A {};
 class C : virtual public A {};
-class D : public B, public C {}; // D has only one copy of A
-
-D d;
-d.show();  // works — no ambiguity
+class D : public B, public C {};
 ```
 
-### 10.6 Operator Overloading
+Use multiple inheritance carefully; interfaces/mixins can be safer than complex stateful inheritance graphs.
+
+---
+
+## 17. Rule of Three, Five and Zero
+
+### Rule of Three
+
+If a class manually manages a resource and needs one of:
+
+- Destructor
+- Copy constructor
+- Copy assignment operator
+
+it often needs all three.
+
+### Rule of Five
+
+Modern C++ adds:
+
+- Move constructor
+- Move assignment operator
+
+### Rule of Zero
+
+Prefer composing RAII types such as `std::string`, containers, and smart pointers so the class needs none of these special functions explicitly.
+
 ```cpp
-class Vector {
-public:
-    int x, y;
-    Vector(int x, int y) : x(x), y(y) {}
-
-    // Member operator overload
-    Vector operator+(const Vector& other) const {
-        return Vector(x + other.x, y + other.y);
-    }
-
-    // Friend function for << overloading
-    friend ostream& operator<<(ostream& os, const Vector& v) {
-        os << "(" << v.x << ", " << v.y << ")";
-        return os;
-    }
+class Buffer {
+  std::vector<std::byte> data_;
 };
-
-Vector v1(1, 2), v2(3, 4);
-cout << v1 + v2;   // (4, 6)
 ```
 
-**Non-overloadable operators:** `::`  `.`  `.*`  `?:`  `sizeof`
+This is generally safer than manually owning `new[]` memory.
 
-### 10.7 Friend Functions and Classes
+---
+
+## 18. Copy vs Move Semantics
+
+### Copy
+
+Creates an independent logical value.
+
 ```cpp
-class MyClass {
-    int secret = 42;
-    friend void reveal(MyClass& obj);   // friend function
-    friend class Inspector;              // friend class
-};
-
-void reveal(MyClass& obj) { cout << obj.secret; }  // can access private
+std::string a = "hello";
+std::string b = a;
 ```
 
-### 10.8 `static` Members
-```cpp
-class Counter {
-    static int count;       // shared across all instances
-public:
-    Counter() { count++; }
-    static int getCount() { return count; }
-};
-int Counter::count = 0;    // definition outside class
+### Move
 
-Counter c1, c2, c3;
-cout << Counter::getCount();  // 3
+Transfers/moves resources from an object that is about to be discarded.
+
+```cpp
+std::string a = "hello";
+std::string b = std::move(a);
 ```
 
-### 10.9 `const` Member Functions
+After moving, the source remains valid but its value is generally unspecified unless the type documents more.
+
+### Important
+
+`std::move()` does not itself move anything. It is essentially a cast that permits move construction/assignment to be selected.
+
+---
+
+## 19. Value Categories
+
+Modern C++ distinguishes expressions including:
+
+- lvalue
+- xvalue
+- prvalue
+
+and groups them into:
+
+```text
+glvalue = lvalue + xvalue
+rvalue  = xvalue + prvalue
+```
+
+This machinery supports move semantics and perfect forwarding.
+
+### Example
+
 ```cpp
-class Circle {
-    double radius;
-public:
-    double getRadius() const { return radius; }  // promises not to modify object
-    // Cannot call non-const methods inside const method
-};
+std::string s = "hello";
+std::string a = s;            // copy from lvalue
+std::string b = std::move(s); // move from xvalue
 ```
 
 ---
 
-## 11. Templates
+## 20. Smart Pointers
 
-Templates allow writing **generic** code that works with any type.
+### `unique_ptr`
 
-### 11.1 Function Templates
+Exclusive ownership.
+
 ```cpp
-template <typename T>
-T max(T a, T b) { return (a > b) ? a : b; }
-
-cout << max(3, 5);      // int version
-cout << max(3.1, 5.2);  // double version
+auto p = std::make_unique<User>("Alice");
 ```
 
-### 11.2 Class Templates
-```cpp
-template <typename T>
-class Stack {
-    vector<T> data;
-public:
-    void push(T val) { data.push_back(val); }
-    T pop() {
-        T top = data.back();
-        data.pop_back();
-        return top;
-    }
-};
+Cannot be copied, but can be moved.
 
-Stack<int> s;
-s.push(1); s.push(2);
-cout << s.pop();  // 2
+### `shared_ptr`
+
+Shared ownership through reference counting.
+
+```cpp
+auto p = std::make_shared<User>("Alice");
+auto q = p;
 ```
 
-### 11.3 Template Specialization
-```cpp
-template <typename T>
-T stringify(T val) { return val; }
+### `weak_ptr`
 
-template <>
-string stringify<bool>(bool val) { return val ? "true" : "false"; }
+Non-owning reference to an object managed by `shared_ptr`.
+
+Useful for breaking ownership cycles.
+
+```text
+A shared_ptr → B shared_ptr
+B weak_ptr  → A
 ```
 
-### 11.4 Variadic Templates (C++11)
-```cpp
-template <typename... Args>
-void print(Args... args) {
-    (cout << ... << args);  // fold expression (C++17)
-}
-print(1, " hello ", 3.14);  // 1 hello 3.14
-```
+### Why prefer `make_unique` / `make_shared`?
+
+They make ownership explicit and generally simplify allocation/exception safety.
+
+### Smart pointer warning
+
+Do not use `shared_ptr` everywhere. Shared ownership has cost and can obscure lifetime design. Prefer `unique_ptr` by default when ownership is exclusive.
 
 ---
 
-## 12. Standard Template Library (STL)
+## 21. STL Overview
 
-### 12.1 Containers
+The Standard Library provides containers, iterators, algorithms, utilities, strings, ranges, concurrency primitives, and more.
 
-| Container | Header | Description | Access | Insert | Delete |
-|-----------|--------|-------------|--------|--------|--------|
-| `vector` | `<vector>` | Dynamic array | O(1) | O(1) amortized | O(n) |
-| `list` | `<list>` | Doubly linked list | O(n) | O(1) | O(1) |
-| `deque` | `<deque>` | Double-ended queue | O(1) | O(1) both ends | O(n) |
-| `stack` | `<stack>` | LIFO (adaptor) | top O(1) | push O(1) | pop O(1) |
-| `queue` | `<queue>` | FIFO (adaptor) | front O(1) | push O(1) | pop O(1) |
-| `priority_queue` | `<queue>` | Max-heap by default | top O(1) | O(log n) | O(log n) |
-| `set` | `<set>` | Sorted unique keys (BST) | O(log n) | O(log n) | O(log n) |
-| `multiset` | `<set>` | Like set, allows duplicates | O(log n) | O(log n) | O(log n) |
-| `map` | `<map>` | Sorted key-value pairs | O(log n) | O(log n) | O(log n) |
-| `unordered_set` | `<unordered_set>` | Hash-based unique keys | O(1) avg | O(1) avg | O(1) avg |
-| `unordered_map` | `<unordered_map>` | Hash-based key-value | O(1) avg | O(1) avg | O(1) avg |
-| `array` | `<array>` | Fixed-size array | O(1) | N/A | N/A |
-| `bitset` | `<bitset>` | Fixed-size bit array | O(1) | N/A | N/A |
+### Major containers
 
-**vector — most commonly used:**
+| Container | Typical strength |
+|---|---|
+| `vector` | Contiguous dynamic array; excellent general-purpose sequence |
+| `deque` | Efficient insertion/removal at both ends |
+| `list` | Stable node-based iterators; specialized use cases |
+| `array` | Fixed-size contiguous array |
+| `map` | Ordered key/value tree structure |
+| `set` | Ordered unique keys |
+| `unordered_map` | Hash table; average O(1) lookup |
+| `unordered_set` | Hash set; average O(1) lookup |
+| `stack` | LIFO adapter |
+| `queue` | FIFO adapter |
+| `priority_queue` | Heap-based priority structure |
+
+---
+
+## 22. `vector` Deep Dive
+
+`std::vector` stores elements contiguously.
+
 ```cpp
-#include <vector>
-vector<int> v = {1, 2, 3};
-v.push_back(4);       // [1,2,3,4]
-v.pop_back();         // [1,2,3]
-v.size();             // 3
-v.empty();            // false
-v[1];                 // 2 (no bounds check)
-v.at(1);              // 2 (bounds check, throws out_of_range)
-v.front(); v.back();  // 1, 3
-v.insert(v.begin()+1, 10);  // [1,10,2,3]
-v.erase(v.begin());         // [10,2,3]
-sort(v.begin(), v.end());   // sort
+std::vector<int> v;
+v.push_back(10);
+v.emplace_back(20);
 ```
 
-**map:**
+Typical complexity:
+
+- Random access: O(1)
+- `push_back`: amortized O(1)
+- Insert/erase in middle: O(n)
+
+### Size vs capacity
+
 ```cpp
-#include <map>
-map<string, int> m;
-m["apple"] = 5;
-m["banana"] = 3;
-m.count("apple");      // 1 (exists)
-m.find("apple");       // iterator
-for (auto& [k, v] : m) { cout << k << ": " << v; }  // C++17 structured bindings
+v.size();
+v.capacity();
+v.reserve(1000);
 ```
 
-### 12.2 Iterators
+`reserve()` increases capacity without changing size. `resize()` changes the number of elements.
+
+### Iterator invalidation
+
+Reallocation can invalidate pointers, references, and iterators to vector elements. Insert/erase can also invalidate elements depending on position and whether reallocation occurs.
+
+---
+
+## 23. Associative Containers
+
+### `map`
+
+Typically implemented using a balanced tree, giving O(log n) search/insert/erase.
+
+### `unordered_map`
+
+Hash-based; average O(1), but worst-case behavior can be worse and depends on hashing/bucket distribution.
+
+### Choosing
+
+Use ordered containers when sorted traversal/order or tree semantics matter. Use unordered containers when hash lookup is appropriate and ordering is unnecessary.
+
+---
+
+## 24. Iterators
+
+Iterators generalize traversal.
 
 ```cpp
-vector<int> v = {1, 2, 3, 4, 5};
-auto it = v.begin();     // points to first element
-auto end = v.end();      // one past last
-
 for (auto it = v.begin(); it != v.end(); ++it) {
-    cout << *it << " ";
-}
-
-// Reverse iterator
-for (auto rit = v.rbegin(); rit != v.rend(); ++rit) {
-    cout << *rit << " ";   // 5 4 3 2 1
+  std::cout << *it;
 }
 ```
 
-**Iterator Types:**
-
-| Type | Can do |
-|------|--------|
-| Input | Read, single pass forward |
-| Output | Write, single pass forward |
-| Forward | Read/Write, multiple pass forward |
-| Bidirectional | Forward + backward (`list`, `set`) |
-| Random Access | ±n, [], compare (`vector`, `deque`) |
-
-### 12.3 Algorithms (`<algorithm>`)
+Modern range-based loops are usually clearer:
 
 ```cpp
-#include <algorithm>
-vector<int> v = {3,1,4,1,5,9,2,6};
-
-sort(v.begin(), v.end());              // ascending
-sort(v.begin(), v.end(), greater<int>());  // descending
-reverse(v.begin(), v.end());
-auto it = find(v.begin(), v.end(), 5); // returns iterator
-int cnt = count(v.begin(), v.end(), 1);
-int mx = *max_element(v.begin(), v.end());
-binary_search(v.begin(), v.end(), 4); // true/false (sorted array)
-auto pos = lower_bound(v.begin(), v.end(), 4);  // first >= 4
-auto pos2 = upper_bound(v.begin(), v.end(), 4); // first > 4
-accumulate(v.begin(), v.end(), 0);    // sum (in <numeric>)
+for (const auto& value : v) {
+  std::cout << value;
+}
 ```
 
-### 12.4 `<utility>` and Pairs/Tuples
+Iterator categories include input, output, forward, bidirectional, and random-access; modern C++ also has the contiguous iterator concept.
+
+---
+
+## 25. Algorithms
+
+Prefer standard algorithms over hand-written loops when they express intent clearly.
+
 ```cpp
-pair<int, string> p = {1, "hello"};
-p.first;   // 1
-p.second;  // "hello"
-auto tp = make_tuple(1, "hi", 3.14);
-get<0>(tp); get<1>(tp); get<2>(tp);
+std::sort(v.begin(), v.end());
+auto it = std::find(v.begin(), v.end(), target);
+int total = std::accumulate(v.begin(), v.end(), 0);
+```
+
+C++20 ranges provide cleaner composition:
+
+```cpp
+auto result = values
+  | std::views::filter([](int x) { return x % 2 == 0; })
+  | std::views::transform([](int x) { return x * x; });
+```
+
+Ranges are often lazy: the view describes computation rather than immediately creating a new container.
+
+---
+
+## 26. Lambdas
+
+```cpp
+auto square = [](int x) { return x * x; };
+```
+
+### Captures
+
+```cpp
+int factor = 2;
+
+auto byValue = [factor](int x) { return x * factor; };
+auto byRef = [&factor](int x) { return x * factor; };
+```
+
+Be careful when returning/storing lambdas that capture references to objects whose lifetime may end.
+
+### Generic lambdas
+
+```cpp
+auto equal = [](const auto& a, const auto& b) {
+  return a == b;
+};
 ```
 
 ---
 
-## 13. Exception Handling
+## 27. Templates
+
+Templates enable generic programming.
+
+```cpp
+template <typename T>
+T maximum(T a, T b) {
+  return a > b ? a : b;
+}
+```
+
+Templates are instantiated for concrete types, subject to language rules and constraints.
+
+### Function vs class templates
+
+```cpp
+template <typename T>
+class Box {
+  T value;
+};
+```
+
+### Non-type template parameters
+
+```cpp
+template <std::size_t N>
+struct Buffer {
+  std::array<int, N> data;
+};
+```
+
+---
+
+## 28. Concepts
+
+C++20 concepts constrain templates more explicitly.
+
+```cpp
+template <typename T>
+requires std::integral<T>
+T add(T a, T b) {
+  return a + b;
+}
+```
+
+Or:
+
+```cpp
+template <std::integral T>
+T add(T a, T b) {
+  return a + b;
+}
+```
+
+Benefits:
+
+- Clearer intent.
+- Better diagnostics than many unconstrained template failures.
+- More expressive generic interfaces.
+
+---
+
+## 29. Exceptions
 
 ```cpp
 try {
-    if (x < 0) throw invalid_argument("Negative number");
-    if (x == 0) throw runtime_error("Division by zero");
-    cout << 100 / x;
-}
-catch (const invalid_argument& e) {
-    cerr << "Invalid arg: " << e.what();
-}
-catch (const runtime_error& e) {
-    cerr << "Runtime error: " << e.what();
-}
-catch (...) {           // catch all
-    cerr << "Unknown exception";
-}
-finally {              // NOTE: C++ has no finally! Use RAII instead.
+  process();
+} catch (const std::exception& e) {
+  std::cerr << e.what();
 }
 ```
 
-**Standard Exception Hierarchy:**
-```
-std::exception
-├── std::logic_error
-│   ├── invalid_argument
-│   ├── out_of_range
-│   └── domain_error
-└── std::runtime_error
-    ├── overflow_error
-    ├── underflow_error
-    └── range_error
-```
-
-**Custom Exceptions:**
-```cpp
-class MyException : public exception {
-    string msg;
-public:
-    MyException(const string& m) : msg(m) {}
-    const char* what() const noexcept override { return msg.c_str(); }
-};
-```
-
-**`noexcept` specifier (C++11):**
-```cpp
-void safe() noexcept { /* guaranteed not to throw */ }
-// If it does throw, std::terminate() is called
-```
-
----
-
-## 14. Move Semantics and Rvalue References (C++11)
-
-### 14.1 Lvalue vs Rvalue
-- **Lvalue** — has a name/address; persists beyond expression (`int x = 5; x` is lvalue)
-- **Rvalue** — temporary; no address (`5`, `x + y`, `string("hello")` are rvalues)
-
-### 14.2 Move Constructor & Move Assignment
-```cpp
-class Buffer {
-    int* data;
-    size_t size;
-public:
-    // Move constructor — steals resources
-    Buffer(Buffer&& other) noexcept : data(other.data), size(other.size) {
-        other.data = nullptr;   // leave source in valid-but-empty state
-        other.size = 0;
-    }
-    // Move assignment
-    Buffer& operator=(Buffer&& other) noexcept {
-        if (this != &other) {
-            delete[] data;
-            data = other.data; size = other.size;
-            other.data = nullptr; other.size = 0;
-        }
-        return *this;
-    }
-};
-```
-
-### 14.3 `std::move` and `std::forward`
-```cpp
-// std::move — cast to rvalue reference (enables move semantics)
-Buffer a(100);
-Buffer b = move(a);   // moves, doesn't copy
-
-// std::forward — perfect forwarding in templates
-template <typename T>
-void wrapper(T&& arg) {
-    process(forward<T>(arg));  // forwards as lvalue or rvalue as appropriate
-}
-```
-
----
-
-## 15. File I/O
+Throw by value:
 
 ```cpp
-#include <fstream>
-
-// Writing
-ofstream outFile("data.txt");
-outFile << "Hello, File!\n";
-outFile.close();
-
-// Reading
-ifstream inFile("data.txt");
-string line;
-while (getline(inFile, line)) {
-    cout << line << "\n";
-}
-inFile.close();
-
-// Binary files
-ofstream bin("data.bin", ios::binary);
-int x = 42;
-bin.write(reinterpret_cast<char*>(&x), sizeof(x));
+throw std::runtime_error("invalid state");
 ```
+
+Catch polymorphic exceptions by `const` reference.
+
+### RAII + exceptions
+
+During stack unwinding, automatic objects are destroyed. RAII therefore provides deterministic cleanup even when exceptions occur.
+
+Avoid using exceptions for ordinary expected control flow when a simpler return/error type is more appropriate for the system design.
 
 ---
 
-## 16. Multithreading (C++11 `<thread>`)
+## 30. `noexcept`
 
 ```cpp
-#include <thread>
-#include <mutex>
+void close() noexcept;
+```
 
-mutex mtx;
+`noexcept` communicates that a function does not throw under its contract. It can affect generic code and move operations.
 
-void task(int id) {
-    lock_guard<mutex> lock(mtx);   // RAII lock
-    cout << "Thread " << id << "\n";
-}
+For example, standard containers may prefer a `noexcept` move constructor when deciding whether moving elements is safe during reallocation.
 
-int main() {
-    thread t1(task, 1);
-    thread t2(task, 2);
-    t1.join();   // wait for t1 to finish
-    t2.join();
+---
+
+## 31. Namespaces and ODR
+
+Namespaces prevent name collisions.
+
+```cpp
+namespace math {
+  int add(int a, int b) { return a + b; }
 }
 ```
 
-**Synchronization Tools:**
+Avoid `using namespace std;` in headers because it pollutes users' namespaces.
 
-| Tool | Use |
-|------|-----|
-| `mutex` | Basic mutual exclusion |
-| `lock_guard` | RAII mutex lock (no unlock needed) |
-| `unique_lock` | Flexible lock (can unlock/re-lock) |
-| `condition_variable` | Wait/notify between threads |
-| `atomic<T>` | Lock-free operations on simple types |
-| `future` / `promise` | Async task result passing |
+### One Definition Rule
+
+C++ has rules governing how declarations and definitions may appear across translation units. Header design, `inline`, templates, and linkage all interact with the ODR.
+
+A practical rule: declarations belong in headers, non-inline ordinary definitions usually belong in one source file, and templates generally need definitions visible where instantiated.
 
 ---
 
-## 17. C++11/14/17 Key Features
+## 32. Header Guards and `#pragma once`
 
-### C++11
-- `auto` keyword — type deduction
-- `nullptr` — type-safe null pointer
-- Range-based `for` loop
-- Lambda expressions
-- Smart pointers (`unique_ptr`, `shared_ptr`, `weak_ptr`)
-- Move semantics (`&&`, `std::move`)
-- `constexpr`
-- `static_assert`
-- Initializer lists `{}`
-- `override` and `final`
-- `std::thread`
+Classic:
 
-### C++14
-- Generic lambdas: `[](auto x) { ... }`
-- `make_unique`
-- Binary literals: `0b1010`
-- Digit separators: `1'000'000`
+```cpp
+#ifndef USER_H
+#define USER_H
+// declarations
+#endif
+```
 
-### C++17
-- Structured bindings: `auto [key, val] = pair;`
-- `if constexpr`
-- `std::optional<T>` — may or may not hold a value
-- `std::variant<T1,T2>` — type-safe union
-- `std::string_view` — non-owning string reference
-- Parallel algorithms: `std::sort(std::execution::par, ...)`
+Many compilers support:
 
-### C++20
-- **Concepts** — constrain templates
-- **Ranges** — composable algorithms
-- **Coroutines** — co_await, co_yield
-- **Modules** — replace headers
-- `std::span` — non-owning view over array
+```cpp
+#pragma once
+```
+
+It is widely used but technically compiler-supported rather than historically part of the ISO C++ standard.
 
 ---
 
-## 18. Frequently Asked Questions (FAQs)
+## 33. `std::optional`, `variant`, `any`
 
-**Q1. What is the difference between `struct` and `class` in C++?**
-> Only difference: default access is `public` in `struct`, `private` in `class`. Both support all OOP features. Convention: use `struct` for plain data, `class` for data + behavior.
+### Optional
 
-**Q2. What is RAII?**
-> Resource Acquisition Is Initialization. Resources (memory, file handles) are acquired in constructor and released in destructor. Guarantees cleanup even with exceptions. Smart pointers and `lock_guard` are examples.
+Represents a value that may be absent.
 
-**Q3. What is a virtual destructor and why is it needed?**
-> When deleting a derived class object via a base class pointer, if the base destructor is not virtual, only the base destructor is called → resource leak. Always make base class destructors `virtual`.
+```cpp
+std::optional<int> findId();
+```
 
-**Q4. What is the difference between `new`/`delete` and `malloc`/`free`?**
-> `new`/`delete` call constructors/destructors and are type-safe. `malloc`/`free` don't call constructors and return `void*`. Never mix them.
+### Variant
 
-**Q5. What is a copy constructor vs assignment operator?**
-> Copy constructor: creates a new object as a copy (`MyClass b = a;`). Assignment operator: copies into an existing object (`b = a;` where b already exists). Deep copy must be implemented for pointer members.
+Type-safe discriminated union.
 
-**Q6. What is object slicing?**
-> When a derived class object is assigned to a base class variable by value, the derived-specific data is "sliced off". Avoided by using pointers/references.
+```cpp
+std::variant<int, std::string> value;
+```
 
-**Q7. What is the difference between `delete` and `delete[]`?**
-> `delete` frees a single object; `delete[]` frees an array. Mismatching them is **undefined behavior**.
+### Any
 
-**Q8. What is a pure virtual function and abstract class?**
-> A pure virtual function (`virtual void f() = 0;`) has no implementation in the base class. A class with at least one pure virtual function is **abstract** — cannot be instantiated.
+Can contain a value of arbitrary type that satisfies its runtime storage requirements.
 
-**Q9. Explain the difference between stack and heap memory.**
-> Stack: automatic, fast, limited size, LIFO. Heap: manual (or smart ptr), slower, large, persistent until freed. Local variables are on stack; `new` allocates on heap.
-
-**Q10. What is `std::move`?**
-> It's a cast that converts an lvalue to an rvalue reference, enabling the move constructor/assignment to be invoked instead of copy. No data is actually moved by `std::move` itself.
-
-**Q11. What is a template and why use it?**
-> Templates enable generic programming — write code once that works for multiple types. Resolved at compile time, so no runtime overhead. Used in STL containers, algorithms, etc.
-
-**Q12. What is the difference between `vector` and `array`?**
-> `vector` is dynamic (resizable), heap-allocated. `std::array` is fixed-size, stack-allocated. `vector` is preferred when size varies; `std::array` for fixed-size performance-critical code.
-
-**Q13. What is a `friend` function?**
-> A function (not a member) that is granted access to private and protected members of a class. Useful for operator overloading (e.g., `operator<<`).
-
-**Q14. What are the differences between `++i` and `i++`?**
-> `++i` (pre-increment): increments and returns new value. `i++` (post-increment): returns old value, then increments. For iterators/objects, `++i` is more efficient (no temporary created).
-
-**Q15. What is `constexpr`?**
-> A `constexpr` value or function can be evaluated at compile time. Enables compile-time computation, useful for templates and array sizes.
+Use `variant` when the set of alternatives is known; `any` when genuinely open-ended type erasure is needed.
 
 ---
 
-## 19. Common Misconceptions
+## 34. `string_view` and `span`
 
-- ❌ *"C++ always does garbage collection"* → No. C++ requires manual memory management (or smart pointers). No built-in GC.
-- ❌ *"References are just pointers under the hood"* → Semantically different; a reference is an alias. Compiler may use pointer internally, but you cannot do pointer arithmetic on a reference.
-- ❌ *"`struct` and `class` are completely different"* → Only default access modifiers differ.
-- ❌ *"Calling `delete` on a nullptr crashes"* → `delete nullptr` is safe and does nothing.
-- ❌ *"`virtual` functions have huge overhead"* → One indirect function call via vtable; usually negligible.
-- ❌ *"C++11 `auto` is like JavaScript `var`"* → `auto` in C++ is compile-time type deduction — still statically typed.
+`std::string_view` is a non-owning view of character data.
 
----
+```cpp
+void print(std::string_view text);
+```
 
-## 20. Quick Revision Checklist
+It avoids copying but requires the underlying characters to outlive the view.
 
-- [ ] Stack vs Heap; `new`/`delete` vs smart pointers
-- [ ] Rule of Three/Five/Zero
-- [ ] `const`, `constexpr`, `mutable`
-- [ ] Virtual functions, vtable, pure virtual, abstract class
-- [ ] Virtual destructor
-- [ ] Multiple inheritance, diamond problem, `virtual` base
-- [ ] Templates: function, class, specialization
-- [ ] STL containers: vector, map, set, unordered_map — complexities
-- [ ] STL algorithms: sort, find, binary_search, accumulate
-- [ ] Lambda syntax and captures
-- [ ] Move semantics, `std::move`, rvalue references
-- [ ] RAII and smart pointers
-- [ ] Exception handling, `noexcept`
-- [ ] Copy constructor vs assignment operator
-- [ ] Operator overloading
-- [ ] `friend` functions/classes
-- [ ] Multithreading basics, mutex, lock_guard
+`std::span<T>` is a non-owning view over contiguous objects.
+
+```cpp
+void process(std::span<const int> values);
+```
+
+These are useful for flexible APIs without transferring ownership.
 
 ---
 
-*Last updated: 2026 | Suitable for: GATE, university exams, software engineering interviews*
+## 35. Concurrency
+
+C++ provides standard threading primitives.
+
+```cpp
+std::thread t([] {
+  // work
+});
+t.join();
+```
+
+Modern code often prefers `std::jthread`, which supports cooperative stopping and automatically joins when destroyed.
+
+### Mutex
+
+```cpp
+std::mutex m;
+std::lock_guard lock(m);
+```
+
+### `unique_lock`
+
+Provides more flexible lock management, including deferred locking and manual unlock/relock.
+
+### Condition variable
+
+```cpp
+std::condition_variable cv;
+std::mutex m;
+std::queue<int> q;
+```
+
+Use a predicate with `wait` to guard against spurious wakeups.
+
+---
+
+## 36. Atomics and Memory Ordering
+
+```cpp
+std::atomic<int> counter{0};
+counter.fetch_add(1);
+```
+
+Atomics provide operations that participate in the C++ memory model.
+
+Memory orders include:
+
+- `relaxed`
+- `acquire`
+- `release`
+- `acq_rel`
+- `seq_cst`
+
+### Intuition
+
+`relaxed` provides atomicity without the stronger synchronization ordering of acquire/release.
+
+A release operation can publish prior writes, and an acquire operation that reads the corresponding value can establish synchronization.
+
+Use `seq_cst` when simple global ordering is more valuable than advanced optimization, and use weaker orderings only when you understand the memory model and have evidence they matter.
+
+---
+
+## 37. Data Race vs Race Condition
+
+A **data race** in C++ is a specific memory-model violation involving conflicting unsynchronized accesses to the same memory location where at least one is a write; it results in undefined behavior.
+
+A **race condition** is broader: correctness depends on timing/order and may exist even without a C++ data race.
+
+This distinction is important in interviews.
+
+---
+
+## 38. Futures, Promises and Async
+
+```cpp
+auto future = std::async(std::launch::async, [] {
+  return expensive_work();
+});
+
+auto result = future.get();
+```
+
+`std::future` represents a result that can become ready later. `std::promise` can be used by one execution context to provide a value/error to a future.
+
+Do not assume `std::async` always creates a dedicated OS thread unless the launch policy explicitly requires asynchronous execution.
+
+---
+
+## 39. Smart Ownership Design
+
+A useful ownership hierarchy:
+
+```text
+Does this object own the resource?
+        |
+        +-- no --> reference / pointer / view
+        |
+        +-- yes --> exclusive? --> unique_ptr
+                    |
+                    +--> shared ownership? --> shared_ptr
+```
+
+Use `weak_ptr` for observing shared ownership without extending lifetime.
+
+Prefer values and RAII where possible.
+
+---
+
+## 40. Undefined Behavior
+
+Undefined behavior (UB) means the C++ standard imposes no requirements on the program's behavior after the violation.
+
+Examples:
+
+```cpp
+int* p = nullptr;
+*p = 1; // UB
+```
+
+Other examples include out-of-bounds access, signed integer overflow, invalid lifetime use, and data races.
+
+UB is not the same as “the program crashes”. It may appear to work, be optimized into unexpected behavior, or change between builds.
+
+---
+
+## 41. Common Performance Concepts
+
+### Cache locality
+
+Contiguous structures such as `vector` often perform well because neighboring elements can exploit spatial locality.
+
+### Reserve capacity
+
+```cpp
+v.reserve(expected_size);
+```
+
+Can reduce repeated reallocations when growth is predictable.
+
+### Avoid premature optimization
+
+First choose the right algorithm/data structure. Measure before changing code for speculative micro-optimizations.
+
+### Move vs copy
+
+Moves can avoid expensive resource duplication, but small types may already be cheap and modern compilers often eliminate unnecessary copies.
+
+---
+
+## 42. Common Interview Questions
+
+### Q1. Why is C++ called statically typed?
+
+Types are checked as part of compilation and expressions have compile-time type information, although runtime polymorphism and dynamic allocation still exist.
+
+### Q2. Pointer vs reference?
+
+Pointers can be null and reseated; references are alias-like bindings that normally must be initialized and cannot be reseated.
+
+### Q3. Stack vs heap?
+
+A simplified distinction between automatic and dynamically allocated storage. The language defines storage duration and lifetime more precisely than the simplistic “stack/heap” terminology.
+
+### Q4. What is RAII?
+
+Tie resource lifetime to object lifetime so destruction performs cleanup automatically and safely during scope exit/exception unwinding.
+
+### Q5. Why prefer smart pointers?
+
+They make ownership explicit and automate resource lifetime, reducing leaks and double deletes.
+
+### Q6. `unique_ptr` vs `shared_ptr`?
+
+`unique_ptr` represents exclusive ownership. `shared_ptr` represents shared ownership through reference counting and has extra overhead/complexity.
+
+### Q7. Why use `weak_ptr`?
+
+To observe a `shared_ptr`-managed object without owning it, especially to break reference cycles.
+
+### Q8. What does `std::move` do?
+
+It casts an expression to an xvalue so move-enabled overloads can be selected. It does not itself perform the move.
+
+### Q9. What is a moved-from object?
+
+A valid object whose value is generally unspecified unless its type documents a stronger post-move state.
+
+### Q10. Rule of three/five/zero?
+
+Resource-owning types may need special copy/move/destructor operations; RAII composition enables the preferred rule of zero.
+
+### Q11. Why should a polymorphic base destructor be virtual?
+
+So deleting/destroying through a base interface performs the correct derived destruction.
+
+### Q12. What is virtual dispatch?
+
+Runtime selection of an overridden virtual function based on the dynamic type of the object.
+
+### Q13. `struct` vs `class`?
+
+Same capabilities; `struct` defaults to public members/inheritance while `class` defaults to private.
+
+### Q14. `vector` vs `list`?
+
+`vector` provides contiguous storage and excellent cache locality; `list` has node allocation overhead and is useful only for specialized stable-node operations.
+
+### Q15. `map` vs `unordered_map`?
+
+Ordered tree-based lookup is typically O(log n); hash-based lookup is average O(1) but unordered and sensitive to hashing/buckets.
+
+### Q16. What is iterator invalidation?
+
+Operations on containers can invalidate iterators/references/pointers, making previously obtained handles unsafe to use. Rules depend on the container and operation.
+
+### Q17. What is a data race?
+
+A C++ memory-model violation caused by conflicting unsynchronized accesses to the same memory location with at least one write.
+
+### Q18. Why use `atomic`?
+
+To perform synchronization-safe atomic operations on shared state without a mutex for suitable problems.
+
+### Q19. What is `constexpr`?
+
+It enables constant evaluation when the expression/function and context satisfy compile-time evaluation rules.
+
+### Q20. `constexpr` vs `consteval`?
+
+`constexpr` permits compile-time evaluation but can also be used at runtime; `consteval` requires compile-time evaluation for calls that use it.
+
+### Q21. Why use `noexcept` on move operations?
+
+It can allow generic/container code to prefer moving because a throwing move can otherwise make strong exception guarantees difficult.
+
+### Q22. What is object slicing?
+
+Copying a derived object into a base object by value discards the derived portion.
+
+```cpp
+Derived d;
+Base b = d; // slicing
+```
+
+Use references/pointers for polymorphic behavior.
+
+### Q23. What is the diamond problem?
+
+Multiple inheritance can create duplicate base subobjects. Virtual inheritance can represent one shared virtual base subobject.
+
+### Q24. Why is `new/delete` discouraged in modern C++?
+
+Manual ownership is error-prone. Containers and smart pointers provide safer lifetime management.
+
+### Q25. What is undefined behavior?
+
+A standard violation for which the C++ standard imposes no requirements. It must not be treated as a predictable runtime error.
+
+---
+
+## 43. Quick Revision Checklist
+
+- [ ] Compilation/linking
+- [ ] Fundamental types and conversions
+- [ ] `const`, `constexpr`, `consteval`
+- [ ] Pointers/references
+- [ ] Storage duration/lifetime
+- [ ] RAII
+- [ ] Classes/constructors/destructors
+- [ ] Inheritance/polymorphism
+- [ ] Virtual functions/destructors
+- [ ] Rule of 3/5/0
+- [ ] Copy/move semantics
+- [ ] Value categories
+- [ ] Smart pointers
+- [ ] STL containers
+- [ ] Iterator invalidation
+- [ ] Algorithms/ranges
+- [ ] Lambdas
+- [ ] Templates/concepts
+- [ ] Exceptions/`noexcept`
+- [ ] ODR/linkage/headers
+- [ ] `optional`/`variant`/`any`
+- [ ] `string_view`/`span`
+- [ ] Threads/mutex/condition variables
+- [ ] Atomics/memory ordering
+- [ ] Data races/UB
+- [ ] Performance/cache locality
+- [ ] Modern C++ interview questions
