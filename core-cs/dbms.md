@@ -1,577 +1,823 @@
-# Database Management Systems (DBMS) — Interview & Exam Notes
+# Database Management Systems (DBMS) — Detailed Interview & Exam Notes
 
-> 📌 **GitHub:** [nirajkr26](https://github.com/nirajkr26) &nbsp;|&nbsp; **LinkedIn:** [nirajkr26](https://www.linkedin.com/in/nirajkr26)
+> **Focus:** relational modeling, SQL, normalization, transactions, concurrency, indexing, query optimization, storage, recovery, distributed databases, NoSQL, and interview preparation.
 
----
+## 1. DBMS Fundamentals
 
-## 1. Introduction / Overview
+A **DBMS** is software that stores, retrieves, updates, protects, and manages data while supporting concurrent users and reliable transactions.
 
-A **Database Management System (DBMS)** is software that enables users to create, read, update, and delete data in a structured way, while ensuring data integrity, security, and concurrent access.
+### DBMS vs file system
 
-**Advantages over File Systems:**
-- Eliminates data redundancy and inconsistency
-- Enforces data integrity constraints
-- Provides concurrent access with ACID guarantees
-- Centralized security and access control
-- Data independence (logical & physical)
+| DBMS | File system |
+|---|---|
+| Schema and constraints | Mostly application-defined structure |
+| Concurrency control | Usually application-specific |
+| Transactions/ACID | Limited/manual |
+| Query language | SQL or DB-specific query API |
+| Indexes/optimizer | Built in |
+| Recovery | Logging/checkpointing |
+| Security | Users, roles, privileges |
 
-**Types of DBMS:**
+### Data abstraction
 
-| Type            | Description                           | Examples              |
-|-----------------|---------------------------------------|-----------------------|
-| Relational (RDBMS)| Data in tables with relationships   | MySQL, PostgreSQL, Oracle |
-| Document        | Semi-structured (JSON/BSON documents) | MongoDB, CouchDB      |
-| Key-Value       | Simple key→value pairs                | Redis, DynamoDB       |
-| Column-family   | Wide-column store                     | Cassandra, HBase      |
-| Graph           | Nodes and edges                       | Neo4j, Amazon Neptune |
-| Time-series     | Timestamped data                      | InfluxDB, TimescaleDB |
+1. **Physical level:** how bytes/pages/records are stored.
+2. **Logical level:** tables, relationships, constraints.
+3. **View level:** what individual users/applications see.
 
----
+This supports **data independence**: physical changes should not require application-level schema changes; logical independence isolates user views from many schema changes.
 
-## 2. Key Concepts & Terminology
+## 2. Relational Model
 
-| Term            | Definition                                                       |
-|-----------------|------------------------------------------------------------------|
-| Table/Relation  | 2D structure with rows and columns                               |
-| Tuple/Row       | A single record in a table                                       |
-| Attribute/Column| A field in a table                                               |
-| Domain          | Set of permissible values for an attribute                       |
-| Schema          | Structure/design of a database                                   |
-| Instance        | Actual data stored at a given moment                             |
-| Primary Key     | Uniquely identifies each row; NOT NULL + UNIQUE                  |
-| Foreign Key     | References primary key in another table; enforces referential integrity |
-| Candidate Key   | Any attribute/set that can uniquely identify a tuple             |
-| Super Key       | Superset of candidate key (may have extra attributes)            |
-| Composite Key   | Primary key consisting of multiple attributes                    |
-| Surrogate Key   | Artificially generated key (e.g., auto-increment ID)             |
-| Null            | Unknown or missing value (NOT same as 0 or empty string)         |
+A relation/table contains tuples/rows and attributes/columns.
 
----
+Important terms:
 
-## 3. ACID Properties
+- **Domain:** valid values for an attribute.
+- **Schema:** database structure.
+- **Instance:** data at a particular time.
+- **Super key:** any attribute set uniquely identifying a row.
+- **Candidate key:** minimal super key.
+- **Primary key:** selected candidate key.
+- **Foreign key:** references a key in another table.
+- **Composite key:** key made from multiple columns.
+- **Surrogate key:** artificial identifier such as integer/UUID.
 
-> **ACID** guarantees reliable transaction processing.
+### Integrity constraints
 
-| Property    | Description                                                        |
-|-------------|-------------------------------------------------------------------|
-| **Atomicity**   | Transaction is all-or-nothing; if any part fails, entire transaction rolls back |
-| **Consistency** | Database moves from one valid state to another; all constraints satisfied |
-| **Isolation**   | Concurrent transactions execute as if sequential; one doesn't see intermediate state of another |
-| **Durability**  | Committed transactions persist even after system failure (stored on non-volatile storage) |
+- **Entity integrity:** primary key cannot be null.
+- **Referential integrity:** foreign-key values must reference valid parent keys, subject to nullability/action rules.
+- **Domain constraints:** values must satisfy type/range/business rules.
+- `UNIQUE`, `NOT NULL`, `CHECK`, `DEFAULT`, primary and foreign keys enforce common constraints.
 
-**Implementation:**
-- Atomicity → **Undo logs / rollback**
-- Durability → **Redo logs / write-ahead logging (WAL)**
-- Isolation → **Locking / MVCC (Multi-Version Concurrency Control)**
-- Consistency → **Integrity constraints, triggers**
+## 3. ER Modeling
 
----
+An ER model describes entities, attributes and relationships before implementation.
 
-## 4. SQL — Structured Query Language
+### Cardinality
 
-### 4.1 SQL Command Categories
+- 1:1 — one entity maps to one.
+- 1:N — one parent has many children.
+- M:N — many entities relate to many entities.
 
-| Category | Commands                               | Description                     |
-|----------|----------------------------------------|---------------------------------|
-| **DDL**  | CREATE, ALTER, DROP, TRUNCATE, RENAME  | Define/modify schema            |
-| **DML**  | SELECT, INSERT, UPDATE, DELETE         | Manipulate data                 |
-| **DCL**  | GRANT, REVOKE                          | Access control                  |
-| **TCL**  | COMMIT, ROLLBACK, SAVEPOINT            | Transaction management          |
+M:N relationships are normally converted to a junction table:
 
-### 4.2 Basic SQL Syntax
-
-```sql
--- Create a table
-CREATE TABLE Employees (
-    emp_id    INT PRIMARY KEY AUTO_INCREMENT,
-    name      VARCHAR(100) NOT NULL,
-    dept_id   INT,
-    salary    DECIMAL(10,2),
-    FOREIGN KEY (dept_id) REFERENCES Departments(dept_id)
-);
-
--- Insert data
-INSERT INTO Employees (name, dept_id, salary)
-VALUES ('Alice', 1, 75000.00);
-
--- Query data
-SELECT name, salary
-FROM Employees
-WHERE salary > 50000
-ORDER BY salary DESC
-LIMIT 10;
-
--- Update data
-UPDATE Employees
-SET salary = salary * 1.10
-WHERE dept_id = 2;
-
--- Delete data
-DELETE FROM Employees
-WHERE emp_id = 5;
+```text
+Student(student_id, name)
+Course(course_id, name)
+Enrollment(student_id, course_id, enrolled_at)
 ```
 
-### 4.3 Aggregate Functions
+### Weak entity
 
-```sql
-SELECT COUNT(*), AVG(salary), MAX(salary), MIN(salary), SUM(salary)
-FROM Employees;
+A weak entity depends on a strong entity for identification. Its partial key becomes unique only together with the owner's key.
 
--- GROUP BY with HAVING
-SELECT dept_id, AVG(salary) AS avg_salary
-FROM Employees
-GROUP BY dept_id
-HAVING AVG(salary) > 60000;
+## 4. Keys and Functional Dependencies
+
+A functional dependency `X → Y` means that equal X values imply equal Y values.
+
+Example:
+
+```text
+employee_id → employee_name, department_id
 ```
 
-**Order of SQL clause execution:**  
-`FROM` → `JOIN` → `WHERE` → `GROUP BY` → `HAVING` → `SELECT` → `DISTINCT` → `ORDER BY` → `LIMIT`
+### Dependency types
 
-### 4.4 Joins
+- **Full dependency:** depends on the whole candidate key.
+- **Partial dependency:** depends on only part of a composite key.
+- **Transitive dependency:** key → non-key → another non-key.
 
-```
-TableA:  id | name       TableB:  id | dept
-         1  | Alice               1  | HR
-         2  | Bob                 3  | IT
-         3  | Carol
-```
-
-| Join Type     | Returns                                                       |
-|---------------|---------------------------------------------------------------|
-| INNER JOIN    | Matching rows in both tables                                  |
-| LEFT JOIN     | All rows from left + matched from right (NULL if no match)    |
-| RIGHT JOIN    | All rows from right + matched from left (NULL if no match)    |
-| FULL OUTER JOIN| All rows from both, NULLs for non-matching sides            |
-| CROSS JOIN    | Cartesian product (every row × every row)                     |
-| SELF JOIN     | Table joined with itself                                      |
-
-```sql
--- INNER JOIN: Alice(1), Carol(3)
-SELECT E.name, D.dept
-FROM Employees E
-INNER JOIN Departments D ON E.id = D.id;
-
--- LEFT JOIN: Alice(1), Bob(2→NULL), Carol(3)
-SELECT E.name, D.dept
-FROM Employees E
-LEFT JOIN Departments D ON E.id = D.id;
-```
-
-**Visual representation:**
-```
-INNER JOIN:  A ∩ B
-LEFT JOIN:   A (all) + A ∩ B
-RIGHT JOIN:  B (all) + A ∩ B
-FULL JOIN:   A ∪ B
-```
-
-### 4.5 Subqueries & CTEs
-
-```sql
--- Subquery (correlated)
-SELECT name FROM Employees
-WHERE salary > (SELECT AVG(salary) FROM Employees);
-
--- CTE (Common Table Expression)
-WITH HighEarners AS (
-    SELECT * FROM Employees WHERE salary > 80000
-)
-SELECT name FROM HighEarners WHERE dept_id = 1;
-```
-
-### 4.6 Window Functions
-
-```sql
--- ROW_NUMBER, RANK, DENSE_RANK
-SELECT name, salary,
-    ROW_NUMBER() OVER (PARTITION BY dept_id ORDER BY salary DESC) AS row_num,
-    RANK()       OVER (PARTITION BY dept_id ORDER BY salary DESC) AS rank,
-    DENSE_RANK() OVER (PARTITION BY dept_id ORDER BY salary DESC) AS dense_rank
-FROM Employees;
-```
-
-| Function      | Gaps in ranking? | Notes                          |
-|---------------|-----------------|--------------------------------|
-| ROW_NUMBER()  | — (unique)      | Always unique sequence         |
-| RANK()        | Yes             | Ties share rank; next skipped  |
-| DENSE_RANK()  | No              | Ties share rank; no gaps       |
-
----
+Functional dependencies are central to normalization.
 
 ## 5. Normalization
 
-> Process of organizing a database to reduce **data redundancy** and improve **data integrity** by decomposing tables.
+Normalization reduces redundancy and update anomalies by decomposing relations according to dependencies.
 
-### 5.1 Functional Dependency (FD)
+### 1NF
 
-`A → B` means: knowing A determines B uniquely.  
-- **Partial Dependency:** Non-key attribute depends on part of a composite primary key  
-- **Transitive Dependency:** A → B → C (non-key depends on another non-key)
+- Atomic values.
+- No repeating groups.
+- Each cell represents one value under the chosen relational model.
 
-### 5.2 Normal Forms
+### 2NF
 
-| NF   | Rule                                                                    | Removes                  |
-|------|-------------------------------------------------------------------------|--------------------------|
-| **1NF** | Atomic values; no repeating groups; each column has unique name      | Repeating groups         |
-| **2NF** | 1NF + No partial dependencies (every non-key attr depends on whole PK) | Partial dependencies   |
-| **3NF** | 2NF + No transitive dependencies                                      | Transitive dependencies  |
-| **BCNF**| 3NF + For every FD X→Y, X must be a superkey                         | FD anomalies from non-superkey |
-| **4NF** | BCNF + No multi-valued dependencies                                   | Multi-valued dependencies|
-| **5NF** | 4NF + No join dependencies                                            | Join anomalies           |
+- In 1NF.
+- Every non-prime attribute fully depends on the whole candidate key.
+- Mainly removes partial dependency for composite keys.
 
-**Practical tip:** Most production databases target **3NF** or **BCNF**.
+### 3NF
 
-### 5.3 Normalization Example
+A relation is in 3NF if for every non-trivial FD `X → A`, either X is a superkey or A is a prime attribute.
 
-**Unnormalized (0NF):**
-```
-OrderID | Customer | Items          | Prices
-1       | Alice    | Pen, Book      | 10, 50
-```
+Common intuition: remove transitive dependency of non-key attributes on keys.
 
-**1NF (atomic values):**
-```
-OrderID | Customer | Item | Price
-1       | Alice    | Pen  | 10
-1       | Alice    | Book | 50
-```
+### BCNF
 
-**2NF (no partial dependency — assume PK = {OrderID, Item}):**
-```
-Orders:  OrderID | Customer
-         1       | Alice
+For every non-trivial FD `X → Y`, X must be a superkey.
 
-OrderItems: OrderID | Item | Price
-            1       | Pen  | 10
-            1       | Book | 50
-```
+BCNF is stricter than 3NF and can require decompositions that sacrifice some dependency preservation.
 
-**3NF (no transitive dependency):**  
-Split further if Customer info depends on CustomerID, not OrderID.
+### 4NF
 
-### 5.4 Denormalization
-> Intentionally introducing redundancy to improve **read performance** (fewer joins).  
-> Common in data warehouses (OLAP) and high-read applications.
+Addresses non-trivial multivalued dependencies.
 
----
+### 5NF
 
-## 6. Transactions and Concurrency
+Addresses join dependencies and rare decomposition anomalies.
 
-### 6.1 Transaction States
+### Practical normalization
 
-```
-Active → Partially Committed → Committed
-   └──────────────────────────► Failed → Aborted (Rolled Back)
-```
+Most transactional systems commonly aim around 3NF/BCNF, then deliberately denormalize selected read-heavy paths when measurements justify it.
 
-### 6.2 Concurrency Problems
+## 6. Anomalies
 
-| Problem              | Description                                                   |
-|----------------------|---------------------------------------------------------------|
-| **Dirty Read**       | Transaction reads data written by uncommitted transaction     |
-| **Non-repeatable Read**| Same query returns different results within one transaction |
-| **Phantom Read**     | New rows added by another transaction appear in re-execution  |
-| **Lost Update**      | Two transactions read then update; one overwrites the other   |
+Suppose one table stores customer, order and product data together.
 
-### 6.3 Isolation Levels
+- **Update anomaly:** customer address repeated across rows must be changed consistently.
+- **Insert anomaly:** cannot insert a customer until an order exists.
+- **Delete anomaly:** deleting the last order accidentally removes customer information.
 
-| Isolation Level   | Dirty Read | Non-repeatable Read | Phantom Read | Notes              |
-|-------------------|-----------|--------------------|--------------|--------------------|
-| READ UNCOMMITTED  | ✅ Possible| ✅ Possible        | ✅ Possible  | Lowest isolation   |
-| READ COMMITTED    | ❌ Prevented| ✅ Possible       | ✅ Possible  | Default in many DBs|
-| REPEATABLE READ   | ❌ Prevented| ❌ Prevented      | ✅ Possible  | Default in MySQL   |
-| SERIALIZABLE      | ❌ Prevented| ❌ Prevented      | ❌ Prevented | Highest isolation  |
+Normalization reduces these problems.
 
-### 6.4 Locking
+## 7. SQL Fundamentals
 
-- **Shared Lock (S):** Multiple transactions can read; no write while held  
-- **Exclusive Lock (X):** Only one transaction can hold; blocks reads & writes  
-- **Two-Phase Locking (2PL):** Growing phase (acquire locks) → Shrinking phase (release locks)  
-  - Ensures serializability  
-  - **Strict 2PL:** Release all locks after commit/abort  
-  - **Deadlock** possible in 2PL
+### Command categories
 
-### 6.5 MVCC (Multi-Version Concurrency Control)
-- Maintain multiple versions of data  
-- Readers don't block writers; writers don't block readers  
-- Used in: PostgreSQL, Oracle, MySQL InnoDB
+| Category | Commands |
+|---|---|
+| DDL | CREATE, ALTER, DROP, TRUNCATE |
+| DML | SELECT, INSERT, UPDATE, DELETE |
+| DCL | GRANT, REVOKE |
+| TCL | COMMIT, ROLLBACK, SAVEPOINT |
 
----
+### Example schema
 
-## 7. Indexing
-
-> An **index** is a data structure that speeds up data retrieval at the cost of additional storage and write overhead.
-
-### 7.1 Types of Indexes
-
-| Type             | Description                                          |
-|------------------|------------------------------------------------------|
-| **Primary Index**| On ordered key field; one entry per block            |
-| **Secondary Index**| On non-ordering field; dense or sparse             |
-| **Clustered**    | Data physically sorted by index key; one per table   |
-| **Non-clustered**| Separate structure with pointers; multiple allowed   |
-| **Composite**    | Index on multiple columns                            |
-| **Unique**       | Enforces uniqueness on indexed column(s)             |
-| **Full-text**    | For text search (inverted index)                     |
-| **Bitmap**       | Bit array per value; good for low-cardinality columns|
-
-### 7.2 B-Tree and B+ Tree
-
-**B+ Tree (most common in RDBMS):**
-- All data records at leaf nodes  
-- Leaf nodes linked (efficient range queries)  
-- Balanced; O(log n) search, insert, delete  
-- Used by: MySQL (InnoDB), PostgreSQL
-
-```
-        [30 | 70]
-       /    |    \
-   [10|20] [40|60] [80|90]
-    ↓↓↓↓   ↓↓↓↓    ↓↓↓↓
-(Leaf nodes contain actual data, linked together)
-```
-
-**Hash Index:**
-- O(1) average lookup; no range queries  
-- Used for equality conditions only
-
-### 7.3 When to Index?
-
-**Index:** columns used in `WHERE`, `JOIN`, `ORDER BY`, `GROUP BY`, foreign keys  
-**Avoid indexing:** small tables, columns with high update frequency, very low cardinality (e.g., boolean)
-
----
-
-## 8. ER Model (Entity-Relationship)
-
-### 8.1 ER Diagram Notation
-
-```
-Rectangle    → Entity (e.g., Student)
-Ellipse      → Attribute
-Double Ellipse → Multivalued Attribute
-Dashed Ellipse → Derived Attribute
-Diamond      → Relationship
-Double Rectangle → Weak Entity
-Double Diamond → Identifying Relationship
-```
-
-### 8.2 Cardinality
-
-```
-1:1   One-to-One     (one person → one passport)
-1:N   One-to-Many    (one department → many employees)
-M:N   Many-to-Many   (students ↔ courses)
-```
-
-### 8.3 Keys in ER Model
-
-- **Partial Key:** Attribute that partially identifies a weak entity (depends on strong entity)  
-- **Discriminator:** The partial key of a weak entity
-
----
-
-## 9. Relational Algebra
-
-> Formal query language for relational databases.
-
-| Operation     | Symbol | SQL Equivalent                  |
-|---------------|--------|---------------------------------|
-| Selection     | σ      | WHERE clause                    |
-| Projection    | π      | SELECT (columns)                |
-| Union         | ∪      | UNION                           |
-| Intersection  | ∩      | INTERSECT                       |
-| Difference    | −      | EXCEPT / MINUS                  |
-| Cartesian Product | × | CROSS JOIN                      |
-| Join          | ⋈      | JOIN                            |
-| Rename        | ρ      | AS                              |
-
----
-
-## 10. Stored Procedures, Views, and Triggers
-
-### Views
 ```sql
--- Create a view
-CREATE VIEW HighSalaryEmployees AS
-SELECT name, salary FROM Employees WHERE salary > 80000;
+CREATE TABLE departments (
+  id BIGINT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL UNIQUE
+);
 
--- Query the view
-SELECT * FROM HighSalaryEmployees;
+CREATE TABLE employees (
+  id BIGINT PRIMARY KEY,
+  department_id BIGINT,
+  name VARCHAR(100) NOT NULL,
+  salary DECIMAL(12,2) CHECK (salary >= 0),
+  FOREIGN KEY (department_id) REFERENCES departments(id)
+);
 ```
-- Virtual table; does not store data (unless materialized)  
-- **Materialized View:** stores the result; needs refreshing
 
-### Stored Procedures
+### Filtering and ordering
+
 ```sql
-DELIMITER //
-CREATE PROCEDURE GetEmployeesByDept(IN dept INT)
+SELECT id, name, salary
+FROM employees
+WHERE salary >= 50000
+ORDER BY salary DESC
+LIMIT 20;
+```
+
+### NULL
+
+`NULL` means unknown/missing, not zero or empty string.
+
+Use:
+
+```sql
+WHERE department_id IS NULL
+```
+
+not `department_id = NULL`.
+
+## 8. SQL Logical Query Processing
+
+A useful conceptual order is:
+
+```text
+FROM / JOIN
+→ WHERE
+→ GROUP BY
+→ HAVING
+→ SELECT
+→ DISTINCT
+→ ORDER BY
+→ LIMIT/OFFSET
+```
+
+This explains why a SELECT alias generally cannot be used in WHERE: WHERE is logically evaluated earlier.
+
+## 9. Joins
+
+| Join | Meaning |
+|---|---|
+| INNER | Matching rows from both sides |
+| LEFT | All left + matching right |
+| RIGHT | All right + matching left |
+| FULL | All rows from both sides |
+| CROSS | Cartesian product |
+| SELF | Table joined to itself |
+
+```sql
+SELECT e.name, d.name AS department
+FROM employees e
+JOIN departments d ON d.id = e.department_id;
+```
+
+### LEFT JOIN trap
+
+This preserves unmatched left rows:
+
+```sql
+SELECT e.name
+FROM employees e
+LEFT JOIN departments d ON d.id = e.department_id
+WHERE d.name = 'Engineering';
+```
+
+The WHERE condition removes NULL right-side rows, effectively making the result behave like an inner join for that predicate. Put predicates in `ON` when preserving unmatched rows is required.
+
+## 10. Aggregation
+
+```sql
+SELECT department_id,
+       COUNT(*) AS employee_count,
+       AVG(salary) AS avg_salary,
+       MAX(salary) AS max_salary
+FROM employees
+GROUP BY department_id
+HAVING AVG(salary) > 70000;
+```
+
+`WHERE` filters rows before grouping; `HAVING` filters groups after aggregation.
+
+## 11. Subqueries and CTEs
+
+```sql
+SELECT name
+FROM employees
+WHERE salary > (SELECT AVG(salary) FROM employees);
+```
+
+CTE:
+
+```sql
+WITH high_earners AS (
+  SELECT * FROM employees WHERE salary > 100000
+)
+SELECT * FROM high_earners;
+```
+
+Recursive CTEs can traverse trees/graphs where supported.
+
+## 12. Window Functions
+
+Window functions calculate values across related rows without collapsing them.
+
+```sql
+SELECT name, department_id, salary,
+       ROW_NUMBER() OVER (
+         PARTITION BY department_id ORDER BY salary DESC
+       ) AS rn,
+       RANK() OVER (
+         PARTITION BY department_id ORDER BY salary DESC
+       ) AS rnk,
+       SUM(salary) OVER (
+         PARTITION BY department_id
+       ) AS dept_total
+FROM employees;
+```
+
+- `ROW_NUMBER`: unique sequence.
+- `RANK`: ties share rank; gaps follow.
+- `DENSE_RANK`: ties share rank; no gaps.
+
+## 13. Transactions and ACID
+
+A transaction is a logical unit of work.
+
+### ACID
+
+- **Atomicity:** all-or-nothing.
+- **Consistency:** constraints/invariants remain valid after commit.
+- **Isolation:** concurrent execution is controlled to provide a defined isolation guarantee.
+- **Durability:** committed state survives failures according to the database's durability design.
+
+Example money transfer:
+
+```text
 BEGIN
-    SELECT * FROM Employees WHERE dept_id = dept;
-END //
-DELIMITER ;
-
-CALL GetEmployeesByDept(1);
+  debit A
+  credit B
+COMMIT
 ```
-- Pre-compiled; reduced network round trips; reusable logic
 
-### Triggers
+If the transaction fails, atomicity prevents only one side from being permanently committed.
+
+## 14. Transaction States
+
+```text
+Active → Partially committed → Committed
+  |
+  v
+Failed → Aborted
+```
+
+A transaction can be rolled back after failure or explicit cancellation.
+
+## 15. Concurrency Problems
+
+### Dirty read
+
+T2 reads data written by T1 before T1 commits.
+
+### Non-repeatable read
+
+T1 reads a row twice; another committed transaction changes it between reads.
+
+### Phantom read
+
+T1 repeats a predicate query and sees new/deleted matching rows due to another transaction.
+
+### Lost update
+
+Two transactions read the same old value and later overwrite each other's update.
+
+## 16. Isolation Levels
+
+The SQL standard defines four commonly discussed levels:
+
+| Level | Dirty read | Non-repeatable | Phantom |
+|---|---:|---:|---:|
+| READ UNCOMMITTED | Possible | Possible | Possible |
+| READ COMMITTED | Prevented | Possible | Possible |
+| REPEATABLE READ | Prevented | Prevented | Implementation-dependent details |
+| SERIALIZABLE | Prevented | Prevented | Prevented |
+
+**Important:** exact behavior differs by database engine and implementation. Do not blindly claim that every REPEATABLE READ implementation behaves identically.
+
+## 17. Locking
+
+- **Shared (S) lock:** compatible with other readers depending on lock manager; blocks conflicting writes.
+- **Exclusive (X) lock:** used for writes; conflicts with other S/X locks.
+
+### Two-phase locking
+
+- Growing phase: acquire locks.
+- Shrinking phase: release locks.
+
+Strict 2PL keeps important write locks until commit/abort, simplifying recovery and preventing many cascading effects.
+
+## 18. MVCC
+
+**Multi-Version Concurrency Control** keeps multiple row versions so readers can often see a consistent snapshot without blocking writers.
+
+Conceptually:
+
+```text
+old version ← row history → new version
+      ↑                       ↑
+   reader snapshot         latest writer
+```
+
+MVCC does not mean “no locks”; databases still use locks for operations that require coordination.
+
+## 19. Deadlocks in Databases
+
+Two transactions can wait on each other's locks:
+
+```text
+T1 holds A → waits for B
+T2 holds B → waits for A
+```
+
+Databases can detect the cycle and abort one transaction.
+
+Application code should generally retry safe, idempotent transactions after a deadlock/serialization failure where appropriate.
+
+## 20. Indexes
+
+An index is an auxiliary data structure that speeds retrieval at the cost of storage and write overhead.
+
+### B+ Tree
+
+Common for ordered/range access.
+
+```text
+             [30 | 70]
+            /    |    \
+        [10,20] [40,60] [80,90]
+             ↔ leaf links ↔
+```
+
+Supports efficient equality and range queries.
+
+### Hash index
+
+Good for equality lookup; generally unsuitable for ordered range scans.
+
+### Composite index
+
 ```sql
-CREATE TRIGGER before_salary_update
-BEFORE UPDATE ON Employees
-FOR EACH ROW
-BEGIN
-    IF NEW.salary < 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Salary cannot be negative';
-    END IF;
-END;
-```
-- Automatically fired on INSERT/UPDATE/DELETE events  
-- Types: BEFORE / AFTER; row-level / statement-level
-
----
-
-## 11. NoSQL vs SQL
-
-| Feature          | SQL (RDBMS)                        | NoSQL                              |
-|------------------|------------------------------------|------------------------------------|
-| Schema           | Fixed schema                       | Dynamic / schema-less              |
-| Data model       | Relational (tables)                | Document, Key-Value, Graph, Column |
-| Scalability      | Vertical (scale up)                | Horizontal (scale out)             |
-| ACID             | Full ACID                          | Often BASE (eventual consistency)  |
-| Query language   | SQL (standardized)                 | Varies per DB                      |
-| Joins            | Supported                          | Generally not supported            |
-| Use cases        | Financial, ERP, CRM systems        | Big data, real-time, flexible data |
-
-**CAP Theorem:**  
-> A distributed system can only guarantee **two of three** simultaneously:
-- **C**onsistency — every read receives the latest write  
-- **A**vailability — every request receives a (non-error) response  
-- **P**artition Tolerance — system works despite network partitions
-
-```
-        Consistency
-           /  \
-          /    \
-Availability - Partition Tolerance
-(choose 2 of 3)
+CREATE INDEX idx_orders_customer_date
+ON orders(customer_id, created_at);
 ```
 
-**BASE (NoSQL):**  
-**B**asically Available, **S**oft state, **E**ventually consistent — contrast to ACID.
+Column order matters. A composite B-tree can efficiently serve predicates beginning with the leading columns under the engine's optimizer rules.
 
----
+## 21. Selectivity and Index Design
 
-## 12. Query Optimization
+High-selectivity predicates often benefit more from indexes, but selectivity alone does not decide everything.
 
-### 12.1 Query Execution Plan
-- Use `EXPLAIN` (MySQL/PostgreSQL) to see how DB executes a query  
-- Look for: full table scans, missing indexes, expensive joins
+Consider:
 
-### 12.2 Optimization Tips
+- Query frequency.
+- Cardinality.
+- Data distribution.
+- Read/write ratio.
+- Sort/group needs.
+- Covering opportunities.
+- Index size.
 
-- Use indexes on filter/join columns  
-- Avoid `SELECT *`; specify only needed columns  
-- Use `LIMIT` for large result sets  
-- Avoid functions on indexed columns in `WHERE` (prevents index use)  
-- Prefer `JOIN` over correlated subqueries  
-- Use query caching where applicable  
-- Partition large tables  
+### Covering index
 
----
+If an index contains all columns needed by a query, the engine may avoid fetching the base table row, depending on the engine and plan.
 
-## 13. Database Design Best Practices
+## 22. Query Optimization
 
-- Design entity-relationship diagram before coding  
-- Choose appropriate data types (avoid oversized types)  
-- Apply normalization up to 3NF/BCNF  
-- Define primary/foreign keys explicitly  
-- Use constraints (NOT NULL, CHECK, UNIQUE)  
-- Add indexes on frequently queried columns  
-- Plan for partitioning/sharding at scale  
-- Implement proper backup and recovery strategy  
+The optimizer chooses an execution plan using statistics and cost estimates.
 
----
+Possible plan decisions:
 
-## 14. Real-world Use Cases
+- Index scan vs sequential/table scan.
+- Join order.
+- Nested-loop vs hash vs merge join.
+- Sort strategy.
+- Parallel execution.
+- Predicate pushdown.
 
-| Concept           | Real-world Example                                            |
-|-------------------|---------------------------------------------------------------|
-| Normalization     | Banking database keeping customer & account tables separate   |
-| Indexing (B+ Tree)| MySQL index on `email` column for fast user lookup            |
-| Transactions/ACID | Bank transfer: debit one account, credit another atomically   |
-| Stored Procedures | Complex business logic in ERP systems                         |
-| NoSQL (MongoDB)   | E-commerce product catalog with varying attributes            |
-| Redis (Key-Value) | Session storage, caching, rate limiting                       |
-| Cassandra         | Netflix viewing history (high write, distributed)             |
-| CAP Theorem       | Google Spanner (CP), Amazon DynamoDB (AP)                     |
+Use `EXPLAIN` / `EXPLAIN ANALYZE` where supported to inspect plans.
 
----
+### Common performance mistakes
 
-## 15. Frequently Asked Questions (FAQs)
+- Missing indexes on selective join/filter paths.
+- Functions preventing useful index use.
+- Fetching unnecessary columns/rows.
+- N+1 queries.
+- Huge OFFSET pagination.
+- Poor join predicates.
+- Stale statistics.
 
-**Q1. What are ACID properties?**  
-> Atomicity (all-or-nothing), Consistency (valid state), Isolation (concurrent = sequential), Durability (committed = permanent).
+## 23. Pagination
 
-**Q2. What is the difference between DELETE, TRUNCATE, and DROP?**  
-> `DELETE`: DML; removes specific rows; rollback possible; fires triggers; slow.  
-> `TRUNCATE`: DDL; removes all rows; faster; no rollback (usually); resets auto-increment.  
-> `DROP`: DDL; removes entire table structure + data; cannot be rolled back.
+### OFFSET pagination
 
-**Q3. What is normalization? Why do we do it?**  
-> Normalization organizes tables to reduce redundancy and dependency. It prevents update/insert/delete anomalies.
+```sql
+SELECT * FROM posts
+ORDER BY id
+LIMIT 20 OFFSET 100000;
+```
 
-**Q4. What is the difference between primary key and unique key?**  
-> Primary key: cannot be NULL; only one per table. Unique key: can have one NULL; multiple allowed per table. Both enforce uniqueness.
+Large offsets can require scanning/skipping many rows.
 
-**Q5. Explain the difference between clustered and non-clustered indexes.**  
-> Clustered index: data is physically sorted by the index. Non-clustered: separate structure with row pointers. A table can have only one clustered index.
+### Keyset pagination
 
-**Q6. What is a deadlock in DBMS?**  
-> When two or more transactions wait for each other to release locks, causing all to be stuck. Resolved by detection (timeout/wait-for graph) and aborting one transaction.
+```sql
+SELECT *
+FROM posts
+WHERE id < :last_seen_id
+ORDER BY id DESC
+LIMIT 20;
+```
 
-**Q7. What is a view? When would you use it?**  
-> A view is a virtual table defined by a query. Used to simplify complex queries, restrict access to sensitive columns, and present a consistent interface.
+Often scales better for deep pagination when an appropriate ordered key/index exists.
 
-**Q8. Explain the difference between HAVING and WHERE.**  
-> `WHERE` filters rows before grouping. `HAVING` filters groups after `GROUP BY`. Aggregate functions can be used in `HAVING` but not in `WHERE`.
+## 24. Views and Materialized Views
 
-**Q9. What is the CAP theorem?**  
-> A distributed system can guarantee at most two of: Consistency, Availability, Partition Tolerance. In practice, partition tolerance is required, so the choice is C or A.
+A **view** is a stored query definition.
 
-**Q10. What is the difference between INNER JOIN and OUTER JOIN?**  
-> INNER JOIN returns only matching rows. OUTER JOIN (LEFT/RIGHT/FULL) returns matching rows plus non-matching rows from one or both tables (with NULLs for missing matches).
+A **materialized view** stores query results and must be refreshed according to the system's rules.
 
----
+Use materialized views for expensive, frequently reused aggregations where freshness requirements permit it.
 
-## 16. Common Misconceptions
+## 25. Stored Procedures and Triggers
 
-- ❌ *"TRUNCATE can always be rolled back"* → In MySQL, TRUNCATE is DDL and cannot be rolled back; in PostgreSQL, it can be (inside a transaction).  
-- ❌ *"NULL == NULL is true"* → `NULL = NULL` evaluates to UNKNOWN. Use `IS NULL` to check for null.  
-- ❌ *"More indexes = faster queries"* → Too many indexes slow down INSERT/UPDATE/DELETE operations.  
-- ❌ *"Normalization is always better"* → Over-normalized schemas require complex joins; denormalization is appropriate for analytics (OLAP).  
-- ❌ *"Foreign keys automatically create indexes"* → MySQL (InnoDB) does create an index; other databases may not.
+Stored procedures execute database-side logic.
 
----
+Triggers automatically execute on defined database events.
 
-## 17. Quick Revision Checklist
+Advantages:
 
-- [ ] ACID properties and implementation  
-- [ ] SQL commands: DDL, DML, DCL, TCL  
-- [ ] All join types with diagrams  
-- [ ] Aggregate functions + GROUP BY + HAVING  
-- [ ] Normal forms (1NF through BCNF)  
-- [ ] Functional dependencies  
-- [ ] Transaction isolation levels + concurrency problems  
-- [ ] Index types (clustered vs non-clustered, B+tree, hash)  
-- [ ] DELETE vs TRUNCATE vs DROP  
-- [ ] CAP theorem  
-- [ ] SQL vs NoSQL trade-offs  
-- [ ] ER diagram symbols  
-- [ ] Stored procedures, views, triggers  
-- [ ] Query optimization (EXPLAIN, index tips)  
-- [ ] Locks (shared/exclusive) and 2PL  
+- Centralized data rules.
+- Fewer network round trips for some workloads.
 
----
+Risks:
 
-*Last updated: 2026 | Suitable for: GATE, university exams, software engineering interviews*
+- Hidden side effects.
+- Harder application-level debugging.
+- Portability concerns.
+
+Use them deliberately rather than automatically.
+
+## 26. Constraints and Cascades
+
+Foreign keys may specify actions such as:
+
+- `ON DELETE RESTRICT`
+- `ON DELETE CASCADE`
+- `ON DELETE SET NULL`
+
+Cascade deletes are powerful and dangerous when a parent has a large dependent graph. Design them explicitly.
+
+## 27. Storage and Pages
+
+Most relational databases store data in fixed-size pages/blocks.
+
+A table is organized into pages; indexes are also page-oriented structures.
+
+This matters because query cost is often driven more by **pages read** than by the number of logical rows returned.
+
+### Heap vs clustered organization
+
+A heap stores rows without requiring a particular key order. A clustered organization stores/organizes table data according to an index/key scheme in engines that support it. Exact terminology varies by DBMS.
+
+## 28. WAL and Recovery
+
+**Write-Ahead Logging (WAL):** log records describing changes must be persisted before the corresponding durable data pages, under the database's logging protocol.
+
+After a crash, recovery can use logs to:
+
+- Redo committed work not yet reflected in data pages.
+- Undo/ignore incomplete work depending on engine design.
+
+### Checkpoints
+
+Checkpoints reduce the amount of log that must be processed during recovery.
+
+## 29. Replication
+
+### Primary-replica
+
+Writes go to a primary; replicas copy changes and can serve reads.
+
+Trade-offs:
+
+- Read scaling.
+- Replication lag.
+- Failover complexity.
+- Read-after-write consistency requirements.
+
+### Synchronous vs asynchronous
+
+- **Synchronous:** commit may wait for replica acknowledgement; stronger durability/consistency but higher latency.
+- **Asynchronous:** primary commits without waiting; lower latency but possible lag/data loss window during failures.
+
+## 30. Partitioning
+
+Partitioning divides one logical table into physical pieces.
+
+Common strategies:
+
+- Range
+- List
+- Hash
+
+Example range partitioning by date can make old/new data management and partition pruning efficient.
+
+Partitioning is not automatically faster. It helps when queries align with partition boundaries and operational goals.
+
+## 31. Sharding
+
+Sharding distributes data across independent nodes.
+
+```text
+Application
+   |
+   +-- shard 0: users 0..N
+   +-- shard 1: users N..M
+   +-- shard 2: users M..Z
+```
+
+Challenges:
+
+- Choosing shard key.
+- Hot shards.
+- Cross-shard transactions.
+- Rebalancing.
+- Global secondary indexes.
+- Operational complexity.
+
+## 32. SQL vs NoSQL
+
+| SQL/RDBMS | NoSQL |
+|---|---|
+| Strong relational model | Model varies by database |
+| Rich joins/constraints | Often optimized around access patterns |
+| Mature transactions | Transaction semantics vary |
+| Structured schema | Often flexible schema |
+| Strong ad-hoc SQL | Query model varies |
+
+NoSQL is not “better for big data” by default. Select based on consistency, access patterns, scalability, operational model and data shape.
+
+## 33. NoSQL Families
+
+- **Document:** MongoDB-style JSON/BSON documents.
+- **Key-value:** Redis/DynamoDB-style access.
+- **Wide-column:** Cassandra-style distributed tables.
+- **Graph:** Neo4j-style nodes/relationships.
+- **Time-series:** optimized for timestamped measurements.
+
+## 34. CAP Theorem
+
+For a distributed system, during a network partition, a system must trade off between strong **Consistency** and **Availability** in the CAP sense.
+
+- **C:** reads see a single coherent/latest value according to the chosen consistency model.
+- **A:** every request to a non-failing node receives a response.
+- **P:** system continues operating despite network partitions.
+
+The important interview point: partitions are possible in distributed systems, so the practical trade-off is usually **C vs A when P occurs**, not “choose any two forever.”
+
+## 35. BASE
+
+Often used as a contrast to strict ACID thinking in distributed systems:
+
+- Basically Available
+- Soft state
+- Eventual consistency
+
+Eventual consistency means replicas converge if updates stop, but reads may temporarily differ.
+
+## 36. Distributed Transactions
+
+Two-phase commit (2PC) uses:
+
+1. Prepare.
+2. Commit/abort.
+
+It provides coordination but can block and introduces coordinator/operational complexity. Many modern systems prefer sagas/outbox/event-driven patterns when strict distributed ACID is unnecessary.
+
+## 37. Outbox Pattern
+
+Write the business change and an “event to publish” record in the same local transaction. A background publisher later sends the event.
+
+```text
+DB transaction:
+  update business row
+  insert outbox event
+       ↓
+Outbox publisher → message broker
+```
+
+This reduces the dual-write problem.
+
+## 38. Security
+
+- Use parameterized queries/prepared statements.
+- Never concatenate untrusted input into SQL.
+- Apply least-privilege database accounts.
+- Encrypt traffic with TLS where appropriate.
+- Encrypt sensitive data at rest where required.
+- Protect backups.
+- Rotate credentials.
+- Audit privileged operations.
+
+### SQL injection
+
+Bad:
+
+```text
+SELECT * FROM users WHERE name = '" + input + "'
+```
+
+Good:
+
+```sql
+SELECT * FROM users WHERE name = ?;
+```
+
+The driver binds the parameter instead of treating user input as SQL syntax.
+
+## 39. DBMS Interview Questions
+
+### Q1. DBMS vs RDBMS?
+
+DBMS is the broader category. An RDBMS specifically implements a relational/table-based model with relationships and relational constraints.
+
+### Q2. Primary key vs unique key?
+
+A primary key identifies the row and has entity-integrity semantics. A table normally has one primary-key constraint but may have multiple unique constraints; NULL behavior for unique constraints is DBMS-specific.
+
+### Q3. Primary key vs foreign key?
+
+A primary key uniquely identifies a row in its table. A foreign key references a key in another table and enforces referential integrity.
+
+### Q4. What is normalization?
+
+Decomposition based on dependencies to reduce redundancy and update anomalies.
+
+### Q5. 2NF vs 3NF?
+
+2NF removes partial dependency on part of a composite key. 3NF additionally removes problematic transitive dependencies, subject to its formal definition.
+
+### Q6. Why BCNF?
+
+It requires every determinant of a non-trivial functional dependency to be a superkey, eliminating dependency anomalies that can remain in 3NF.
+
+### Q7. DELETE vs TRUNCATE vs DROP?
+
+`DELETE` removes rows and can usually filter them. `TRUNCATE` removes all rows using a more specialized operation. `DROP` removes the database object itself. Exact transaction/logging behavior is DBMS-specific.
+
+### Q8. WHERE vs HAVING?
+
+WHERE filters rows before grouping; HAVING filters groups after aggregation.
+
+### Q9. INNER vs LEFT JOIN?
+
+INNER returns matches. LEFT preserves every left row and fills unmatched right columns with NULL.
+
+### Q10. Why use indexes?
+
+To reduce the work needed for frequent filters, joins, ordering or grouping, trading additional storage and write/update cost.
+
+### Q11. Why not index every column?
+
+Indexes consume storage and make inserts/updates/deletes more expensive; some indexes provide little benefit for low-selectivity or rarely queried data.
+
+### Q12. B-tree vs hash index?
+
+B-tree supports ordered traversal and range queries; hash is optimized primarily for equality lookup.
+
+### Q13. What is ACID?
+
+Atomicity, Consistency, Isolation and Durability.
+
+### Q14. What is MVCC?
+
+A concurrency-control technique that keeps multiple row versions so readers can use snapshots while writers proceed, subject to the engine's semantics.
+
+### Q15. Dirty vs non-repeatable vs phantom read?
+
+Dirty reads uncommitted data; non-repeatable reads see a changed existing row; phantom reads see a changed set of rows matching a predicate.
+
+### Q16. What is a deadlock?
+
+Transactions form a cycle of lock/resource waits. The DBMS can detect and abort one transaction.
+
+### Q17. What is WAL?
+
+A logging technique where change information is made durable before corresponding durable data changes, enabling crash recovery.
+
+### Q18. Replication vs sharding?
+
+Replication copies data across nodes; sharding partitions data across nodes.
+
+### Q19. What is a covering index?
+
+An index containing all columns needed by a query, allowing the engine to answer it from the index in suitable cases.
+
+### Q20. Why can OFFSET pagination become slow?
+
+The database may need to locate/skip many earlier rows before returning the requested page. Keyset pagination can avoid deep offsets.
+
+### Q21. What is CAP?
+
+During a network partition, a distributed system must trade off consistency and availability under the CAP definitions.
+
+### Q22. How do you prevent SQL injection?
+
+Use parameterized queries/prepared statements, avoid string concatenation, validate inputs, and use least-privilege accounts.
+
+### Q23. Why can a query ignore an index?
+
+The optimizer may estimate that a table scan is cheaper, the predicate may be non-selective, statistics may be stale, or the query expression may not match the index effectively.
+
+### Q24. How would you optimize a slow query?
+
+Measure first: inspect execution plan, row counts, selectivity, indexes, joins, sort/group operations, statistics and I/O. Change one thing and benchmark again.
+
+### Q25. How would you design a high-volume order database?
+
+Start with normalized transactional tables, appropriate composite indexes, immutable/order identifiers, transaction boundaries, read replicas where useful, partitioning by measured access patterns, and an outbox for asynchronous downstream events. Introduce sharding only when scale requires it.
+
+## 40. Revision Checklist
+
+- [ ] Relational model and keys
+- [ ] ER diagrams/cardinality
+- [ ] Functional dependencies
+- [ ] 1NF/2NF/3NF/BCNF/4NF/5NF
+- [ ] SQL DDL/DML/TCL/DCL
+- [ ] NULL semantics
+- [ ] Joins/grouping/subqueries/CTEs
+- [ ] Window functions
+- [ ] ACID and transaction states
+- [ ] Isolation anomalies and levels
+- [ ] Locks/2PL/MVCC
+- [ ] Deadlocks
+- [ ] B-tree/hash/composite indexes
+- [ ] Query plans and EXPLAIN
+- [ ] Pagination
+- [ ] WAL/recovery/checkpoints
+- [ ] Replication/partitioning/sharding
+- [ ] CAP/eventual consistency
+- [ ] NoSQL families
+- [ ] Security/SQL injection
+- [ ] Production design scenarios

@@ -1,498 +1,1049 @@
-# Computer Networks — Interview & Exam Notes
+# Computer Networks — Detailed Interview & Exam Notes
 
-> 📌 **GitHub:** [nirajkr26](https://github.com/nirajkr26) &nbsp;|&nbsp; **LinkedIn:** [nirajkr26](https://www.linkedin.com/in/nirajkr26)
+> **Focus:** network fundamentals, OSI/TCP-IP, Ethernet, IP addressing/subnetting, ARP, routing, TCP/UDP, DNS, HTTP/HTTPS, TLS, Wi-Fi, NAT, congestion, troubleshooting, security, numericals, and interview preparation.
 
----
+## 1. Network Fundamentals
 
-## 1. Introduction / Overview
+A **computer network** connects hosts so they can exchange data and share resources.
 
-A **Computer Network** is a collection of interconnected devices that share resources and information. Networks are fundamental to the internet, web applications, cloud computing, and communication systems.
+Key metrics:
 
-**Key Terminology:**
-- **Node:** Any device on the network (PC, router, switch, server)
-- **Host:** End device (client or server)
-- **Link:** Physical or logical connection between nodes
-- **Bandwidth:** Maximum data rate of a link (bps)
-- **Latency:** Time for data to travel from source to destination
-- **Throughput:** Actual data rate achieved
+- **Bandwidth:** maximum theoretical capacity of a link.
+- **Throughput:** achieved data rate.
+- **Goodput:** useful application data rate excluding protocol overhead/retransmissions.
+- **Latency:** time to deliver data.
+- **Jitter:** variation in packet delay.
+- **Packet loss:** packets that fail to reach the destination.
 
----
+### Delay components
 
-## 2. Network Classifications
-
-### By Scale
-
-| Type | Scale          | Example                     |
-|------|----------------|-----------------------------|
-| PAN  | Personal (~10m)| Bluetooth, USB              |
-| LAN  | Local (<1km)   | Office network, home WiFi   |
-| MAN  | City (~100km)  | Cable TV, metro Ethernet    |
-| WAN  | Worldwide      | Internet, MPLS networks     |
-
-### By Topology
-
-```
-Bus:  [ Node ]---[ Node ]---[ Node ]---[ Node ]
-      Single backbone; easy to install; single point of failure
-
-Star:          [ Hub/Switch ]
-              /      |      \
-       [Node] [Node] [Node] [Node]
-      Centralized; easy to add nodes; hub = single point of failure
-
-Ring: [ Node ] → [ Node ] → [ Node ] → [ Node ] → (back to start)
-      Token passing; equal access; one failure breaks ring
-
-Mesh: Every node connected to every other node
-      Highly redundant; expensive; used in WANs
-      Full mesh: n(n-1)/2 links
+```text
+Total delay ≈ processing + queuing + transmission + propagation
 ```
 
----
+- Processing: inspect packet/header.
+- Queuing: wait in device queue.
+- Transmission: time to push bits onto link = packet bits / link rate.
+- Propagation: signal travel time through medium.
+
+## 2. Network Types and Topologies
+
+### Scale
+
+- PAN: personal area.
+- LAN: local area.
+- MAN: metropolitan area.
+- WAN: wide area.
+
+### Topologies
+
+- **Star:** endpoints connect to central switch/AP.
+- **Bus:** shared backbone.
+- **Ring:** logical/physical ring.
+- **Mesh:** many redundant links.
+
+Full mesh links for `n` nodes:
+
+```text
+n(n-1)/2
+```
 
 ## 3. OSI Model
 
-> The **Open Systems Interconnection** model is a conceptual framework with 7 layers for understanding how data travels from one device to another.
-
-```
-┌─────────────────────────────────────────────────────────┐
-│  7. Application Layer  │ HTTP, FTP, SMTP, DNS, SNMP     │
-│  6. Presentation Layer │ SSL/TLS, JPEG, MPEG, ASCII      │
-│  5. Session Layer      │ NetBIOS, RPC, PPTP              │
-│  4. Transport Layer    │ TCP, UDP, ports                 │
-│  3. Network Layer      │ IP, ICMP, ARP, routers          │
-│  2. Data Link Layer    │ Ethernet, MAC, switches         │
-│  1. Physical Layer     │ Cables, hubs, bits              │
-└─────────────────────────────────────────────────────────┘
+```text
+7 Application   HTTP, DNS, SMTP
+6 Presentation  encoding, compression, encryption concepts
+5 Session       session coordination concepts
+4 Transport     TCP, UDP
+3 Network       IP, ICMP, routing
+2 Data Link     Ethernet, Wi-Fi framing, MAC
+1 Physical      bits, signaling, media
 ```
 
-**Mnemonic (top → bottom):** **A**ll **P**eople **S**eem **T**o **N**eed **D**ata **P**rocessing
+PDU names commonly used:
 
-| Layer | Name         | PDU    | Key Functions                                      | Devices       |
-|-------|--------------|--------|----------------------------------------------------|---------------|
-| 7     | Application  | Data   | User interface, HTTP, email, DNS                  | Gateways      |
-| 6     | Presentation | Data   | Encryption, compression, data format conversion   | —             |
-| 5     | Session      | Data   | Session establishment, maintenance, termination   | —             |
-| 4     | Transport    | Segment| End-to-end delivery, error control, flow control  | —             |
-| 3     | Network      | Packet | Logical addressing (IP), routing                  | Routers       |
-| 2     | Data Link    | Frame  | Physical addressing (MAC), error detection        | Switches, bridges |
-| 1     | Physical     | Bit    | Bit transmission, physical medium                 | Hubs, repeaters |
+```text
+Application/Presentation/Session → Data
+Transport → Segment (TCP) / Datagram (UDP)
+Network → Packet
+Data Link → Frame
+Physical → Bits
+```
 
----
+### Encapsulation
+
+```text
+Application data
+  ↓ TCP header
+TCP segment
+  ↓ IP header
+IP packet
+  ↓ Ethernet header/trailer
+Ethernet frame
+  ↓
+Bits
+```
+
+At the receiver, the reverse process is decapsulation.
 
 ## 4. TCP/IP Model
 
-> A practical 4-layer model used in the real internet.
+Practical internet model:
 
-```
-┌────────────────────────────────────────────────────┐
-│  4. Application Layer  (OSI layers 5, 6, 7)        │
-│  3. Transport Layer    (OSI layer 4)               │
-│  2. Internet Layer     (OSI layer 3)               │
-│  1. Network Access     (OSI layers 1, 2)           │
-└────────────────────────────────────────────────────┘
-```
+1. Application
+2. Transport
+3. Internet
+4. Link/Network Access
 
-### OSI vs TCP/IP
-
-| Feature              | OSI Model               | TCP/IP Model               |
-|----------------------|-------------------------|----------------------------|
-| Layers               | 7                       | 4                          |
-| Developed by         | ISO                     | DARPA                      |
-| Nature               | Conceptual/theoretical  | Practical/implementation   |
-| Protocol-independence| Yes                     | No (TCP/IP specific)       |
-| Session/Presentation | Separate layers         | Part of Application layer  |
-
----
+OSI is primarily a conceptual teaching model; TCP/IP describes the protocol suite used in real networks.
 
 ## 5. Physical Layer
 
-- **Transmission media:**
-  - **Guided:** Twisted pair (Cat5/6), Coaxial cable, Fiber optic
-  - **Unguided:** Radio waves, Microwave, Infrared
+### Media
 
-- **Bandwidth vs Throughput:** Bandwidth is theoretical max; throughput is actual.
+- Twisted-pair copper.
+- Coaxial.
+- Fiber optic.
+- Wireless radio.
 
-- **Nyquist Theorem (noiseless):** `Max bit rate = 2B log₂V`  
-  where B = bandwidth (Hz), V = signal levels
+Fiber offers high bandwidth, long distance and strong immunity to electromagnetic interference.
 
-- **Shannon's Theorem (noisy):** `Max bit rate = B log₂(1 + S/N)`  
-  where S/N = Signal-to-Noise ratio
+### Nyquist theorem
 
----
+For an ideal noiseless channel:
+
+```text
+Maximum bit rate = 2B log₂(V)
+```
+
+where B is bandwidth and V is number of signal levels.
+
+### Shannon capacity
+
+For a noisy channel:
+
+```text
+C = B log₂(1 + S/N)
+```
+
+where S/N is signal-to-noise ratio.
 
 ## 6. Data Link Layer
 
-### 6.1 Functions
-- Framing, physical addressing (MAC), error detection/correction, flow control, access control
+Responsibilities include:
 
-### 6.2 Error Detection Methods
+- Framing.
+- MAC addressing.
+- Error detection.
+- Medium access.
+- Link-level flow/control behavior depending on protocol.
 
-| Method          | How it works                                | Notes                          |
-|-----------------|---------------------------------------------|--------------------------------|
-| Parity bit      | Add bit to make total 1s even/odd           | Detects odd-number errors      |
-| Checksum        | Sum of data segments in 1s complement       | Used in TCP/UDP/IP             |
-| CRC             | Polynomial division of data                 | Most powerful; used in Ethernet|
+### Ethernet
 
-### 6.3 Error Correction — Hamming Code
-- Can detect up to 2-bit errors and **correct 1-bit errors**
-- Redundant bits `r` needed for `m` data bits: `2^r ≥ m + r + 1`
+IEEE 802.3 family. Ethernet frames contain source/destination MAC addresses and an EtherType/length field plus payload and frame check sequence.
 
-### 6.4 Flow Control Protocols
+### MAC address
 
-| Protocol      | Description                                       |
-|---------------|---------------------------------------------------|
-| Stop-and-Wait | Send one frame, wait for ACK                      |
-| Go-Back-N (GBN)| Send N frames without waiting; on error, retransmit from error frame |
-| Selective Repeat (SR) | Retransmit only the erroneous frame       |
+Typically 48 bits for Ethernet:
 
-**Sliding Window:**
-- Window size = `2^n - 1` for GBN (sender), `2^(n-1)` for SR (both sender & receiver)
-
-### 6.5 MAC Protocols (Multiple Access)
-
-| Category | Protocol | Notes                               |
-|----------|----------|-------------------------------------|
-| Random Access | ALOHA | Pure ALOHA: 18.4%; Slotted: 36.8% efficiency |
-| Random Access | CSMA/CD | Carrier Sense Multiple Access with Collision Detection; used in Ethernet |
-| Random Access | CSMA/CA | Collision Avoidance; used in WiFi (802.11) |
-| Controlled | Token Ring | Token passed around; holder transmits |
-
-### 6.6 Ethernet
-- IEEE 802.3
-- Uses CSMA/CD
-- MAC address: 48-bit (6 bytes), e.g., `AA:BB:CC:DD:EE:FF`
-
-### 6.7 Devices
-
-| Device   | Layer | Description                                      |
-|----------|-------|--------------------------------------------------|
-| Hub      | 1     | Broadcasts to all ports; no intelligence         |
-| Switch   | 2     | Forwards based on MAC address table              |
-| Router   | 3     | Routes based on IP address                       |
-| Gateway  | 7     | Protocol translation between different networks  |
-| Bridge   | 2     | Connects two LANs at data link layer             |
-| Repeater | 1     | Amplifies/regenerates signal                     |
-
----
-
-## 7. Network Layer
-
-### 7.1 IP Addressing
-
-#### IPv4
-- 32-bit address, dotted decimal notation: `192.168.1.1`
-- **Classes:**
-
-| Class | First Octet | Default Mask   | Hosts per Network |
-|-------|-------------|----------------|-------------------|
-| A     | 1–126       | 255.0.0.0 /8   | 16,777,214        |
-| B     | 128–191     | 255.255.0.0 /16| 65,534            |
-| C     | 192–223     | 255.255.255.0 /24 | 254            |
-| D     | 224–239     | Multicast      | —                 |
-| E     | 240–255     | Reserved       | —                 |
-
-- **Private IP ranges:** `10.x.x.x`, `172.16–31.x.x`, `192.168.x.x`
-- **Loopback:** `127.0.0.1`
-- **Broadcast:** host bits all 1s (e.g., `192.168.1.255`)
-
-#### IPv6
-- 128-bit address, hexadecimal, colon-separated  
-- Example: `2001:0db8:85a3::8a2e:0370:7334`  
-- **Key features:** larger address space, built-in IPSec, no NAT needed, simplified header
-
-#### Subnetting
-```
-Network address  = IP AND Subnet mask
-Broadcast        = IP OR (NOT Subnet mask)
-Number of hosts  = 2^(host bits) - 2
+```text
+AA:BB:CC:DD:EE:FF
 ```
 
-### 7.2 ARP (Address Resolution Protocol)
-- Maps **IP address → MAC address**  
-- Broadcasts ARP request; target replies with its MAC  
-- **RARP:** Reverse ARP (MAC → IP); replaced by DHCP
+MAC addresses are link-local identifiers, not globally routable internet addresses.
 
-### 7.3 ICMP (Internet Control Message Protocol)
-- Used for error reporting and diagnostics  
-- `ping` uses ICMP Echo Request/Reply  
-- `traceroute` uses ICMP Time Exceeded messages
+## 7. Error Detection
 
-### 7.4 Routing Algorithms
+### Parity
 
-#### Distance Vector (e.g., RIP)
-- Each router maintains distance to every destination  
-- Bellman-Ford algorithm  
-- **Count-to-infinity** problem → solved by split horizon, poisoned reverse
+Adds parity information; limited detection capability.
 
-#### Link State (e.g., OSPF)
-- Each router has complete topology map  
-- Dijkstra's shortest path algorithm  
-- Faster convergence; more bandwidth/memory
+### Checksum
 
-| Feature          | Distance Vector (RIP) | Link State (OSPF)    |
-|------------------|-----------------------|----------------------|
-| Algorithm        | Bellman-Ford          | Dijkstra             |
-| Knowledge        | Neighbor's view only  | Complete topology    |
-| Convergence      | Slow                  | Fast                 |
-| Bandwidth usage  | Low                   | High (LSA flooding)  |
-| Scalability      | Small networks        | Large networks       |
+Combines data words into a checksum; used in several protocols.
 
-#### BGP (Border Gateway Protocol)
-- **Path vector** protocol; used between Autonomous Systems (AS) on the internet  
-- Policy-based routing
+### CRC
 
-### 7.5 NAT (Network Address Translation)
-- Maps private IP addresses to one (or few) public IPs  
-- Conserves IPv4 address space  
-- Types: Static NAT, Dynamic NAT, PAT (Port Address Translation / NAT overload)
+Cyclic Redundancy Check uses polynomial arithmetic and is strong for detecting burst errors. Ethernet uses an FCS based on CRC.
 
----
+## 8. Flow Control and Reliable Link Protocols
 
-## 8. Transport Layer
+### Stop-and-Wait
 
-### 8.1 TCP vs UDP
+Send one frame and wait for acknowledgement.
 
-| Feature           | TCP                          | UDP                          |
-|-------------------|------------------------------|------------------------------|
-| Connection        | Connection-oriented           | Connectionless               |
-| Reliability       | Guaranteed delivery           | No guarantee                 |
-| Ordering          | In-order delivery             | No ordering                  |
-| Error checking    | Yes (checksum + retransmit)   | Checksum only (no retransmit)|
-| Flow control      | Yes (sliding window)          | No                           |
-| Congestion control| Yes                          | No                           |
-| Speed             | Slower                        | Faster                       |
-| Header size       | 20–60 bytes                   | 8 bytes                      |
-| Use cases         | HTTP, FTP, SMTP, SSH          | DNS, DHCP, video streaming, VoIP |
+Pros: simple. Cons: poor link utilization on high-latency paths.
 
-### 8.2 TCP Three-way Handshake (Connection Establishment)
+### Sliding window
 
-```
-Client              Server
-  |── SYN ──────────►|
-  |◄──── SYN-ACK ────|
-  |── ACK ──────────►|
-         (Connected)
+Allows multiple outstanding frames.
+
+### Go-Back-N
+
+On loss/error, retransmit the affected frame and subsequent outstanding frames.
+
+### Selective Repeat
+
+Retransmit only missing/incorrect frames. More receiver buffering and protocol complexity.
+
+Do not blindly apply textbook window-size formulas across every variant; sequence-number/window constraints depend on protocol definitions.
+
+## 9. Switching
+
+A **switch** forwards frames using MAC addresses.
+
+### MAC learning
+
+```text
+Frame arrives on port 3 from MAC A
+→ switch records A → port 3
 ```
 
-### 8.3 TCP Four-way Handshake (Connection Termination)
+If destination is known, it forwards to the corresponding port. If unknown, it may flood within the VLAN.
 
-```
-Client              Server
-  |── FIN ──────────►|
-  |◄──── ACK ────────|
-  |◄──── FIN ────────|
-  |── ACK ──────────►|
-       (TIME_WAIT → CLOSED)
-```
+### Collision domains
 
-### 8.4 TCP Flow Control & Congestion Control
+Modern switched Ethernet provides a separate collision domain per switch port in typical full-duplex operation.
 
-- **Flow Control:** Receiver advertises **window size** (receiver buffer); prevents overflow
-- **Congestion Control mechanisms:**
-  - **Slow Start:** Window starts at 1 MSS, doubles each RTT until threshold
-  - **Congestion Avoidance:** Linear increase after threshold
-  - **Fast Retransmit:** Retransmit on 3 duplicate ACKs (without waiting for timeout)
-  - **Fast Recovery:** Halve window after fast retransmit (not slow start)
+### Broadcast domains
 
-### 8.5 Ports
+Routers/L3 boundaries separate broadcast domains. VLANs also create logical Layer-2 broadcast domains.
 
-| Range        | Type                | Examples                          |
-|--------------|---------------------|-----------------------------------|
-| 0–1023       | Well-known ports    | HTTP(80), HTTPS(443), FTP(21), SSH(22), DNS(53) |
-| 1024–49151   | Registered ports    | MySQL(3306), MongoDB(27017)       |
-| 49152–65535  | Dynamic/private     | Ephemeral client ports            |
+## 10. Hub vs Switch vs Router
 
----
+| Device | Main layer | Decision |
+|---|---|---|
+| Hub | Physical | Repeats bits/signals |
+| Switch | Data link | MAC address |
+| Router | Network | IP/prefix/routing table |
+| Gateway | Depends | Protocol/application translation concept |
 
-## 9. Application Layer Protocols
+## 11. VLANs
 
-### 9.1 DNS (Domain Name System)
+A **VLAN** logically separates Layer-2 networks on shared switching infrastructure.
 
-> Translates domain names (www.google.com) to IP addresses.
+Common concepts:
 
-```
-DNS Resolution Flow:
-Browser Cache → OS Cache → Recursive Resolver →
-Root Nameserver → TLD Nameserver (.com) →
-Authoritative Nameserver → IP Address
+- Access port: usually carries one VLAN untagged.
+- Trunk: carries multiple VLANs using tagging such as IEEE 802.1Q.
+- Inter-VLAN routing: requires a Layer-3 device.
+
+VLANs improve segmentation but are not a substitute for complete security controls.
+
+## 12. IP Addressing
+
+### IPv4
+
+32-bit address:
+
+```text
+192.168.1.10
 ```
 
-- **Record types:**
+IPv4 is usually discussed with CIDR prefixes rather than old classful addressing.
 
-| Type  | Purpose                           |
-|-------|-----------------------------------|
-| A     | Domain → IPv4 address             |
-| AAAA  | Domain → IPv6 address             |
-| CNAME | Alias to another domain           |
-| MX    | Mail exchange server              |
-| NS    | Nameserver for domain             |
-| TXT   | Text records (SPF, DKIM)          |
-| PTR   | Reverse DNS (IP → domain)         |
+### CIDR
 
-### 9.2 HTTP / HTTPS
+```text
+192.168.1.0/24
+```
 
-- **HTTP** (HyperText Transfer Protocol) — Port 80; stateless; application layer protocol
-- **HTTPS** — HTTP + TLS/SSL encryption; Port 443
+`/24` means 24 network bits and 8 host bits.
 
-**HTTP Methods:**
+### Private ranges
 
-| Method  | Description              |
-|---------|--------------------------|
-| GET     | Retrieve data            |
-| POST    | Send data to server      |
-| PUT     | Update/replace resource  |
-| PATCH   | Partial update           |
-| DELETE  | Remove resource          |
-| HEAD    | GET without body         |
-| OPTIONS | Describe communication options |
+```text
+10.0.0.0/8
+172.16.0.0/12
+192.168.0.0/16
+```
 
-**HTTP Status Codes:**
+### Special addresses
 
-| Range | Category     | Examples                              |
-|-------|--------------|---------------------------------------|
-| 1xx   | Informational| 100 Continue                          |
-| 2xx   | Success      | 200 OK, 201 Created, 204 No Content   |
-| 3xx   | Redirection  | 301 Moved Permanently, 302 Found      |
-| 4xx   | Client Error | 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found |
-| 5xx   | Server Error | 500 Internal Server Error, 503 Service Unavailable |
+- `127.0.0.0/8`: loopback.
+- `0.0.0.0`: unspecified/default-route context depending on usage.
+- Link-local IPv4: `169.254.0.0/16`.
 
-**HTTP versions:**
-- **HTTP/1.1** — persistent connections, pipelining
-- **HTTP/2** — multiplexing, binary framing, header compression, server push
-- **HTTP/3** — built on QUIC (UDP-based); lower latency
+## 13. Subnetting
 
-### 9.3 Other Key Protocols
+For a prefix `/p` in IPv4:
 
-| Protocol | Port | Description                                        |
-|----------|------|----------------------------------------------------|
-| FTP      | 21(ctrl), 20(data) | File Transfer Protocol         |
-| SFTP     | 22   | Secure FTP (over SSH)                              |
-| SSH      | 22   | Secure Shell; encrypted remote login               |
-| Telnet   | 23   | Unsecured remote login (deprecated)                |
-| SMTP     | 25   | Simple Mail Transfer Protocol (sending email)      |
-| POP3     | 110  | Post Office Protocol v3 (download email)           |
-| IMAP     | 143  | Internet Message Access Protocol (access email)    |
-| DHCP     | 67/68| Dynamic Host Configuration Protocol (IP assignment)|
-| SNMP     | 161  | Simple Network Management Protocol                 |
-| NTP      | 123  | Network Time Protocol                              |
-| RDP      | 3389 | Remote Desktop Protocol                            |
+```text
+Host bits = 32 − p
+Addresses per subnet = 2^(host bits)
+```
 
----
+Traditional host-count formula:
 
-## 10. Network Security
+```text
+usable hosts = 2^h − 2
+```
 
-### 10.1 TLS/SSL
-- **TLS (Transport Layer Security)** — cryptographic protocol for securing communications  
-- **TLS Handshake:** Client Hello → Server Hello + Certificate → Key Exchange → Finished  
-- **Certificates:** issued by Certificate Authorities (CA); X.509 format
+This “minus two” rule has exceptions for special prefix sizes and modern point-to-point/networking practices, so know the context.
 
-### 10.2 Common Attacks
+### Example
 
-| Attack        | Description                                      | Prevention                    |
-|---------------|--------------------------------------------------|-------------------------------|
-| DoS/DDoS      | Overwhelm server with requests                   | Rate limiting, CDN, firewall  |
-| Man-in-Middle | Intercept communication                          | TLS/HTTPS, certificate pinning|
-| Phishing      | Trick users to reveal credentials                | User awareness, SPF/DKIM      |
-| SQL Injection | Inject SQL via input fields                      | Prepared statements, WAF      |
-| ARP Spoofing  | Fake ARP replies to intercept traffic            | Dynamic ARP inspection        |
-| DNS Spoofing  | Corrupt DNS cache with fake records              | DNSSEC                        |
-| SYN Flood     | Half-open TCP connections overwhelm server       | SYN cookies                   |
+`192.168.10.0/26`:
 
-### 10.3 Firewalls and VPN
-- **Firewall:** filters traffic based on rules (packet filtering, stateful, application-layer)
-- **VPN (Virtual Private Network):** encrypted tunnel over public network; protocols: IPSec, OpenVPN, WireGuard
+```text
+Host bits = 6
+Addresses = 2^6 = 64
+Traditional usable hosts = 62
+```
 
----
+Subnets inside a /24 occur every 64 addresses:
 
-## 11. Wireless Networks
+```text
+192.168.10.0/26
+192.168.10.64/26
+192.168.10.128/26
+192.168.10.192/26
+```
 
-| Standard    | Max Speed | Frequency | Notes               |
-|-------------|-----------|-----------|---------------------|
-| 802.11a     | 54 Mbps   | 5 GHz     | Less interference   |
-| 802.11b     | 11 Mbps   | 2.4 GHz   | Longer range        |
-| 802.11g     | 54 Mbps   | 2.4 GHz   | Backward compatible |
-| 802.11n (WiFi 4) | 600 Mbps | 2.4/5 GHz | MIMO          |
-| 802.11ac (WiFi 5)| 3.5 Gbps | 5 GHz    | Beamforming    |
-| 802.11ax (WiFi 6)| 9.6 Gbps | 2.4/5/6 GHz | OFDMA     |
+## 14. IPv6
 
----
+IPv6 uses 128-bit addresses.
 
-## 12. Real-world Use Cases
+```text
+2001:db8:1234::1
+```
 
-| Concept        | Real-world Example                                    |
-|----------------|-------------------------------------------------------|
-| DNS            | Typing `google.com` → IP resolved transparently      |
-| CDN            | Netflix/YouTube serving content from edge nodes      |
-| Load Balancing | AWS ELB distributing traffic across EC2 instances    |
-| VPN            | Remote work accessing corporate intranet securely    |
-| BGP            | Internet routing between ISPs and large enterprises  |
-| TLS            | Every HTTPS website (bank, e-commerce)               |
-| NAT            | Home router sharing one public IP among all devices  |
+Features:
 
----
+- Huge address space.
+- Hierarchical addressing.
+- No IPv4-style broadcast; multicast/anycast are used instead.
+- Neighbor Discovery replaces ARP functionality.
+- Simplified base header.
 
-## 13. Frequently Asked Questions (FAQs)
+Do not claim that IPv6 “automatically means no NAT” in every deployment; NAT-like mechanisms can exist, although end-to-end addressing is more feasible.
 
-**Q1. What are the differences between TCP and UDP?**  
-> TCP is connection-oriented, reliable, and ordered; used for HTTP, FTP. UDP is connectionless, unreliable, and faster; used for DNS, streaming, VoIP.
+## 15. ARP and Neighbor Discovery
 
-**Q2. Explain the OSI model layers and their functions.**  
-> 7 layers: Physical (bits), Data Link (frames/MAC), Network (packets/IP), Transport (segments/TCP), Session, Presentation (encryption), Application (HTTP/DNS).
+### ARP
 
-**Q3. What happens when you type a URL in a browser?**  
-> DNS resolution → TCP 3-way handshake → TLS handshake (for HTTPS) → HTTP GET request → Server response → Browser renders HTML.
+Maps IPv4 address to MAC address on a local network.
 
-**Q4. What is subnetting?**  
-> Dividing a network into smaller sub-networks using a subnet mask. Reduces broadcast domains, improves security and performance.
+```text
+Host A: Who has 192.168.1.5?
+Broadcast ARP request
 
-**Q5. What is the difference between a hub, switch, and router?**  
-> Hub (L1): broadcasts to all ports. Switch (L2): forwards based on MAC address. Router (L3): routes based on IP address between networks.
+Host B: 192.168.1.5 is at AA:BB:...
+ARP reply
+```
 
-**Q6. What is NAT and why is it used?**  
-> Network Address Translation maps private IPs to public IPs. Used to conserve IPv4 addresses and provide a layer of security.
+ARP cache stores recently learned mappings.
 
-**Q7. What is the difference between HTTP and HTTPS?**  
-> HTTP transmits data in plain text; HTTPS encrypts data with TLS/SSL. Both use same methods/status codes; HTTPS runs on port 443.
+### IPv6
 
-**Q8. What is DNS and how does it work?**  
-> DNS translates domain names to IP addresses. A recursive resolver queries root → TLD → authoritative nameserver to get the IP.
+IPv6 uses **Neighbor Discovery Protocol (NDP)** through ICMPv6 rather than ARP.
 
-**Q9. What is ARP?**  
-> Address Resolution Protocol maps an IP address to a MAC address. A host broadcasts "Who has IP X?" and the owner replies with its MAC.
+## 16. Routing
 
-**Q10. Explain the difference between routing and switching.**  
-> Switching operates at Layer 2 (MAC addresses, within a network). Routing operates at Layer 3 (IP addresses, between networks).
+A router forwards packets between networks based on destination prefixes and routing information.
 
----
+### Longest Prefix Match
 
-## 14. Common Misconceptions
+If multiple routes match an IP, the most specific (longest prefix) normally wins.
 
-- ❌ *"MAC addresses are globally unique forever"* → MACs can be spoofed using software.  
-- ❌ *"Ping uses TCP"* → ICMP (connectionless); no TCP/UDP involved.  
-- ❌ *"UDP is always unreliable"* → UDP is unreliable by protocol, but applications (like QUIC) can add reliability on top.  
-- ❌ *"IP addresses are permanent"* → DHCP assigns dynamic IPs; only static IPs are permanent.  
-- ❌ *"VPN makes you anonymous"* → VPN hides your IP from websites but VPN provider can see traffic; VPN ≠ full anonymity.
+Example:
 
----
+```text
+10.0.0.0/8
+10.1.0.0/16
+10.1.2.0/24  ← 10.1.2.5 chooses this
+```
 
-## 15. Quick Revision Checklist
+### Default route
 
-- [ ] OSI 7 layers + PDU at each layer  
-- [ ] TCP/IP 4-layer model  
-- [ ] TCP 3-way handshake  
-- [ ] TCP vs UDP comparison  
-- [ ] IPv4 address classes + subnetting  
-- [ ] DNS resolution steps  
-- [ ] HTTP methods + status codes  
-- [ ] ARP, ICMP, DHCP roles  
-- [ ] Routing algorithms (RIP vs OSPF vs BGP)  
-- [ ] Hub vs Switch vs Router  
-- [ ] NAT, VPN, TLS/SSL basics  
-- [ ] Common port numbers  
-- [ ] Error detection methods (parity, CRC)  
-- [ ] CSMA/CD vs CSMA/CA  
+```text
+0.0.0.0/0
+```
 
----
+Matches any IPv4 destination when no more-specific route exists.
 
-*Last updated: 2026 | Suitable for: GATE, university exams, software engineering interviews*
+## 17. Routing Protocols
+
+### RIP
+
+Distance-vector protocol using hop count; limited scalability.
+
+### OSPF
+
+Link-state IGP. Routers build topology information and calculate shortest paths, commonly using Dijkstra/SPF.
+
+### BGP
+
+Path-vector protocol used between autonomous systems. Routing decisions are strongly policy-driven, not simply “shortest path.”
+
+### Static vs dynamic routing
+
+- Static: configured manually; predictable but less adaptive.
+- Dynamic: routers exchange routing information and adapt to topology changes.
+
+## 18. NAT
+
+Network Address Translation maps addresses/ports between address spaces.
+
+Common forms:
+
+- Static NAT.
+- Dynamic NAT.
+- PAT/NAPT: many private endpoints share a public IP using port mappings.
+
+NAT conserves IPv4 addresses and provides some topology hiding, but it is not a complete security boundary by itself.
+
+## 19. ICMP
+
+ICMP carries network control/diagnostic messages.
+
+Examples:
+
+- Echo request/reply → `ping`.
+- Time Exceeded → important for traceroute behavior.
+- Destination Unreachable.
+
+ICMP is not an application data protocol like HTTP.
+
+## 20. Transport Layer
+
+Transport protocols provide process-to-process communication.
+
+A socket endpoint is commonly identified by IP address + port + protocol context.
+
+### Ports
+
+- 0–1023: well-known.
+- 1024–49151: registered.
+- 49152–65535: dynamic/private range commonly used for ephemeral ports.
+
+## 21. TCP
+
+TCP provides a reliable, ordered byte stream with congestion and flow control.
+
+Important mechanisms:
+
+- Sequence numbers.
+- Acknowledgements.
+- Retransmission.
+- Receive window.
+- Congestion window.
+- Connection state machine.
+
+TCP does **not** preserve application message boundaries; it is a byte stream.
+
+## 22. TCP Three-Way Handshake
+
+```text
+Client                 Server
+  | ---- SYN ---------> |
+  | <--- SYN + ACK ---- |
+  | ---- ACK ---------> |
+```
+
+Purpose:
+
+- Establish connection state.
+- Exchange initial sequence numbers.
+- Confirm both directions are reachable.
+
+## 23. TCP Connection Termination
+
+Typical graceful close is a four-segment exchange because each direction of the full-duplex byte stream can close independently.
+
+```text
+A → FIN → B
+A ← ACK ← B
+A ← FIN ← B
+A → ACK → B
+```
+
+`TIME_WAIT` allows old delayed segments to expire and helps ensure the final acknowledgement can be retransmitted if necessary.
+
+## 24. TCP Flow Control vs Congestion Control
+
+### Flow control
+
+Protects the **receiver** from being overwhelmed. The receive window communicates how much data the receiver can accept.
+
+### Congestion control
+
+Protects the **network** from overload. TCP maintains a congestion window and adapts sending behavior to observed loss/ECN/delay signals depending on implementation.
+
+These are different concepts.
+
+## 25. TCP Congestion Control
+
+Classical concepts:
+
+- **Slow start:** congestion window grows rapidly at first.
+- **Congestion avoidance:** growth becomes more conservative.
+- **Fast retransmit:** duplicate acknowledgements can indicate loss before timeout.
+- **Fast recovery:** adjusts sending after inferred loss.
+
+Modern TCP implementations use different congestion-control algorithms; do not assume every TCP stack follows one exact textbook curve.
+
+## 26. UDP
+
+UDP is connectionless and provides datagrams without TCP-style reliability, ordering, retransmission or congestion control.
+
+Advantages:
+
+- Low protocol overhead.
+- Application controls reliability/timing if needed.
+- Useful for real-time and request/response workloads.
+
+Examples:
+
+- DNS.
+- DHCP.
+- RTP/media systems.
+- QUIC transport uses UDP underneath.
+
+UDP does have a checksum mechanism; “UDP is unreliable” means delivery/ordering is not guaranteed by UDP itself.
+
+## 27. TCP vs UDP
+
+| TCP | UDP |
+|---|---|
+| Connection-oriented | Connectionless |
+| Reliable ordered byte stream | Unreliable datagrams |
+| Retransmission | No built-in retransmission |
+| Flow control | Yes |
+| Congestion control | TCP-specific mechanisms |
+| Message boundaries | Not preserved | Datagram boundaries preserved |
+| Typical use | Web streams, SSH, DB connections | DNS, media, QUIC transport |
+
+## 28. DNS
+
+DNS maps names to resource records.
+
+Typical resolution:
+
+```text
+Application/OS cache
+        ↓
+Recursive resolver
+        ↓
+Root
+        ↓
+TLD server
+        ↓
+Authoritative server
+        ↓
+Answer
+```
+
+### Important records
+
+| Type | Meaning |
+|---|---|
+| A | IPv4 address |
+| AAAA | IPv6 address |
+| CNAME | Alias |
+| MX | Mail exchange |
+| NS | Authoritative name server |
+| TXT | Arbitrary text/policy data |
+| PTR | Reverse DNS |
+| SOA | Zone authority metadata |
+
+### DNS caching
+
+Resolvers cache records according to TTL, reducing latency and authoritative-server load.
+
+## 29. DHCP
+
+DHCP dynamically configures hosts.
+
+Classic DORA sequence:
+
+```text
+Discover → Offer → Request → ACK
+```
+
+A DHCP configuration can include IP address, subnet mask/prefix, default gateway and DNS servers.
+
+## 30. HTTP
+
+HTTP is an application-layer request/response protocol.
+
+### Methods
+
+- GET: retrieve.
+- POST: submit/create/action.
+- PUT: replace/update a resource representation.
+- PATCH: partial update.
+- DELETE: remove.
+- HEAD: headers equivalent to GET without response body.
+- OPTIONS: discover supported communication/options.
+
+### Safe vs idempotent
+
+- Safe methods should not intentionally change server state (GET/HEAD/OPTIONS conceptually).
+- Idempotent means repeating the same request has the same intended effect as doing it once. PUT and DELETE are generally idempotent by HTTP semantics; POST is generally not.
+
+## 31. HTTP Status Codes
+
+| Range | Meaning |
+|---|---|
+| 1xx | Informational |
+| 2xx | Success |
+| 3xx | Redirection |
+| 4xx | Client-side request problem |
+| 5xx | Server-side failure |
+
+Common:
+
+- 200 OK
+- 201 Created
+- 204 No Content
+- 301/308 permanent redirect
+- 302/307 temporary redirect
+- 400 Bad Request
+- 401 Unauthorized/authentication required
+- 403 Forbidden
+- 404 Not Found
+- 409 Conflict
+- 429 Too Many Requests
+- 500 Internal Server Error
+- 502 Bad Gateway
+- 503 Service Unavailable
+- 504 Gateway Timeout
+
+## 32. HTTP Headers and Cookies
+
+Common headers:
+
+- `Content-Type`
+- `Content-Length`
+- `Accept`
+- `Authorization`
+- `Cache-Control`
+- `ETag`
+- `If-None-Match`
+- `Cookie`
+- `Set-Cookie`
+
+### Cookies
+
+Security-relevant attributes:
+
+- `Secure`: send over HTTPS.
+- `HttpOnly`: JavaScript cannot read it through `document.cookie`.
+- `SameSite`: controls cross-site cookie sending behavior.
+- `Domain` / `Path`: scope the cookie.
+
+## 33. HTTP Caching
+
+### Cache-Control
+
+Examples:
+
+```text
+Cache-Control: max-age=3600
+Cache-Control: no-store
+Cache-Control: no-cache
+```
+
+`no-cache` means a stored response generally must be revalidated before reuse; it does **not** literally mean “do not store.” `no-store` means do not store.
+
+### ETag
+
+Server returns an entity tag. Client can send:
+
+```text
+If-None-Match: "abc123"
+```
+
+If unchanged, server can return `304 Not Modified` without sending the full representation.
+
+## 34. HTTP/1.1 vs HTTP/2 vs HTTP/3
+
+### HTTP/1.1
+
+- Textual headers/message format.
+- Persistent connections.
+- Multiple requests can be serialized on a connection, leading to application-level head-of-line issues.
+
+### HTTP/2
+
+- Binary framing.
+- Multiplexed streams over one TCP connection.
+- Header compression (HPACK).
+- Stream prioritization concepts.
+
+### HTTP/3
+
+- HTTP semantics over **QUIC**.
+- QUIC uses UDP as its packet transport substrate.
+- QUIC provides encrypted transport, streams and connection migration features.
+- Avoid saying HTTP/3 is “HTTP over raw UDP”; QUIC supplies the transport functionality.
+
+## 35. TLS and HTTPS
+
+HTTPS = HTTP carried over TLS.
+
+TLS provides:
+
+- Server authentication through certificates.
+- Confidentiality.
+- Integrity.
+
+Simplified handshake idea:
+
+```text
+ClientHello
+   ↓
+ServerHello + certificate + key exchange messages
+   ↓
+Key establishment
+   ↓
+Encrypted application traffic
+```
+
+Modern TLS commonly uses ephemeral key exchange and authenticated symmetric encryption for application data.
+
+## 36. Certificates and PKI
+
+A certificate binds an identity (such as a hostname) to a public key and is signed by a trusted certificate authority chain.
+
+Browser trust involves:
+
+- Certificate validity period.
+- Hostname verification.
+- Signature chain.
+- Key usage/extensions.
+- Trust store.
+- Revocation/status mechanisms as applicable.
+
+## 37. Sockets
+
+A socket is an OS/network abstraction for communication.
+
+Typical TCP server:
+
+```text
+socket()
+  ↓
+bind()
+  ↓
+listen()
+  ↓
+accept()
+  ↓
+read/write
+```
+
+Typical client:
+
+```text
+socket()
+  ↓
+connect()
+  ↓
+read/write
+```
+
+## 38. Load Balancing
+
+A load balancer distributes requests across backend instances.
+
+Common strategies:
+
+- Round robin.
+- Weighted round robin.
+- Least connections.
+- Hash-based routing.
+
+Layer-4 load balancing operates primarily on transport information. Layer-7 load balancing understands application protocols such as HTTP and can route by host/path/header.
+
+## 39. Reverse Proxy
+
+A reverse proxy sits in front of backend servers.
+
+Responsibilities can include:
+
+- TLS termination.
+- Routing.
+- Compression.
+- Caching.
+- Rate limiting.
+- Authentication integration.
+- Load balancing.
+
+## 40. Wi-Fi Basics
+
+Wi-Fi uses IEEE 802.11.
+
+Unlike traditional half-duplex shared Ethernet, Wi-Fi uses **CSMA/CA** because a wireless station cannot reliably detect collisions while transmitting in the same way wired Ethernet historically did.
+
+Concepts:
+
+- Access point.
+- SSID.
+- Channels.
+- Association/authentication.
+- WPA2/WPA3 security.
+- 2.4/5/6 GHz bands depending on hardware/regulation.
+
+## 41. CSMA/CD vs CSMA/CA
+
+### CSMA/CD
+
+Carrier Sense Multiple Access with Collision Detection. Historically associated with shared half-duplex Ethernet.
+
+### CSMA/CA
+
+Collision Avoidance. Used by Wi-Fi, where stations attempt to reduce collision probability using contention/backoff and acknowledgements.
+
+Modern full-duplex switched Ethernet does not use CSMA/CD for normal operation.
+
+## 42. Network Security
+
+### Common attacks
+
+- Packet sniffing.
+- Spoofing.
+- ARP poisoning.
+- DNS poisoning/cache attacks.
+- SYN flood.
+- DDoS.
+- Man-in-the-middle.
+- Session/token theft.
+
+### Defenses
+
+- TLS.
+- Secure Wi-Fi configuration.
+- Network segmentation/VLANs plus firewall policy.
+- Authentication and authorization.
+- Rate limiting.
+- DDoS protection.
+- Secure DNS practices.
+- Monitoring and anomaly detection.
+
+## 43. Firewall
+
+A firewall filters traffic according to rules.
+
+- Packet filtering.
+- Stateful firewall.
+- Application/proxy firewall.
+- Network security groups/cloud firewalls.
+
+A firewall is a control layer, not a substitute for secure application code.
+
+## 44. Troubleshooting Method
+
+When “the API is slow/unreachable,” isolate layers:
+
+```text
+DNS → TCP/QUIC → TLS → HTTP → application → database
+```
+
+Useful tools:
+
+- `ping`
+- `traceroute` / `tracert`
+- `nslookup` / `dig`
+- `curl -v`
+- `ss` / `netstat`
+- `tcpdump`
+- Wireshark
+
+Ask:
+
+1. Does DNS resolve?
+2. Is the route reachable?
+3. Is the port accepting connections?
+4. Does TLS succeed?
+5. What HTTP status/latency occurs?
+6. Is backend/database latency the bottleneck?
+
+## 45. Common Network Numericals
+
+### Transmission delay
+
+```text
+Transmission delay = packet size (bits) / link rate (bits/sec)
+```
+
+Example: 1,000-byte packet on 10 Mbps:
+
+```text
+8000 / 10,000,000 = 0.0008 sec = 0.8 ms
+```
+
+### Propagation delay
+
+```text
+Propagation delay = distance / propagation speed
+```
+
+### Bandwidth-delay product
+
+```text
+BDP = bandwidth × RTT
+```
+
+It approximates how much data can be “in flight” on a path.
+
+### Subnetting
+
+For `/27`:
+
+```text
+Host bits = 5
+Addresses = 32
+Traditional usable hosts = 30
+```
+
+## 46. Interview Questions & Answers
+
+### Q1. Bandwidth vs throughput?
+
+Bandwidth is link capacity; throughput is actual achieved rate.
+
+### Q2. Latency vs throughput?
+
+Latency is delay per operation/path; throughput is amount of data completed per unit time. A system can have high throughput and high latency.
+
+### Q3. Why seven OSI layers?
+
+They provide a conceptual separation of responsibilities. Real protocols do not always map perfectly one-to-one to OSI layers.
+
+### Q4. Hub vs switch?
+
+A hub repeats signals to ports; a switch learns MAC addresses and forwards frames selectively.
+
+### Q5. Switch vs router?
+
+A switch primarily forwards frames within Layer-2 networks; a router forwards IP packets between networks.
+
+### Q6. What is ARP?
+
+IPv4-to-MAC resolution on a local Layer-2 network.
+
+### Q7. Does a router forward MAC addresses end-to-end?
+
+No. Ethernet MAC addresses are link-local. At each routed hop, the Layer-2 frame is rebuilt for the next link.
+
+### Q8. What is CIDR?
+
+Classless Inter-Domain Routing represents networks using prefix length such as `/24`, enabling flexible address allocation and routing aggregation.
+
+### Q9. What is longest prefix match?
+
+When multiple routing entries match a destination, the most specific matching prefix is selected.
+
+### Q10. TCP vs UDP?
+
+TCP provides an ordered reliable byte stream with flow/congestion control. UDP provides datagrams without TCP-style reliability/ordering.
+
+### Q11. Why is TCP called a byte stream?
+
+TCP does not preserve application message boundaries; the receiver reads a sequence of bytes.
+
+### Q12. Why three-way handshake?
+
+It establishes bidirectional connection state and synchronizes sequence-number state before normal data exchange.
+
+### Q13. Why TIME_WAIT?
+
+It helps prevent delayed old segments from interfering with a future connection and permits retransmission of the final ACK when needed.
+
+### Q14. Flow control vs congestion control?
+
+Flow control protects the receiver; congestion control protects the network.
+
+### Q15. What is DNS?
+
+A distributed naming system that maps domain names to records such as IP addresses and mail servers.
+
+### Q16. What happens when you type a URL?
+
+A simplified path is: parse URL → DNS resolution → establish TCP/QUIC → TLS for HTTPS → send HTTP request → server/proxy/backend work → response → browser processing/rendering. Caches and connection reuse can skip parts.
+
+### Q17. What is HTTPS?
+
+HTTP transported over TLS, providing encryption, integrity and server authentication.
+
+### Q18. HTTP/2 vs HTTP/1.1?
+
+HTTP/2 uses binary framing and multiplexed streams over a connection, reducing many HTTP/1.1 connection-level inefficiencies.
+
+### Q19. HTTP/3 vs HTTP/2?
+
+HTTP/3 uses QUIC instead of TCP, providing stream multiplexing without TCP-level head-of-line blocking across independent streams and supporting modern transport features.
+
+### Q20. What is NAT?
+
+A mechanism translating addresses and often ports between network domains, commonly used to let private IPv4 hosts share public addresses.
+
+### Q21. Is NAT a firewall?
+
+No. NAT changes addressing; firewalling is an explicit traffic-policy/security function.
+
+### Q22. What is a VLAN?
+
+A logical Layer-2 segmentation mechanism that creates separate broadcast domains over switching infrastructure.
+
+### Q23. What is a reverse proxy?
+
+A server in front of backend servers that can terminate TLS, route requests, cache, rate-limit and load-balance.
+
+### Q24. What is a CDN?
+
+A geographically distributed caching/delivery system that serves content closer to users, reducing latency and origin load.
+
+### Q25. How do you debug “website not opening”?
+
+Check DNS, route/connectivity, destination port, TLS handshake, HTTP status and backend dependencies in order. Use `dig`, `curl`, `ss`, `traceroute` and packet capture as appropriate.
+
+### Q26. Why can ping work while HTTP fails?
+
+ICMP reachability does not imply that TCP port 443/80 is reachable, TLS succeeds, or the HTTP application is healthy. Firewalls may treat protocols differently.
+
+### Q27. Why can DNS be fast but the request still slow?
+
+DNS is only one stage. TCP/TLS setup, network latency, queueing, server processing, database calls and response transfer can dominate.
+
+### Q28. What is BGP?
+
+The internet's inter-domain path-vector routing protocol. It exchanges reachability and applies policy between autonomous systems.
+
+### Q29. What is a subnet mask?
+
+It identifies which bits of an IPv4 address represent the network prefix versus host portion.
+
+### Q30. What is BDP?
+
+Bandwidth-delay product: bandwidth multiplied by round-trip or path delay, approximating the amount of data that can be in flight.
+
+## 47. Revision Checklist
+
+- [ ] Bandwidth/latency/throughput/goodput
+- [ ] Delay components
+- [ ] OSI/TCP-IP models
+- [ ] Encapsulation/decapsulation
+- [ ] Ethernet/MAC/switching
+- [ ] VLAN/broadcast/collision domains
+- [ ] IPv4/CIDR/private ranges
+- [ ] Subnetting numericals
+- [ ] IPv6/NDP
+- [ ] ARP/ICMP
+- [ ] Routing/longest prefix match
+- [ ] RIP/OSPF/BGP
+- [ ] NAT/PAT
+- [ ] TCP/UDP
+- [ ] TCP handshake/termination/TIME_WAIT
+- [ ] Flow vs congestion control
+- [ ] DNS/DHCP
+- [ ] HTTP methods/status/cache
+- [ ] TLS/HTTPS/PKI
+- [ ] HTTP/1.1 vs HTTP/2 vs HTTP/3
+- [ ] Sockets/load balancers/reverse proxies
+- [ ] Wi-Fi/CSMA/CA
+- [ ] Firewalls/network security
+- [ ] Troubleshooting tools
+- [ ] Transmission/propagation/BDP numericals
