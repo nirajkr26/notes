@@ -100,25 +100,30 @@ Dynamic arrays typically provide O(1) indexing and O(1) amortized append; middle
 ### C++
 ```cpp
 vector<int> twoSum(const vector<int>& nums, int target) {
-    unordered_map<int,int> index;
-    for (int i=0;i<(int)nums.size();++i) {
-        int need=target-nums[i];
-        if (index.count(need)) return {index[need],i};
-        index[nums[i]]=i;
+  unordered_map<int,int> index;
+  for (int i=0;i<(int)nums.size();++i) {
+    int need=target-nums[i];
+    if (index.count(need)) return {
+      index[need],i}
+      ;
+      index[nums[i]]=i;
     }
-    return {};
-}
+    return {
+    }
+    ;
+  }
 ```
 ### Python
 ```python
-def two_sum(nums: list[int], target: int) -> list[int]:
-    index = {}
-    for i, x in enumerate(nums):
-        need = target - x
-        if need in index:
-            return [index[need], i]
-        index[x] = i
-    return []
+def two_sum(nums:
+    list[int], target: int) -> list[int]:
+index = {}
+for i, x in enumerate(nums):
+need = target - x
+if need in index:
+return [index[need], i]
+index[x] = i
+return []
 ```
 ### JavaScript
 ```javascript
@@ -140,22 +145,23 @@ Track the best sum ending at the current position. **Time:** O(n), **space:** O(
 ### C++
 ```cpp
 long long maxSubarraySum(const vector<int>& nums) {
-    long long current=nums[0], best=nums[0];
-    for (int i=1;i<(int)nums.size();++i) {
-        current=max((long long)nums[i],current+nums[i]);
-        best=max(best,current);
-    }
-    return best;
+  long long current=nums[0], best=nums[0];
+  for (int i=1;i<(int)nums.size();++i) {
+    current=max((long long)nums[i],current+nums[i]);
+    best=max(best,current);
+  }
+  return best;
 }
 ```
 ### Python
 ```python
-def max_subarray_sum(nums: list[int]) -> int:
-    current = best = nums[0]
-    for x in nums[1:]:
-        current = max(x, current + x)
-        best = max(best, current)
-    return best
+def max_subarray_sum(nums:
+    list[int]) -> int:
+current = best = nums[0]
+for x in nums[1:]:
+current = max(x, current + x)
+best = max(best, current)
+return best
 ```
 ### JavaScript
 ```javascript
@@ -178,18 +184,19 @@ function maxSubarraySum(nums) {
 ### C++
 ```cpp
 vector<long long> buildPrefix(const vector<int>& a) {
-    vector<long long> p(a.size()+1);
-    for (size_t i=0;i<a.size();++i) p[i+1]=p[i]+a[i];
-    return p;
+  vector<long long> p(a.size()+1);
+  for (size_t i=0;i<a.size();++i) p[i+1]=p[i]+a[i];
+  return p;
 }
 ```
 ### Python
 ```python
-def build_prefix(a: list[int]) -> list[int]:
-    p = [0] * (len(a) + 1)
-    for i, x in enumerate(a):
-        p[i + 1] = p[i] + x
-    return p
+def build_prefix(a:
+    list[int]) -> list[int]:
+p = [0] * (len(a) + 1)
+for i, x in enumerate(a):
+p[i + 1] = p[i] + x
+return p
 ```
 ### JavaScript
 ```javascript
@@ -207,26 +214,27 @@ Sort by start, then merge overlaps. **Time:** O(n log n).
 ### C++
 ```cpp
 vector<vector<int>> mergeIntervals(vector<vector<int>> a) {
-    sort(a.begin(),a.end());
-    vector<vector<int>> ans;
-    for (auto &x:a) {
-        if (ans.empty() || ans.back()[1] < x[0]) ans.push_back(x);
-        else ans.back()[1]=max(ans.back()[1],x[1]);
-    }
-    return ans;
+  sort(a.begin(),a.end());
+  vector<vector<int>> ans;
+  for (auto &x:a) {
+    if (ans.empty() || ans.back()[1] < x[0]) ans.push_back(x);
+    else ans.back()[1]=max(ans.back()[1],x[1]);
+  }
+  return ans;
 }
 ```
 ### Python
 ```python
-def merge_intervals(a: list[list[int]]) -> list[list[int]]:
-    a.sort()
-    ans = []
-    for start, end in a:
-        if not ans or ans[-1][1] < start:
-            ans.append([start, end])
-        else:
-            ans[-1][1] = max(ans[-1][1], end)
-    return ans
+def merge_intervals(a:
+    list[list[int]]) -> list[list[int]]:
+a.sort()
+ans = []
+for start, end in a:
+if not ans or ans[-1][1] < start:
+ans.append([start, end])
+else:
+ans[-1][1] = max(ans[-1][1], end)
+return ans
 ```
 ### JavaScript
 ```javascript
@@ -254,19 +262,21 @@ Master frequency counting, two pointers, sliding windows, palindrome expansion, 
 ### C++
 ```cpp
 bool isAnagram(const string& a,const string& b){
-    if(a.size()!=b.size()) return false;
-    array<int,26> f{};
-    for(char c:a) ++f[c-'a'];
-    for(char c:b) --f[c-'a'];
-    return all_of(f.begin(),f.end(),[](int x){return x==0;});
+  if(a.size()!=b.size()) return false;
+  array<int,26> f{
+  }
+  ;
+  for(char c:a) ++f[c-'a'];
+  for(char c:b) --f[c-'a'];
+  return all_of(f.begin(),f.end(),[](int x){return x==0;});
 }
 ```
 ### Python
 ```python
 from collections import Counter
-
-def is_anagram(a: str, b: str) -> bool:
-    return Counter(a) == Counter(b)
+def is_anagram(a:
+    str, b: str) -> bool:
+return Counter(a) == Counter(b)
 ```
 ### JavaScript
 ```javascript
@@ -277,7 +287,8 @@ function isAnagram(a, b) {
   for (const c of b) {
     if (!f.has(c)) return false;
     const n = f.get(c) - 1;
-    if (n === 0) f.delete(c); else f.set(c, n);
+    if (n === 0) f.delete(c);
+    else f.set(c, n);
   }
   return f.size === 0;
 }
@@ -290,27 +301,28 @@ Sliding window + last-seen index. **Time:** O(n).
 ### C++
 ```cpp
 int longestUnique(const string& s){
-    unordered_map<char,int> last;
-    int left=0,best=0;
-    for(int right=0;right<(int)s.size();++right){
-        if(last.count(s[right])) left=max(left,last[s[right]]+1);
-        last[s[right]]=right;
-        best=max(best,right-left+1);
-    }
-    return best;
+  unordered_map<char,int> last;
+  int left=0,best=0;
+  for(int right=0;right<(int)s.size();++right){
+    if(last.count(s[right])) left=max(left,last[s[right]]+1);
+    last[s[right]]=right;
+    best=max(best,right-left+1);
+  }
+  return best;
 }
 ```
 ### Python
 ```python
-def longest_unique(s: str) -> int:
-    last = {}
-    left = best = 0
-    for right, c in enumerate(s):
-        if c in last:
-            left = max(left, last[c] + 1)
-        last[c] = right
-        best = max(best, right - left + 1)
-    return best
+def longest_unique(s:
+    str) -> int:
+last = {}
+left = best = 0
+for right, c in enumerate(s):
+if c in last:
+left = max(left, last[c] + 1)
+last[c] = right
+best = max(best, right - left + 1)
+return best
 ```
 ### JavaScript
 ```javascript
@@ -367,25 +379,34 @@ Use when sorted order or another monotonic property lets pointer movement elimin
 ### C++
 ```cpp
 pair<int,int> pairSum(const vector<int>& a,int target){
-    int l=0,r=(int)a.size()-1;
-    while(l<r){
-        long long s=(long long)a[l]+a[r];
-        if(s==target) return {l,r};
-        if(s<target) ++l; else --r;
+  int l=0,r=(int)a.size()-1;
+  while(l<r){
+    long long s=(long long)a[l]+a[r];
+    if(s==target) return {
+      l,r}
+      ;
+      if(s<target) ++l;
+      else --r;
     }
-    return {-1,-1};
-}
+    return {
+      -1,-1}
+      ;
+    }
 ```
 ### Python
 ```python
-def pair_sum(a: list[int], target: int) -> tuple[int, int]:
-    l, r = 0, len(a) - 1
-    while l < r:
-        s = a[l] + a[r]
-        if s == target: return l, r
-        if s < target: l += 1
-        else: r -= 1
-    return -1, -1
+def pair_sum(a:
+    list[int], target: int) -> tuple[int, int]:
+l, r = 0, len(a) - 1
+while l < r:
+s = a[l] + a[r]
+if s == target:
+    return l, r
+if s < target:
+    l += 1
+else:
+    r -= 1
+return -1, -1
 ```
 ### JavaScript
 ```javascript
@@ -394,7 +415,8 @@ function pairSum(a, target) {
   while(l<r){
     const s=a[l]+a[r];
     if(s===target) return [l,r];
-    if(s<target) l++; else r--;
+    if(s<target) l++;
+    else r--;
   }
   return [-1,-1];
 }
@@ -411,30 +433,41 @@ Use for contiguous ranges when window state can be updated incrementally.
 ### C++
 ```cpp
 long long maxWindow(const vector<int>& a,int k){
-    if(k<=0 || k>(int)a.size()) return 0;
-    long long w=0; for(int i=0;i<k;++i) w+=a[i];
-    long long best=w;
-    for(int i=k;i<(int)a.size();++i){ w+=a[i]-a[i-k]; best=max(best,w); }
-    return best;
+  if(k<=0 || k>(int)a.size()) return 0;
+  long long w=0;
+  for(int i=0;i<k;++i) w+=a[i];
+  long long best=w;
+  for(int i=k;i<(int)a.size();++i){
+    w+=a[i]-a[i-k];
+    best=max(best,w);
+  }
+  return best;
 }
 ```
 ### Python
 ```python
-def max_window(a: list[int], k: int) -> int:
-    if k <= 0 or k > len(a): return 0
-    w = sum(a[:k]); best = w
-    for i in range(k, len(a)):
-        w += a[i] - a[i-k]
-        best = max(best, w)
-    return best
+def max_window(a:
+    list[int], k: int) -> int:
+if k <= 0 or k > len(a):
+    return 0
+w = sum(a[:k]);
+best = w
+for i in range(k, len(a)):
+w += a[i] - a[i-k]
+best = max(best, w)
+return best
 ```
 ### JavaScript
 ```javascript
 function maxWindow(a,k){
   if(k<=0 || k>a.length) return 0;
-  let w=0; for(let i=0;i<k;i++) w+=a[i];
+  let w=0;
+  for(let i=0;i<k;i++) w+=a[i];
   let best=w;
-  for(let i=k;i<a.length;i++){ w+=a[i]-a[i-k]; best=Math.max(best,w); }
+  for(let i=k;i<a.length;i++){
+    w+=a[i]-a[i-k];
+    best=Math.max(best,w);
+  }
   return best;
 }
 ```
@@ -450,27 +483,43 @@ If `prefix[j] - prefix[i] = k`, then the earlier prefix is `prefix[j]-k`. Store 
 ### C++
 ```cpp
 int subarraySumK(const vector<int>& a,int k){
-    unordered_map<long long,int> cnt{{0,1}};
-    long long p=0; int ans=0;
-    for(int x:a){ p+=x; if(cnt.count(p-k)) ans+=cnt[p-k]; ++cnt[p]; }
+  unordered_map<long long,int> cnt{
+    {
+      0,1}
+    }
+    ;
+    long long p=0;
+    int ans=0;
+    for(int x:a){
+      p+=x;
+      if(cnt.count(p-k)) ans+=cnt[p-k];
+      ++cnt[p];
+    }
     return ans;
-}
+  }
 ```
 ### Python
 ```python
-def subarray_sum_k(a: list[int], k: int) -> int:
-    cnt = {0: 1}; p = ans = 0
-    for x in a:
-        p += x
-        ans += cnt.get(p-k, 0)
-        cnt[p] = cnt.get(p, 0) + 1
-    return ans
+def subarray_sum_k(a:
+    list[int], k: int) -> int:
+cnt = {0: 1};
+p = ans = 0
+for x in a:
+p += x
+ans += cnt.get(p-k, 0)
+cnt[p] = cnt.get(p, 0) + 1
+return ans
 ```
 ### JavaScript
 ```javascript
 function subarraySumK(a,k){
-  const cnt=new Map([[0,1]]); let p=0,ans=0;
-  for(const x of a){ p+=x; ans+=cnt.get(p-k)??0; cnt.set(p,(cnt.get(p)??0)+1); }
+  const cnt=new Map([[0,1]]);
+  let p=0,ans=0;
+  for(const x of a){
+    p+=x;
+    ans+=cnt.get(p-k)??0;
+    cnt.set(p,(cnt.get(p)??0)+1);
+  }
   return ans;
 }
 ```
@@ -486,25 +535,30 @@ The general pattern is searching a monotonic predicate.
 ### C++
 ```cpp
 int binarySearch(const vector<int>& a,int target){
-    int l=0,r=(int)a.size()-1;
-    while(l<=r){
-        int m=l+(r-l)/2;
-        if(a[m]==target) return m;
-        if(a[m]<target) l=m+1; else r=m-1;
-    }
-    return -1;
+  int l=0,r=(int)a.size()-1;
+  while(l<=r){
+    int m=l+(r-l)/2;
+    if(a[m]==target) return m;
+    if(a[m]<target) l=m+1;
+    else r=m-1;
+  }
+  return -1;
 }
 ```
 ### Python
 ```python
-def binary_search(a: list[int], target: int) -> int:
-    l, r = 0, len(a)-1
-    while l <= r:
-        m = l + (r-l)//2
-        if a[m] == target: return m
-        if a[m] < target: l = m+1
-        else: r = m-1
-    return -1
+def binary_search(a:
+    list[int], target: int) -> int:
+l, r = 0, len(a)-1
+while l <= r:
+m = l + (r-l)//2
+if a[m] == target:
+    return m
+if a[m] < target:
+    l = m+1
+else:
+    r = m-1
+return -1
 ```
 ### JavaScript
 ```javascript
@@ -513,7 +567,8 @@ function binarySearch(a,target){
   while(l<=r){
     const m=l+Math.floor((r-l)/2);
     if(a[m]===target) return m;
-    if(a[m]<target) l=m+1; else r=m-1;
+    if(a[m]<target) l=m+1;
+    else r=m-1;
   }
   return -1;
 }
@@ -526,21 +581,30 @@ First index where `a[i] >= target`.
 ### C++
 ```cpp
 int lowerBound(const vector<int>& a,int target){
-    int l=0,r=a.size();
-    while(l<r){ int m=l+(r-l)/2; if(a[m]<target) l=m+1; else r=m; }
-    return l;
+  int l=0,r=a.size();
+  while(l<r){
+    int m=l+(r-l)/2;
+    if(a[m]<target) l=m+1;
+    else r=m;
+  }
+  return l;
 }
 ```
 ### Python
 ```python
 from bisect import bisect_left
-def lower_bound(a, target): return bisect_left(a, target)
+def lower_bound(a, target):
+    return bisect_left(a, target)
 ```
 ### JavaScript
 ```javascript
 function lowerBound(a,target){
   let l=0,r=a.length;
-  while(l<r){ const m=l+Math.floor((r-l)/2); if(a[m]<target) l=m+1; else r=m; }
+  while(l<r){
+    const m=l+Math.floor((r-l)/2);
+    if(a[m]<target) l=m+1;
+    else r=m;
+  }
   return l;
 }
 ```
@@ -559,16 +623,28 @@ Linked lists trade random access for pointer rewiring.
 
 ### C++
 ```cpp
-struct ListNode { int val; ListNode* next; ListNode(int x):val(x),next(nullptr){} };
+struct ListNode {
+  int val;
+  ListNode* next;
+  ListNode(int x):val(x),next(nullptr){
+  }
+}
+;
 ```
 ### Python
 ```python
 class ListNode:
-    def __init__(self, val=0, next=None): self.val, self.next = val, next
+def __init__(self, val=0, next=None):
+    self.val, self.next = val, next
 ```
 ### JavaScript
 ```javascript
-class ListNode { constructor(val=0,next=null){ this.val=val; this.next=next; } }
+class ListNode {
+  constructor(val=0,next=null){
+    this.val=val;
+    this.next=next;
+  }
+}
 ```
 
 ## Reverse List
@@ -576,24 +652,37 @@ class ListNode { constructor(val=0,next=null){ this.val=val; this.next=next; } }
 ### C++
 ```cpp
 ListNode* reverseList(ListNode* head){
-    ListNode *prev=nullptr,*cur=head;
-    while(cur){ auto* next=cur->next; cur->next=prev; prev=cur; cur=next; }
-    return prev;
+  ListNode *prev=nullptr,*cur=head;
+  while(cur){
+    auto* next=cur->next;
+    cur->next=prev;
+    prev=cur;
+    cur=next;
+  }
+  return prev;
 }
 ```
 ### Python
 ```python
 def reverse_list(head):
-    prev=None; cur=head
-    while cur:
-        nxt=cur.next; cur.next=prev; prev,cur=cur,nxt
-    return prev
+prev=None;
+cur=head
+while cur:
+nxt=cur.next;
+cur.next=prev;
+prev,cur=cur,nxt
+return prev
 ```
 ### JavaScript
 ```javascript
 function reverseList(head){
   let prev=null,cur=head;
-  while(cur){ const next=cur.next; cur.next=prev; prev=cur; cur=next; }
+  while(cur){
+    const next=cur.next;
+    cur.next=prev;
+    prev=cur;
+    cur=next;
+  }
   return prev;
 }
 ```
@@ -603,25 +692,35 @@ function reverseList(head){
 ### C++
 ```cpp
 bool hasCycle(ListNode* head){
-    ListNode *slow=head,*fast=head;
-    while(fast&&fast->next){ slow=slow->next; fast=fast->next->next; if(slow==fast) return true; }
-    return false;
+  ListNode *slow=head,*fast=head;
+  while(fast&&fast->next){
+    slow=slow->next;
+    fast=fast->next->next;
+    if(slow==fast) return true;
+  }
+  return false;
 }
 ```
 ### Python
 ```python
 def has_cycle(head):
-    slow=fast=head
-    while fast and fast.next:
-        slow=slow.next; fast=fast.next.next
-        if slow is fast: return True
-    return False
+slow=fast=head
+while fast and fast.next:
+slow=slow.next;
+fast=fast.next.next
+if slow is fast:
+    return True
+return False
 ```
 ### JavaScript
 ```javascript
 function hasCycle(head){
   let slow=head,fast=head;
-  while(fast&&fast.next){ slow=slow.next; fast=fast.next.next; if(slow===fast) return true; }
+  while(fast&&fast.next){
+    slow=slow.next;
+    fast=fast.next.next;
+    if(slow===fast) return true;
+  }
   return false;
 }
 ```
@@ -639,28 +738,41 @@ LIFO. Applications: parentheses, DFS, parsing, monotonic-stack problems.
 ### C++
 ```cpp
 bool validParentheses(const string& s){
-    stack<char> st;
-    for(char c:s){
-        if(c=='('||c=='['||c=='{') st.push(c);
-        else { if(st.empty()) return false; char t=st.top(); st.pop(); if((c==')'&&t!='(')||(c==']'&&t!='[')||(c=='}'&&t!='{')) return false; }
+  stack<char> st;
+  for(char c:s){
+    if(c=='('||c=='['||c=='{') st.push(c);
+    else {
+      if(st.empty()) return false;
+      char t=st.top();
+      st.pop();
+      if((c==')'&&t!='(')||(c==']'&&t!='[')||(c=='}'&&t!='{')) return false;
     }
-    return st.empty();
+  }
+  return st.empty();
 }
 ```
 ### Python
 ```python
 def valid_parentheses(s):
-    pairs={')':'(',']':'[','}':'{'}; st=[]
-    for c in s:
-        if c in '([{': st.append(c)
-        elif not st or st.pop()!=pairs[c]: return False
-    return not st
+pairs={')':'(',']':'[','}':'{'};
+st=[]
+for c in s:
+if c in '([{':
+    st.append(c)
+elif not st or st.pop()!=pairs[c]:
+    return False
+return not st
 ```
 ### JavaScript
 ```javascript
 function validParentheses(s){
   const pairs=new Map([[')','('],[']','['],['}','{']]), st=[];
-  for(const c of s){ if(pairs.has(c)){ if(st.pop()!==pairs.get(c)) return false; } else st.push(c); }
+  for(const c of s){
+    if(pairs.has(c)){
+      if(st.pop()!==pairs.get(c)) return false;
+    }
+    else st.push(c);
+  }
   return st.length===0;
 }
 ```
@@ -672,25 +784,37 @@ Each element is pushed/popped at most once → O(n).
 ### C++
 ```cpp
 vector<int> nextGreater(const vector<int>& a){
-    vector<int> ans(a.size(),-1); stack<int> st;
-    for(int i=0;i<(int)a.size();++i){ while(!st.empty()&&a[st.top()]<a[i]){ans[st.top()]=a[i];st.pop();} st.push(i); }
-    return ans;
+  vector<int> ans(a.size(),-1);
+  stack<int> st;
+  for(int i=0;i<(int)a.size();++i){
+    while(!st.empty()&&a[st.top()]<a[i]){
+      ans[st.top()]=a[i];
+      st.pop();
+    }
+    st.push(i);
+  }
+  return ans;
 }
 ```
 ### Python
 ```python
 def next_greater(a):
-    ans=[-1]*len(a); st=[]
-    for i,x in enumerate(a):
-        while st and a[st[-1]]<x: ans[st.pop()]=x
-        st.append(i)
-    return ans
+ans=[-1]*len(a);
+st=[]
+for i,x in enumerate(a):
+while st and a[st[-1]]<x:
+    ans[st.pop()]=x
+st.append(i)
+return ans
 ```
 ### JavaScript
 ```javascript
 function nextGreater(a){
   const ans=new Array(a.length).fill(-1),st=[];
-  for(let i=0;i<a.length;i++){ while(st.length&&a[st.at(-1)]<a[i]) ans[st.pop()]=a[i]; st.push(i); }
+  for(let i=0;i<a.length;i++){
+    while(st.length&&a[st.at(-1)]<a[i]) ans[st.pop()]=a[i];
+    st.push(i);
+  }
   return ans;
 }
 ```
@@ -703,20 +827,29 @@ function nextGreater(a){
 
 **C++**
 ```cpp
-queue<int> q; q.push(source); while(!q.empty()){ int u=q.front(); q.pop(); }
+queue<int> q;
+q.push(source);
+while(!q.empty()){
+  int u=q.front();
+  q.pop();
+}
 ```
 
 **Python**
 ```python
 from collections import deque
 q=deque([source])
-while q: u=q.popleft()
+while q:
+    u=q.popleft()
 ```
 
 **JavaScript**
 ```javascript
-const q=[source]; let head=0;
-while(head<q.length){ const u=q[head++]; }
+const q=[source];
+let head=0;
+while(head<q.length){
+  const u=q[head++];
+}
 ```
 
 **JS note:** avoid repeated `shift()` for large queues.
@@ -728,35 +861,42 @@ Use a decreasing deque of indices. **Time:** O(n).
 ### C++
 ```cpp
 vector<int> maxWindow(const vector<int>& a,int k){
-    deque<int> d; vector<int> ans;
-    for(int i=0;i<(int)a.size();++i){
-        while(!d.empty()&&d.front()<=i-k)d.pop_front();
-        while(!d.empty()&&a[d.back()]<=a[i])d.pop_back(); d.push_back(i);
-        if(i>=k-1)ans.push_back(a[d.front()]);
-    } return ans;
+  deque<int> d;
+  vector<int> ans;
+  for(int i=0;i<(int)a.size();++i){
+    while(!d.empty()&&d.front()<=i-k)d.pop_front();
+    while(!d.empty()&&a[d.back()]<=a[i])d.pop_back();
+    d.push_back(i);
+    if(i>=k-1)ans.push_back(a[d.front()]);
+  }
+  return ans;
 }
 ```
 ### Python
 ```python
 from collections import deque
 def max_window_values(a,k):
-    d=deque(); ans=[]
-    for i,x in enumerate(a):
-        while d and d[0]<=i-k:d.popleft()
-        while d and a[d[-1]]<=x:d.pop()
-        d.append(i)
-        if i>=k-1:ans.append(a[d[0]])
-    return ans
+d=deque();
+ans=[]
+for i,x in enumerate(a):
+while d and d[0]<=i-k:d.popleft()
+while d and a[d[-1]]<=x:d.pop()
+d.append(i)
+if i>=k-1:ans.append(a[d[0]])
+return ans
 ```
 ### JavaScript
 ```javascript
 function maxWindowValues(a,k){
-  const d=[],ans=[]; let head=0;
+  const d=[],ans=[];
+  let head=0;
   for(let i=0;i<a.length;i++){
     while(head<d.length&&d[head]<=i-k)head++;
-    while(head<d.length&&a[d.at(-1)]<=a[i])d.pop(); d.push(i);
+    while(head<d.length&&a[d.at(-1)]<=a[i])d.pop();
+    d.push(i);
     if(i>=k-1)ans.push(a[d[head]]);
-  } return ans;
+  }
+  return ans;
 }
 ```
 
@@ -780,31 +920,46 @@ Know how to implement merge sort and partition-based quicksort, but prefer the l
 **C++**
 ```cpp
 void mergeSort(vector<int>& a){
-    if(a.size()<=1)return;
-    vector<int> t(a.size());
-    function<void(int,int)> f=[&](int l,int r){
-        if(r-l<=1)return; int m=l+(r-l)/2; f(l,m);f(m,r);
-        int i=l,j=m,k=l; while(i<m&&j<r)t[k++]=a[i]<=a[j]?a[i++]:a[j++];
-        while(i<m)t[k++]=a[i++]; while(j<r)t[k++]=a[j++];
-        for(int p=l;p<r;++p)a[p]=t[p];
-    }; f(0,a.size());
+  if(a.size()<=1)return;
+  vector<int> t(a.size());
+  function<void(int,int)> f=[&](int l,int r){
+    if(r-l<=1)return;
+    int m=l+(r-l)/2;
+    f(l,m);
+    f(m,r);
+    int i=l,j=m,k=l;
+    while(i<m&&j<r)t[k++]=a[i]<=a[j]?a[i++]:a[j++];
+    while(i<m)t[k++]=a[i++];
+    while(j<r)t[k++]=a[j++];
+    for(int p=l;p<r;++p)a[p]=t[p];
+  }
+  ;
+  f(0,a.size());
 }
 ```
 **Python**
 ```python
 def merge_sort(a):
-    if len(a)<=1:return a[:]
-    m=len(a)//2; l=merge_sort(a[:m]); r=merge_sort(a[m:]); out=[];i=j=0
-    while i<len(l) and j<len(r):
-        if l[i]<=r[j]:out.append(l[i]);i+=1
-        else:out.append(r[j]);j+=1
-    return out+l[i:]+r[j:]
+if len(a)<=1:return a[:]
+m=len(a)//2;
+l=merge_sort(a[:m]);
+r=merge_sort(a[m:]);
+out=[];
+i=j=0
+while i<len(l) and j<len(r):
+if l[i]<=r[j]:out.append(l[i]);
+i+=1
+else:out.append(r[j]);
+j+=1
+return out+l[i:]+r[j:]
 ```
 **JavaScript**
 ```javascript
 function mergeSort(a){
-  if(a.length<=1)return [...a]; const m=Math.floor(a.length/2);
-  const l=mergeSort(a.slice(0,m)),r=mergeSort(a.slice(m)),out=[]; let i=0,j=0;
+  if(a.length<=1)return [...a];
+  const m=Math.floor(a.length/2);
+  const l=mergeSort(a.slice(0,m)),r=mergeSort(a.slice(m)),out=[];
+  let i=0,j=0;
   while(i<l.length&&j<r.length)out.push(l[i]<=r[j]?l[i++]:r[j++]);
   return out.concat(l.slice(i),r.slice(j));
 }
@@ -821,25 +976,48 @@ Pattern: **choose → recurse → undo**.
 ### C++
 ```cpp
 void dfs(const vector<int>& a,int i,vector<int>& path,vector<vector<int>>& ans){
-    if(i==(int)a.size()){ans.push_back(path);return;}
-    dfs(a,i+1,path,ans); path.push_back(a[i]); dfs(a,i+1,path,ans); path.pop_back();
+  if(i==(int)a.size()){
+    ans.push_back(path);
+    return;
+  }
+  dfs(a,i+1,path,ans);
+  path.push_back(a[i]);
+  dfs(a,i+1,path,ans);
+  path.pop_back();
 }
 ```
 ### Python
 ```python
 def subsets(a):
-    ans=[]; path=[]
-    def dfs(i):
-        if i==len(a): ans.append(path.copy()); return
-        dfs(i+1); path.append(a[i]); dfs(i+1); path.pop()
-    dfs(0); return ans
+ans=[];
+path=[]
+def dfs(i):
+if i==len(a):
+    ans.append(path.copy());
+return
+dfs(i+1);
+path.append(a[i]);
+dfs(i+1);
+path.pop()
+dfs(0);
+return ans
 ```
 ### JavaScript
 ```javascript
 function subsets(a){
   const ans=[],path=[];
-  function dfs(i){ if(i===a.length){ans.push([...path]);return;} dfs(i+1);path.push(a[i]);dfs(i+1);path.pop(); }
-  dfs(0); return ans;
+  function dfs(i){
+    if(i===a.length){
+      ans.push([...path]);
+      return;
+    }
+    dfs(i+1);
+    path.push(a[i]);
+    dfs(i+1);
+    path.pop();
+  }
+  dfs(0);
+  return ans;
 }
 ```
 
@@ -857,16 +1035,29 @@ A tree with n nodes has n−1 edges.
 
 ### C++
 ```cpp
-struct TreeNode{int val;TreeNode*left,*right;TreeNode(int x):val(x),left(nullptr),right(nullptr){}};
+struct TreeNode{
+  int val;
+  TreeNode*left,*right;
+  TreeNode(int x):val(x),left(nullptr),right(nullptr){
+  }
+}
+;
 ```
 ### Python
 ```python
 class TreeNode:
-    def __init__(self,val=0,left=None,right=None): self.val,self.left,self.right=val,left,right
+def __init__(self,val=0,left=None,right=None):
+    self.val,self.left,self.right=val,left,right
 ```
 ### JavaScript
 ```javascript
-class TreeNode{constructor(val=0,left=null,right=null){this.val=val;this.left=left;this.right=right;}}
+class TreeNode{
+  constructor(val=0,left=null,right=null){
+    this.val=val;
+    this.left=left;
+    this.right=right;
+  }
+}
 ```
 
 ## Traversals
@@ -879,76 +1070,143 @@ Postorder: left → right → root
 
 **C++**
 ```cpp
-void inorder(TreeNode* r,vector<int>&o){if(!r)return;inorder(r->left,o);o.push_back(r->val);inorder(r->right,o);}
+void inorder(TreeNode* r,vector<int>&o){
+  if(!r)return;
+  inorder(r->left,o);
+  o.push_back(r->val);
+  inorder(r->right,o);
+}
 ```
 **Python**
 ```python
 def inorder(r,out):
-    if not r:return
-    inorder(r.left,out);out.append(r.val);inorder(r.right,out)
+if not r:return
+inorder(r.left,out);
+out.append(r.val);
+inorder(r.right,out)
 ```
 **JavaScript**
 ```javascript
-function inorder(r,out=[]){if(!r)return out;inorder(r.left,out);out.push(r.val);inorder(r.right,out);return out;}
+function inorder(r,out=[]){
+  if(!r)return out;
+  inorder(r.left,out);
+  out.push(r.val);
+  inorder(r.right,out);
+  return out;
+}
 ```
 
 ## Level Order
 
 **C++**
 ```cpp
-vector<vector<int>> levelOrder(TreeNode* root){if(!root)return{};queue<TreeNode*>q{{root}};vector<vector<int>>ans;while(!q.empty()){int n=q.size();vector<int>v;while(n--){auto*x=q.front();q.pop();v.push_back(x->val);if(x->left)q.push(x->left);if(x->right)q.push(x->right);}ans.push_back(v);}return ans;}
+vector<vector<int>> levelOrder(TreeNode* root){
+  if(!root)return{
+  }
+  ;
+  queue<TreeNode*>q{
+    {
+      root}
+    }
+    ;
+    vector<vector<int>>ans;
+    while(!q.empty()){
+      int n=q.size();
+      vector<int>v;
+      while(n--){
+        auto*x=q.front();
+        q.pop();
+        v.push_back(x->val);
+        if(x->left)q.push(x->left);
+        if(x->right)q.push(x->right);
+      }
+      ans.push_back(v);
+    }
+    return ans;
+  }
 ```
 **Python**
 ```python
 from collections import deque
 def level_order(root):
-    if not root:return []
-    q=deque([root]);ans=[]
-    while q:
-        level=[]
-        for _ in range(len(q)):
-            x=q.popleft();level.append(x.val)
-            if x.left:q.append(x.left)
-            if x.right:q.append(x.right)
-        ans.append(level)
-    return ans
+if not root:return []
+q=deque([root]);
+ans=[]
+while q:
+level=[]
+for _ in range(len(q)):
+x=q.popleft();
+level.append(x.val)
+if x.left:q.append(x.left)
+if x.right:q.append(x.right)
+ans.append(level)
+return ans
 ```
 **JavaScript**
 ```javascript
-function levelOrder(root){if(!root)return[];const q=[root];let h=0,ans=[];while(h<q.length){const end=q.length,level=[];while(h<end){const x=q[h++];level.push(x.val);if(x.left)q.push(x.left);if(x.right)q.push(x.right);}ans.push(level);}return ans;}
+function levelOrder(root){
+  if(!root)return[];
+  const q=[root];
+  let h=0,ans=[];
+  while(h<q.length){
+    const end=q.length,level=[];
+    while(h<end){
+      const x=q[h++];
+      level.push(x.val);
+      if(x.left)q.push(x.left);
+      if(x.right)q.push(x.right);
+    }
+    ans.push(level);
+  }
+  return ans;
+}
 ```
 
 ## Maximum Depth
 
 **C++**
 ```cpp
-int maxDepth(TreeNode*r){return r?1+max(maxDepth(r->left),maxDepth(r->right)):0;}
+int maxDepth(TreeNode*r){
+  return r?1+max(maxDepth(r->left),maxDepth(r->right)):0;
+}
 ```
 **Python**
 ```python
-def max_depth(r): return 0 if not r else 1+max(max_depth(r.left),max_depth(r.right))
+def max_depth(r):
+    return 0 if not r else 1+max(max_depth(r.left),max_depth(r.right))
 ```
 **JavaScript**
 ```javascript
-function maxDepth(r){return r?1+Math.max(maxDepth(r.left),maxDepth(r.right)):0;}
+function maxDepth(r){
+  return r?1+Math.max(maxDepth(r.left),maxDepth(r.right)):0;
+}
 ```
 
 ## LCA — Binary Tree
 
 **C++**
 ```cpp
-TreeNode* lca(TreeNode*r,TreeNode*p,TreeNode*q){if(!r||r==p||r==q)return r;auto*l=lca(r->left,p,q),*x=lca(r->right,p,q);return l&&x?r:l?l:x;}
+TreeNode* lca(TreeNode*r,TreeNode*p,TreeNode*q){
+  if(!r||r==p||r==q)return r;
+  auto*l=lca(r->left,p,q),*x=lca(r->right,p,q);
+  return l&&x?r:l?l:x;
+}
 ```
 **Python**
 ```python
 def lca(r,p,q):
-    if not r or r is p or r is q:return r
-    l=lca(r.left,p,q); x=lca(r.right,p,q)
-    return r if l and x else l or x
+if not r or r is p or r is q:return r
+l=lca(r.left,p,q);
+x=lca(r.right,p,q)
+return r if l and x else l or x
 ```
 **JavaScript**
 ```javascript
-function lca(r,p,q){if(!r||r===p||r===q)return r;const l=lca(r.left,p,q),x=lca(r.right,p,q);return l&&x?r:l||x;}
+function lca(r,p,q){
+  if(!r||r===p||r===q)return r;
+  const l=lca(r.left,p,q),x=lca(r.right,p,q);
+  return l&&x?r:l||x;
+}
 ```
 
 ---
@@ -963,18 +1221,26 @@ Use global bounds or inorder monotonicity; local child comparisons are insuffici
 
 **C++**
 ```cpp
-bool valid(TreeNode*r,long long lo,long long hi){if(!r)return true;if(r->val<=lo||r->val>=hi)return false;return valid(r->left,lo,r->val)&&valid(r->right,r->val,hi);}
+bool valid(TreeNode*r,long long lo,long long hi){
+  if(!r)return true;
+  if(r->val<=lo||r->val>=hi)return false;
+  return valid(r->left,lo,r->val)&&valid(r->right,r->val,hi);
+}
 ```
 **Python**
 ```python
 def valid(r,lo=float('-inf'),hi=float('inf')):
-    if not r:return True
-    if not lo<r.val<hi:return False
-    return valid(r.left,lo,r.val) and valid(r.right,r.val,hi)
+if not r:return True
+if not lo<r.val<hi:return False
+return valid(r.left,lo,r.val) and valid(r.right,r.val,hi)
 ```
 **JavaScript**
 ```javascript
-function validBST(r,lo=-Infinity,hi=Infinity){if(!r)return true;if(!(lo<r.val&&r.val<hi))return false;return validBST(r.left,lo,r.val)&&validBST(r.right,r.val,hi);}
+function validBST(r,lo=-Infinity,hi=Infinity){
+  if(!r)return true;
+  if(!(lo<r.val&&r.val<hi))return false;
+  return validBST(r.left,lo,r.val)&&validBST(r.right,r.val,hi);
+}
 ```
 
 ---
@@ -992,21 +1258,34 @@ Keep a min-heap of size K for K largest elements.
 
 **C++**
 ```cpp
-vector<int> topK(const vector<int>&a,int k){priority_queue<int,vector<int>,greater<int>>q;for(int x:a){q.push(x);if((int)q.size()>k)q.pop();}vector<int>r;while(!q.empty()){r.push_back(q.top());q.pop();}return r;}
+vector<int> topK(const vector<int>&a,int k){
+  priority_queue<int,vector<int>,greater<int>>q;
+  for(int x:a){
+    q.push(x);
+    if((int)q.size()>k)q.pop();
+  }
+  vector<int>r;
+  while(!q.empty()){
+    r.push_back(q.top());
+    q.pop();
+  }
+  return r;
+}
 ```
 **Python**
 ```python
 import heapq
 def top_k(a,k):
-    h=[]
-    for x in a:
-        heapq.heappush(h,x)
-        if len(h)>k:heapq.heappop(h)
-    return h
+h=[]
+for x in a:
+heapq.heappush(h,x)
+if len(h)>k:heapq.heappop(h)
+return h
 ```
 **JavaScript**
 ```javascript
-// JavaScript has no standard heap; implement MinHeap or use the interview platform's heap.
+// JavaScript has no standard heap;
+implement MinHeap or use the interview platform's heap.
 ```
 
 ---
@@ -1020,40 +1299,75 @@ def top_k(a,k):
 
 **C++**
 ```cpp
-void dfs(int u,const vector<vector<int>>&g,vector<bool>&seen){seen[u]=true;for(int v:g[u])if(!seen[v])dfs(v,g,seen);}
+void dfs(int u,const vector<vector<int>>&g,vector<bool>&seen){
+  seen[u]=true;
+  for(int v:g[u])if(!seen[v])dfs(v,g,seen);
+}
 ```
 **Python**
 ```python
 def dfs(u,g,seen):
-    seen[u]=True
-    for v in g[u]:
-        if not seen[v]:dfs(v,g,seen)
+seen[u]=True
+for v in g[u]:
+if not seen[v]:dfs(v,g,seen)
 ```
 **JavaScript**
 ```javascript
-function dfs(u,g,seen){seen[u]=true;for(const v of g[u])if(!seen[v])dfs(v,g,seen);}
+function dfs(u,g,seen){
+  seen[u]=true;
+  for(const v of g[u])if(!seen[v])dfs(v,g,seen);
+}
 ```
 
 ## BFS — Unweighted Shortest Path
 
 **C++**
 ```cpp
-vector<int>bfs(int s,const vector<vector<int>>&g){vector<int>d(g.size(),-1);queue<int>q;q.push(s);d[s]=0;while(!q.empty()){int u=q.front();q.pop();for(int v:g[u])if(d[v]==-1){d[v]=d[u]+1;q.push(v);}}return d;}
+vector<int>bfs(int s,const vector<vector<int>>&g){
+  vector<int>d(g.size(),-1);
+  queue<int>q;
+  q.push(s);
+  d[s]=0;
+  while(!q.empty()){
+    int u=q.front();
+    q.pop();
+    for(int v:g[u])if(d[v]==-1){
+      d[v]=d[u]+1;
+      q.push(v);
+    }
+  }
+  return d;
+}
 ```
 **Python**
 ```python
 from collections import deque
 def bfs(s,g):
-    d=[-1]*len(g);d[s]=0;q=deque([s])
-    while q:
-        u=q.popleft()
-        for v in g[u]:
-            if d[v]==-1:d[v]=d[u]+1;q.append(v)
-    return d
+d=[-1]*len(g);
+d[s]=0;
+q=deque([s])
+while q:
+u=q.popleft()
+for v in g[u]:
+if d[v]==-1:d[v]=d[u]+1;
+q.append(v)
+return d
 ```
 **JavaScript**
 ```javascript
-function bfs(s,g){const d=new Array(g.length).fill(-1),q=[s];let h=0;d[s]=0;while(h<q.length){const u=q[h++];for(const v of g[u])if(d[v]===-1){d[v]=d[u]+1;q.push(v);}}return d;}
+function bfs(s,g){
+  const d=new Array(g.length).fill(-1),q=[s];
+  let h=0;
+  d[s]=0;
+  while(h<q.length){
+    const u=q[h++];
+    for(const v of g[u])if(d[v]===-1){
+      d[v]=d[u]+1;
+      q.push(v);
+    }
+  }
+  return d;
+}
 ```
 
 ## Topological Sort — Kahn
@@ -1062,26 +1376,56 @@ A DAG has a valid ordering. If fewer than V nodes are processed, a cycle exists.
 
 **C++**
 ```cpp
-vector<int> topo(int n,const vector<vector<int>>&g){vector<int>in(n);for(int u=0;u<n;++u)for(int v:g[u])++in[v];queue<int>q;for(int i=0;i<n;++i)if(!in[i])q.push(i);vector<int>o;while(!q.empty()){int u=q.front();q.pop();o.push_back(u);for(int v:g[u])if(--in[v]==0)q.push(v);}return o.size()==(size_t)n?o:vector<int>{};}
+vector<int> topo(int n,const vector<vector<int>>&g){
+  vector<int>in(n);
+  for(int u=0;u<n;++u)for(int v:g[u])++in[v];
+  queue<int>q;
+  for(int i=0;i<n;++i)if(!in[i])q.push(i);
+  vector<int>o;
+  while(!q.empty()){
+    int u=q.front();
+    q.pop();
+    o.push_back(u);
+    for(int v:g[u])if(--in[v]==0)q.push(v);
+  }
+  return o.size()==(size_t)n?o:vector<int>{
+  }
+  ;
+}
 ```
 **Python**
 ```python
 from collections import deque
 def topo(n,g):
-    indeg=[0]*n
-    for u in range(n):
-        for v in g[u]:indeg[v]+=1
-    q=deque(i for i,d in enumerate(indeg) if d==0);o=[]
-    while q:
-        u=q.popleft();o.append(u)
-        for v in g[u]:
-            indeg[v]-=1
-            if indeg[v]==0:q.append(v)
-    return o if len(o)==n else []
+indeg=[0]*n
+for u in range(n):
+for v in g[u]:indeg[v]+=1
+q=deque(i for i,d in enumerate(indeg) if d==0);
+o=[]
+while q:
+u=q.popleft();
+o.append(u)
+for v in g[u]:
+indeg[v]-=1
+if indeg[v]==0:q.append(v)
+return o if len(o)==n else []
 ```
 **JavaScript**
 ```javascript
-function topo(n,g){const d=new Array(n).fill(0);for(let u=0;u<n;u++)for(const v of g[u])d[v]++;const q=[];let h=0;for(let i=0;i<n;i++)if(d[i]===0)q.push(i);const o=[];while(h<q.length){const u=q[h++];o.push(u);for(const v of g[u])if(--d[v]===0)q.push(v);}return o.length===n?o:[];}
+function topo(n,g){
+  const d=new Array(n).fill(0);
+  for(let u=0;u<n;u++)for(const v of g[u])d[v]++;
+  const q=[];
+  let h=0;
+  for(let i=0;i<n;i++)if(d[i]===0)q.push(i);
+  const o=[];
+  while(h<q.length){
+    const u=q[h++];
+    o.push(u);
+    for(const v of g[u])if(--d[v]===0)q.push(v);
+  }
+  return o.length===n?o:[];
+}
 ```
 
 ## Dijkstra
@@ -1090,25 +1434,62 @@ Use only when edge weights are non-negative. Adjacency list + binary heap: O((V+
 
 **C++**
 ```cpp
-vector<long long>dijkstra(int s,const vector<vector<pair<int,int>>>&g){const long long INF=LLONG_MAX/4;vector<long long>d(g.size(),INF);using S=pair<long long,int>;priority_queue<S,vector<S>,greater<S>>q;d[s]=0;q.push({0,s});while(!q.empty()){auto [du,u]=q.top();q.pop();if(du!=d[u])continue;for(auto [v,w]:g[u])if(d[v]>du+w){d[v]=du+w;q.push({d[v],v});}}return d;}
+vector<long long>dijkstra(int s,const vector<vector<pair<int,int>>>&g){
+  const long long INF=LLONG_MAX/4;
+  vector<long long>d(g.size(),INF);
+  using S=pair<long long,int>;
+  priority_queue<S,vector<S>,greater<S>>q;
+  d[s]=0;
+  q.push({0,s});
+  while(!q.empty()){
+    auto [du,u]=q.top();
+    q.pop();
+    if(du!=d[u])continue;
+    for(auto [v,w]:g[u])if(d[v]>du+w){
+      d[v]=du+w;
+      q.push({d[v],v});
+    }
+  }
+  return d;
+}
 ```
 **Python**
 ```python
 import heapq
 def dijkstra(s,g):
-    INF=10**30;d=[INF]*len(g);d[s]=0;h=[(0,s)]
-    while h:
-        du,u=heapq.heappop(h)
-        if du!=d[u]:continue
-        for v,w in g[u]:
-            nd=du+w
-            if nd<d[v]:d[v]=nd;heapq.heappush(h,(nd,v))
-    return d
+INF=10**30;
+d=[INF]*len(g);
+d[s]=0;
+h=[(0,s)]
+while h:
+du,u=heapq.heappop(h)
+if du!=d[u]:continue
+for v,w in g[u]:
+nd=du+w
+if nd<d[v]:d[v]=nd;
+heapq.heappush(h,(nd,v))
+return d
 ```
 **JavaScript**
 ```javascript
 // Use a MinHeap of [distance,node]. JavaScript has no standard heap.
-function dijkstra(s,g,heap){const d=new Array(g.length).fill(Infinity);d[s]=0;heap.push([0,s]);while(heap.size){const [du,u]=heap.pop();if(du!==d[u])continue;for(const [v,w] of g[u]){const nd=du+w;if(nd<d[v]){d[v]=nd;heap.push([nd,v]);}}}return d;}
+function dijkstra(s,g,heap){
+  const d=new Array(g.length).fill(Infinity);
+  d[s]=0;
+  heap.push([0,s]);
+  while(heap.size){
+    const [du,u]=heap.pop();
+    if(du!==d[u])continue;
+    for(const [v,w] of g[u]){
+      const nd=du+w;
+      if(nd<d[v]){
+        d[v]=nd;
+        heap.push([nd,v]);
+      }
+    }
+  }
+  return d;
+}
 ```
 
 Other graph algorithms: Bellman-Ford, Floyd-Warshall, Prim, Kruskal, bipartite check, SCC, and DSU.
@@ -1121,24 +1502,63 @@ Path compression + union by size/rank gives O(α(n)) amortized operations.
 
 **C++**
 ```cpp
-class DSU{vector<int>p,sz;public:DSU(int n):p(n),sz(n,1){iota(p.begin(),p.end(),0);}int find(int x){return p[x]==x?x:p[x]=find(p[x]);}bool unite(int a,int b){a=find(a);b=find(b);if(a==b)return false;if(sz[a]<sz[b])swap(a,b);p[b]=a;sz[a]+=sz[b];return true;}};
+class DSU{
+  vector<int>p,sz;
+  public:DSU(int n):p(n),sz(n,1){
+    iota(p.begin(),p.end(),0);
+  }
+  int find(int x){
+    return p[x]==x?x:p[x]=find(p[x]);
+  }
+  bool unite(int a,int b){
+    a=find(a);
+    b=find(b);
+    if(a==b)return false;
+    if(sz[a]<sz[b])swap(a,b);
+    p[b]=a;
+    sz[a]+=sz[b];
+    return true;
+  }
+}
+;
 ```
 **Python**
 ```python
 class DSU:
-    def __init__(self,n):self.p=list(range(n));self.sz=[1]*n
-    def find(self,x):
-        if self.p[x]!=x:self.p[x]=self.find(self.p[x])
-        return self.p[x]
-    def union(self,a,b):
-        a,b=self.find(a),self.find(b)
-        if a==b:return False
-        if self.sz[a]<self.sz[b]:a,b=b,a
-        self.p[b]=a;self.sz[a]+=self.sz[b];return True
+def __init__(self,n):self.p=list(range(n));
+self.sz=[1]*n
+def find(self,x):
+if self.p[x]!=x:self.p[x]=self.find(self.p[x])
+return self.p[x]
+def union(self,a,b):
+a,b=self.find(a),self.find(b)
+if a==b:return False
+if self.sz[a]<self.sz[b]:a,b=b,a
+self.p[b]=a;
+self.sz[a]+=self.sz[b];
+return True
 ```
 **JavaScript**
 ```javascript
-class DSU{constructor(n){this.p=Array.from({length:n},(_,i)=>i);this.sz=new Array(n).fill(1);}find(x){if(this.p[x]!==x)this.p[x]=this.find(this.p[x]);return this.p[x];}union(a,b){a=this.find(a);b=this.find(b);if(a===b)return false;if(this.sz[a]<this.sz[b])[a,b]=[b,a];this.p[b]=a;this.sz[a]+=this.sz[b];return true;}}
+class DSU{
+  constructor(n){
+    this.p=Array.from({length:n},(_,i)=>i);
+    this.sz=new Array(n).fill(1);
+  }
+  find(x){
+    if(this.p[x]!==x)this.p[x]=this.find(this.p[x]);
+    return this.p[x];
+  }
+  union(a,b){
+    a=this.find(a);
+    b=this.find(b);
+    if(a===b)return false;
+    if(this.sz[a]<this.sz[b])[a,b]=[b,a];
+    this.p[b]=a;
+    this.sz[a]+=this.sz[b];
+    return true;
+  }
+}
 ```
 
 Applications: Kruskal, dynamic connectivity, components, undirected cycle detection.
@@ -1172,37 +1592,57 @@ State → Transition → Base case → Order → Answer
 
 **C++**
 ```cpp
-int climbStairs(int n){int a=1,b=1;for(int i=2;i<=n;++i){int c=a+b;a=b;b=c;}return b;}
+int climbStairs(int n){
+  int a=1,b=1;
+  for(int i=2;i<=n;++i){
+    int c=a+b;
+    a=b;
+    b=c;
+  }
+  return b;
+}
 ```
 **Python**
 ```python
 def climb_stairs(n):
-    a=b=1
-    for _ in range(2,n+1):a,b=b,a+b
-    return b
+a=b=1
+for _ in range(2,n+1):a,b=b,a+b
+return b
 ```
 **JavaScript**
 ```javascript
-function climbStairs(n){let a=1,b=1;for(let i=2;i<=n;i++)[a,b]=[b,a+b];return b;}
+function climbStairs(n){
+  let a=1,b=1;
+  for(let i=2;i<=n;i++)[a,b]=[b,a+b];
+  return b;
+}
 ```
 
 ## 0/1 Knapsack
 
 **C++**
 ```cpp
-int knapsack01(const vector<int>&w,const vector<int>&v,int C){vector<int>dp(C+1);for(int i=0;i<(int)w.size();++i)for(int c=C;c>=w[i];--c)dp[c]=max(dp[c],v[i]+dp[c-w[i]]);return dp[C];}
+int knapsack01(const vector<int>&w,const vector<int>&v,int C){
+  vector<int>dp(C+1);
+  for(int i=0;i<(int)w.size();++i)for(int c=C;c>=w[i];--c)dp[c]=max(dp[c],v[i]+dp[c-w[i]]);
+  return dp[C];
+}
 ```
 **Python**
 ```python
 def knapsack01(w,v,C):
-    dp=[0]*(C+1)
-    for wi,vi in zip(w,v):
-        for c in range(C,wi-1,-1):dp[c]=max(dp[c],vi+dp[c-wi])
-    return dp[C]
+dp=[0]*(C+1)
+for wi,vi in zip(w,v):
+for c in range(C,wi-1,-1):dp[c]=max(dp[c],vi+dp[c-wi])
+return dp[C]
 ```
 **JavaScript**
 ```javascript
-function knapsack01(w,v,C){const dp=new Array(C+1).fill(0);for(let i=0;i<w.length;i++)for(let c=C;c>=w[i];c--)dp[c]=Math.max(dp[c],v[i]+dp[c-w[i]]);return dp[C];}
+function knapsack01(w,v,C){
+  const dp=new Array(C+1).fill(0);
+  for(let i=0;i<w.length;i++)for(let c=C;c>=w[i];c--)dp[c]=Math.max(dp[c],v[i]+dp[c-w[i]]);
+  return dp[C];
+}
 ```
 
 **Critical:** backward capacity iteration prevents reusing an item in 0/1 knapsack.
@@ -1217,16 +1657,31 @@ Trie operation: O(L), where L is key length.
 
 **C++**
 ```cpp
-struct TrieNode{array<TrieNode*,26>child{};bool terminal=false;TrieNode(){child.fill(nullptr);}};
+struct TrieNode{
+  array<TrieNode*,26>child{
+  }
+  ;
+  bool terminal=false;
+  TrieNode(){
+    child.fill(nullptr);
+  }
+}
+;
 ```
 **Python**
 ```python
 class TrieNode:
-    def __init__(self):self.children={};self.terminal=False
+def __init__(self):self.children={};
+self.terminal=False
 ```
 **JavaScript**
 ```javascript
-class TrieNode{constructor(){this.children=new Map();this.terminal=false;}}
+class TrieNode{
+  constructor(){
+    this.children=new Map();
+    this.terminal=false;
+  }
+}
 ```
 
 Applications: autocomplete, prefix search, dictionary lookup, word search, XOR trie.
@@ -1246,18 +1701,26 @@ n & (n-1) removes the lowest set bit
 
 **C++**
 ```cpp
-int singleNumber(const vector<int>&a){int x=0;for(int v:a)x^=v;return x;}
+int singleNumber(const vector<int>&a){
+  int x=0;
+  for(int v:a)x^=v;
+  return x;
+}
 ```
 **Python**
 ```python
 def single_number(a):
-    x=0
-    for v in a:x^=v
-    return x
+x=0
+for v in a:x^=v
+return x
 ```
 **JavaScript**
 ```javascript
-function singleNumber(a){let x=0;for(const v of a)x^=v;return x;}
+function singleNumber(a){
+  let x=0;
+  for(const v of a)x^=v;
+  return x;
+}
 ```
 
 **JS caution:** bitwise operators use signed 32-bit integer conversion. For larger exact integers, consider `BigInt` and its different operator rules.
@@ -1270,17 +1733,27 @@ function singleNumber(a){let x=0;for(const v of a)x^=v;return x;}
 
 **C++**
 ```cpp
-long long gcd(long long a,long long b){while(b){long long t=a%b;a=b;b=t;}return llabs(a);}
+long long gcd(long long a,long long b){
+  while(b){
+    long long t=a%b;
+    a=b;
+    b=t;
+  }
+  return llabs(a);
+}
 ```
 **Python**
 ```python
 def gcd(a,b):
-    while b:a,b=b,a%b
-    return abs(a)
+while b:a,b=b,a%b
+return abs(a)
 ```
 **JavaScript**
 ```javascript
-function gcd(a,b){while(b!==0)[a,b]=[b,a%b];return Math.abs(a);}
+function gcd(a,b){
+  while(b!==0)[a,b]=[b,a%b];
+  return Math.abs(a);
+}
 ```
 
 Know fast exponentiation (O(log n)) and the Sieve of Eratosthenes (O(n log log n)).
