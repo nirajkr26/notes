@@ -1,66 +1,498 @@
-# 17. Bit Manipulation
+# 17. Bit Manipulation — From Binary Basics to Bitmask DP
 
-Bits are useful for compact state representation, XOR cancellation, masks, and performance-critical integer logic.
+Bit manipulation works directly with the binary representation of integers. It is useful for compact state representation, XOR cancellation, subsets, masks, parity, and advanced optimization.
 
-## Fundamentals
+---
 
-- `x & 1`: test lowest bit.
-- `x << k`: shift left by k bits (beware overflow/sign issues).
-- `x >> k`: shift right.
-- `x ^ x = 0`, `x ^ 0 = x`.
-- `x & (x-1)`: clears the lowest set bit.
-- `x & -x`: isolates the lowest set bit for two's-complement integers.
+# 1. Binary Representation
+
+An integer is represented using bits.
+
+For example:
+
+```text
+13 = 1101₂
+```
+
+From right to left, bit positions are:
+
+```text
+3 2 1 0
+1 1 0 1
+```
+
+Bit `k` has value `2^k` when it is set.
+
+---
+
+# 2. Essential Operators
+
+```text
+&   AND
+|   OR
+^   XOR
+~   NOT
+<<  left shift
+>>  right shift
+```
+
+Truth-table intuition:
+
+```text
+AND → both bits must be 1
+OR  → at least one bit is 1
+XOR → bits differ
+```
+
+---
+
+# 3. Important Identities
+
+```text
+x ^ 0 = x
+x ^ x = 0
+x ^ y ^ x = y
+x & 0 = 0
+x | 0 = x
+x & (x-1) → removes lowest set bit
+```
+
+The XOR identities are especially useful for cancellation problems.
+
+---
+
+# 4. Check, Set, Clear, Toggle a Bit
+
+For bit `k`, create mask:
+
+```cpp
+1LL << k
+```
+
+### Check
+
+```cpp
+bool isSet(long long x, int k) {
+    return (x & (1LL << k)) != 0;
+}
+```
+
+### Set
+
+```cpp
+x |= (1LL << k);
+```
+
+### Clear
+
+```cpp
+x &= ~(1LL << k);
+```
+
+### Toggle
+
+```cpp
+x ^= (1LL << k);
+```
+
+All are:
+
+**TC:** O(1)  
+**SC:** O(1)
+
+---
+
+# 5. Check Odd/Even
+
+The lowest bit indicates parity.
+
+```cpp
+bool isOdd(int x) {
+    return x & 1;
+}
+```
+
+If lowest bit is 1 → odd. If 0 → even.
+
+**TC:** O(1)  
+**SC:** O(1)
+
+---
+
+# 6. Remove Lowest Set Bit
+
+```text
+x & (x-1)
+```
+
+Example:
+
+```text
+x       = 1011000
+x - 1   = 1010111
+AND     = 1010000
+```
+
+The lowest `1` disappears.
+
+This is the foundation of efficient set-bit counting.
+
+---
+
+# 7. Count Set Bits
+
+Repeatedly remove the lowest set bit.
+
+```cpp
+int countBits(unsigned int x) {
+    int count = 0;
+    while (x) {
+        x &= (x - 1);
+        ++count;
+    }
+    return count;
+}
+```
+
+**TC:** O(number of set bits)  
+**SC:** O(1)
+
+C++ also provides `__builtin_popcount` and `__builtin_popcountll`.
+
+---
+
+# 8. Power of Two
+
+A positive power of two has exactly one set bit.
+
+Therefore:
+
+```text
+x & (x-1) == 0
+```
+
+### Important edge case
+`0` also satisfies the bit expression, so explicitly require `x > 0`.
+
+**TC:** O(1)  
+**SC:** O(1)
+
+---
+
+# 9. XOR — Single Number
+
+Every duplicate appears exactly twice.
+
+XOR all values:
+
+```text
+x ^ x = 0
+0 ^ unique = unique
+```
+
+```cpp
+int singleNumber(const vector<int>& a) {
+    int ans = 0;
+    for (int x : a) ans ^= x;
+    return ans;
+}
+```
+
+**TC:** O(n)  
+**SC:** O(1)
+
+### When does this fail?
+If more than one number occurs an odd number of times, ordinary XOR only gives their XOR, not each individual answer. Additional techniques are required.
+
+---
+
+# 10. Missing Number with XOR
+
+XOR all indices `0..n` and all array values. Every present value cancels with its index, leaving the missing value.
+
+**TC:** O(n)  
+**SC:** O(1)
+
+---
+
+# 11. Find Two Unique Numbers
+
+If every value appears twice except two unique values `a` and `b`, XOR all numbers:
+
+```text
+xorAll = a ^ b
+```
+
+Since `a != b`, `xorAll` has at least one set bit. Use one set bit to partition values into two groups. Equal duplicates remain in the same group and cancel, while the two unique values fall into different groups.
+
+**TC:** O(n)  
+**SC:** O(1)
+
+This is a classic advanced XOR interview problem.
+
+---
+
+# 12. Reverse Bits
+
+Process each bit and construct the reversed result.
+
+For fixed 32-bit integers:
+
+**TC:** O(32) = O(1)  
+**SC:** O(1)
+
+The general idea is repeated:
+
+```text
+answer = (answer << 1) | lowestBit
+x >>= 1
+```
+
+---
+
+# 13. Generate All Subsets Using Masks
+
+For `n` elements, there are `2^n` subsets.
+
+Mask bit `i` determines whether element `i` is included.
+
+```text
+mask = 0101
+```
+
+means include elements 0 and 2.
+
+If every subset is materialized:
+
+**TC:** O(n2^n)  
+**SC:** O(1) auxiliary excluding output
+
+This technique is practical when `n` is small, typically around 20 or below depending on constraints.
+
+---
+
+# 14. Bitmask Representation of a Set
+
+If the universe has at most 64 relevant elements, a 64-bit integer can represent membership.
+
+Operations become:
+
+```text
+union        → |
+intersection → &
+difference   → & ~mask
+symmetric difference → ^
+```
+
+This is extremely useful in subset DP and combinatorial problems.
+
+---
+
+# 15. Subset Enumeration
+
+To iterate all submasks of a mask:
+
+```cpp
+for (int sub = mask; sub; sub = (sub - 1) & mask) {
+    // use sub
+}
+```
+
+This enumerates every non-empty submask efficiently.
+
+Across all masks, the number of mask-submask pairs is O(3^n), a fact that appears in advanced subset DP.
+
+---
+
+# 16. Sum of Two Integers Without +
+
+Bitwise addition separates:
+
+```text
+XOR → sum without carry
+AND → carry positions
+left shift → move carry
+```
+
+Repeat until carry becomes zero.
+
+**TC:** O(B), where B is integer bit width  
+**SC:** O(1)
+
+This is a conceptual question that tests whether you understand binary arithmetic rather than a technique commonly needed in production.
+
+---
+
+# 17. Gray Code
+
+The nth Gray code can be generated by:
+
+```text
+gray(n) = n ^ (n >> 1)
+```
+
+Gray codes ensure consecutive values differ by one bit.
+
+Useful in combinatorial generation and bitmask problems.
+
+---
+
+# 18. Maximum XOR Pair — Binary Trie
+
+Build a binary Trie of all numbers. For each number, greedily choose the opposite bit at every position if available.
+
+Why?
+The highest differing bit contributes the largest power of two, so maximizing that bit is more important than all lower bits combined.
+
+**TC:** O(nB)  
+**SC:** O(nB)
+
+For fixed 32-bit integers this is effectively linear in n.
+
+---
+
+# 19. XOR Basis / Linear Basis
+
+An XOR basis stores independent bit vectors.
+
+It can answer questions such as:
+
+- maximum XOR obtainable
+- whether a value can be represented as XOR of selected values
+- linear independence over GF(2)
+
+With bit width `B`, insertion is approximately O(B), giving O(nB) total construction.
+
+This is advanced competitive-programming material but valuable for difficult OA problems.
+
+---
+
+# 20. Bitmask DP
+
+If a problem asks you to choose from a small set of entities and remember which have already been used, represent the used subset as a bitmask.
+
+Example state:
+
+```text
+dp[mask][last]
+```
+
+For `n` entities:
+
+```text
+number of masks = 2^n
+```
+
+Typical TSP complexity:
+
+**TC:** O(n²2^n)  
+**SC:** O(n2^n)
+
+The state-space explosion is why bitmask DP is normally limited to small n.
+
+---
+
+# 21. Bit Tricks Worth Memorizing
+
+```text
+check bit k       → x & (1LL << k)
+set bit k         → x | (1LL << k)
+clear bit k       → x & ~(1LL << k)
+toggle bit k      → x ^ (1LL << k)
+remove low set    → x & (x-1)
+isolate low set   → x & -x
+power of two      → x > 0 && (x & (x-1)) == 0
+parity             → x & 1
+```
+
+Do not merely memorize them. Understand the binary picture behind each one.
+
+---
+
+# 22. OA / Interview Problem Bank
 
 ## Beginner
 
-### Check/set/clear a bit
-For bit `k`, use masks `1LL << k` and `&`, `|`, `^` operations.
-
-**TC:** O(1)  **SC:** O(1)
-
-### Count set bits
-Repeatedly clear the lowest set bit. Number of iterations equals number of set bits.
-
-**TC:** O(number of set bits), **SC:** O(1). C++ also provides `__builtin_popcount` / `__builtin_popcountll`.
-
-### Single number
-XOR all values; duplicates cancel and the unique value remains.
-
-**TC:** O(n)  **SC:** O(1)
+1. Check odd/even.
+2. Check/set/clear/toggle bit.
+3. Count set bits.
+4. Power of two.
+5. Single number.
+6. Missing number.
+7. Reverse bits.
+8. Binary representation.
 
 ## Intermediate
 
-### Power of two
-A positive integer is a power of two iff `x & (x-1) == 0`.
-
-### Subsets with bit masks
-For `n` elements, mask `0..2^n-1` represents every subset.
-
-**TC:** O(n·2^n), **SC:** O(1) auxiliary excluding output.
+9. Two unique numbers.
+10. Counting bits from 0 to N.
+11. Power of four.
+12. Sum without plus.
+13. Generate subsets using masks.
+14. Gray code.
+15. Bitwise AND of range.
+16. Maximum XOR.
 
 ## Advanced
 
-### XOR basis / linear basis
-Maintain independent bit vectors to answer maximum XOR and representability questions. Complexity depends on bit width, commonly O(nB).
+17. Binary Trie maximum XOR.
+18. XOR basis.
+19. Submask enumeration.
+20. Bitmask DP.
+21. TSP.
+22. Assignment DP.
+23. State compression.
+24. SOS/subset DP concepts.
 
-### Bitmask DP
-Represent a subset by an integer mask. Useful when `n` is small.
+---
 
-Typical **TC:** O(2^n n), **SC:** O(2^n).
+# 23. Frequently Asked Interview Questions
 
-## Important questions
+### Q1. Why does XOR find a unique value?
+XOR is associative/commutative and equal values cancel to zero.
 
-1. Single Number — **O(n), O(1)**.
-2. Number of 1 Bits — **O(B)** or O(popcount), **O(1)**.
-3. Counting Bits 0..N — **O(N), O(N)**.
-4. Missing Number — XOR, **O(n), O(1)**.
-5. Reverse Bits — **O(B), O(1)**.
-6. Power of Two — **O(1), O(1)**.
-7. Sum of Two Integers without `+` — XOR for sum without carry and AND/shift for carry; **O(B), O(1)**.
-8. Maximum XOR pair — binary trie **O(nB), O(nB)** or more specialized linear-basis approaches.
-9. Subset enumeration — **O(n2^n)** if each subset is materialized.
-10. TSP bitmask DP — **O(n²2^n), O(n2^n)**.
+### Q2. Why does `x & (x-1)` remove the lowest set bit?
+Subtracting one changes the lowest set bit to zero and turns all lower zero bits into ones; ANDing with the original removes exactly that lowest set bit.
 
-## Pitfalls
+### Q3. Why is power-of-two detection special?
+A positive power of two contains exactly one set bit.
 
-Signed shifts and overflow are language-sensitive. Use unsigned types where appropriate for bit-level manipulation, and use `1ULL << k` when a wide unsigned mask is required.
+### Q4. Why can bitmasking represent subsets?
+Each bit independently records whether one element is selected.
+
+### Q5. Why is bitmask DP exponential?
+There are `2^n` possible subsets.
+
+### Q6. Why does binary Trie maximize XOR greedily?
+At the highest bit where two numbers differ, XOR becomes 1. That contribution dominates all lower bits.
+
+### Q7. What is the difference between `&` and `&&`?
+`&` is bitwise AND. `&&` is logical AND and operates on truth values.
+
+### Q8. What is the difference between `|` and `||`?
+`|` is bitwise OR. `||` is logical OR.
+
+### Q9. What is the difference between `^` and exponentiation?
+In C++, `^` is XOR. It is not exponentiation.
+
+### Q10. What should you watch for with shifts?
+Overflow, signed values, shift width, and undefined/implementation-sensitive behavior around invalid shift counts. Use appropriate unsigned/wide types when working at the bit level.
+
+---
+
+# 24. Complexity Summary
+
+| Problem | TC | SC |
+|---|---:|---:|
+| Bit operation | O(1) | O(1) |
+| Count set bits | O(popcount) | O(1) |
+| Single number | O(n) | O(1) |
+| Two unique numbers | O(n) | O(1) |
+| Reverse fixed-width bits | O(B) | O(1) |
+| Generate subsets | O(n2^n) | O(1) auxiliary |
+| Maximum XOR via Trie | O(nB) | O(nB) |
+| XOR basis | O(nB) | O(B) |
+| Bitmask DP | O(n2^n) typical | O(2^n) |
+| TSP DP | O(n²2^n) | O(n2^n) |
+
+> **Core lesson:** Bit manipulation becomes easy when you stop treating bit tricks as magic formulas and start seeing every operation as a precise transformation of binary state.
